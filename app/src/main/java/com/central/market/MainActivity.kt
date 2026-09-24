@@ -4,8 +4,8 @@ import android.app.Activity
 import android.os.Bundle
 import android.graphics.Color
 import android.graphics.Typeface
+import android.text.InputType
 import android.view.Gravity
-import android.view.View
 import android.widget.*
 
 class MainActivity : Activity() {
@@ -14,7 +14,6 @@ class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         showHome()
     }
 
@@ -29,19 +28,13 @@ class MainActivity : Activity() {
         header.setTypeface(null, Typeface.BOLD)
         header.setTextColor(Color.rgb(20, 45, 70))
         header.gravity = Gravity.CENTER
-        header.setPadding(16, 35, 16, 25)
+        header.setPadding(16, 30, 16, 20)
 
-        root.addView(
-            header,
-            LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-        )
+        root.addView(header)
 
         content = LinearLayout(this)
         content.orientation = LinearLayout.VERTICAL
-        content.setPadding(18, 10, 18, 20)
+        content.setPadding(18, 8, 18, 20)
 
         val scroll = ScrollView(this)
         scroll.addView(content)
@@ -58,20 +51,13 @@ class MainActivity : Activity() {
         val navigation = LinearLayout(this)
         navigation.orientation = LinearLayout.HORIZONTAL
         navigation.gravity = Gravity.CENTER
-        navigation.setPadding(5, 8, 5, 8)
 
         addNavButton(navigation, "الرئيسية") { showHome() }
         addNavButton(navigation, "البحث") { showSearch() }
-        addNavButton(navigation, "الإعلانات") { showAds() }
+        addNavButton(navigation, "المفضلة") { showFavorites() }
         addNavButton(navigation, "الحساب") { showAccount() }
 
-        root.addView(
-            navigation,
-            LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-        )
+        root.addView(navigation)
 
         return root
     }
@@ -83,7 +69,7 @@ class MainActivity : Activity() {
     ) {
         val button = Button(this)
         button.text = title
-        button.textSize = 12f
+        button.textSize = 11f
         button.setOnClickListener { action() }
 
         parent.addView(
@@ -102,16 +88,20 @@ class MainActivity : Activity() {
         text.textSize = 21f
         text.setTypeface(null, Typeface.BOLD)
         text.setTextColor(Color.rgb(20, 45, 70))
-        text.setPadding(5, 20, 5, 12)
+        text.setPadding(5, 18, 5, 10)
 
         content.addView(text)
     }
 
-    private fun addCard(title: String, description: String, action: () -> Unit) {
+    private fun addCard(
+        title: String,
+        description: String,
+        action: () -> Unit
+    ) {
         val button = Button(this)
         button.text = "$title\n$description"
         button.textSize = 15f
-        button.setPadding(10, 20, 10, 20)
+        button.setPadding(10, 18, 10, 18)
         button.setOnClickListener { action() }
 
         content.addView(
@@ -120,7 +110,7 @@ class MainActivity : Activity() {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             ).apply {
-                setMargins(0, 6, 0, 6)
+                setMargins(0, 5, 0, 5)
             }
         )
     }
@@ -129,162 +119,125 @@ class MainActivity : Activity() {
         setContentView(baseLayout())
         content.removeAllViews()
 
-        val welcome = TextView(this)
-        welcome.text = "مرحبًا بك في CENTRAL MARKET"
-        welcome.textSize = 23f
-        welcome.setTypeface(null, Typeface.BOLD)
-        welcome.gravity = Gravity.CENTER
-        welcome.setTextColor(Color.rgb(20, 45, 70))
-        welcome.setPadding(5, 15, 5, 20)
+        addSection("مرحبًا بك في CENTRAL MARKET")
 
-        content.addView(welcome)
+        val intro = TextView(this)
+        intro.text =
+            "منصة واحدة للأسواق والخدمات والتسويق والمركبات والمزيد."
+        intro.textSize = 16f
+        intro.gravity = Gravity.CENTER
+        intro.setPadding(5, 5, 5, 18)
 
-        val info = TextView(this)
-        info.text =
-            "منصة واحدة للخدمات والأسواق والمركبات والإعلانات والتسويق."
-        info.textSize = 16f
-        info.gravity = Gravity.CENTER
-        info.setPadding(10, 0, 10, 20)
+        content.addView(intro)
 
-        content.addView(info)
+        addSection("الوصول السريع")
 
-        addSection("أقسام CENTRAL MARKET")
-
-        addCard("🚛 المركبات والشاحنات", "بيع وشراء وخدمات المركبات") {
-            showMessage("قسم المركبات والشاحنات")
+        addCard("👤 وضع الزائر", "استعمال الخدمات الأساسية دون تسجيل") {
+            showGuestMode()
         }
 
-        addCard("📱 الهواتف والإلكترونيات", "هواتف وأجهزة وإلكترونيات") {
-            showMessage("قسم الهواتف والإلكترونيات")
+        addCard("🛡️ أمان المنطقة", "مؤشر معلومات السلامة المحلية") {
+            showSafety()
+        }
+
+        addCard("📦 المنتجات والخدمات", "استعراض العروض") {
+            showProducts()
+        }
+
+        addSection("الأقسام الرئيسية")
+
+        addCard("🚛 المركبات والشاحنات", "بيع وشراء وخدمات المركبات") {
+            showCategory(
+                "🚛 المركبات والشاحنات",
+                "مركبات، شاحنات، معدات وآليات"
+            )
+        }
+
+        addCard("📱 الهواتف والإلكترونيات", "أجهزة وهواتف وإلكترونيات") {
+            showCategory(
+                "📱 الهواتف والإلكترونيات",
+                "هواتف وأجهزة وإلكترونيات"
+            )
         }
 
         addCard("🍽️ المطاعم والتوصيل", "مطاعم وطلبات وتوصيل") {
-            showMessage("قسم المطاعم والتوصيل")
+            showCategory(
+                "🍽️ المطاعم والتوصيل",
+                "مطاعم وطلبات وخدمات توصيل"
+            )
         }
 
         addCard("📢 التسويق والإعلانات", "عرض المنتجات والخدمات") {
             showAds()
         }
 
-        addCard("🛠️ الخدمات", "خدمات متنوعة في مكان واحد") {
-            showMessage("قسم الخدمات")
+        addCard("🛠️ الخدمات", "خدمات متنوعة") {
+            showCategory(
+                "🛠️ الخدمات",
+                "خدمات للأفراد والشركات"
+            )
         }
 
-        addCard("💡 الابتكار والمشاريع", "أفكار ومشاريع المستقبل") {
-            showMessage("قسم الابتكار والمشاريع")
+        addSection("المشاريع والمجتمع")
+
+        addCard("💡 الذكاء البشري", "أفكار وابتكارات ومشاريع المستقبل") {
+            showHumanIntelligence()
+        }
+
+        addCard(
+            "🤲 صندوق دعم الأيتام والمحتاجين",
+            "مبادرات الدعم المجتمعي"
+        ) {
+            showCharity()
+        }
+
+        addCard("🍲 مطبخ الطيبات", "وصفات وأطعمة ومعلومات غذائية") {
+            showKitchen()
         }
 
         addSection("خدمات قادمة")
 
-        addCard("💳 الدفع الإلكتروني", "سيتم ربط خدمات الدفع لاحقًا") {
-            showMessage("خدمة الدفع الإلكتروني قيد التجهيز")
+        addCard("💳 الدفع الإلكتروني", "ربط وسائل الدفع لاحقًا") {
+            showMessage("الدفع الإلكتروني قيد التجهيز")
         }
 
-        addCard("📍 الخرائط والتتبع", "الخدمات الجغرافية والتتبع") {
+        addCard("📍 الخرائط والتتبع", "الموقع والتتبع") {
             showMessage("الخرائط والتتبع قيد التجهيز")
         }
     }
 
-    private fun showSearch() {
+    private fun showGuestMode() {
         setContentView(baseLayout())
         content.removeAllViews()
 
-        addSection("🔎 البحث")
+        addSection("👤 وضع الزائر")
 
-        val search = EditText(this)
-        search.hint = "ابحث عن منتج أو خدمة..."
-        search.textSize = 17f
-
-        content.addView(search)
-
-        val button = Button(this)
-        button.text = "بحث"
-        button.setOnClickListener {
-            val query = search.text.toString().trim()
-
-            if (query.isEmpty()) {
-                showMessage("اكتب شيئًا للبحث")
-            } else {
-                showMessage("سيتم البحث عن: $query")
-            }
+        addCard(
+            "استعراض المنتجات",
+            "يمكنك تصفح المنتجات والخدمات"
+        ) {
+            showProducts()
         }
 
-        content.addView(button)
-
-        addSection("بحث سريع")
-
-        addCard("🚛 المركبات", "البحث في المركبات") {
-            showMessage("بحث المركبات")
+        addCard(
+            "البحث",
+            "البحث عن منتج أو خدمة"
+        ) {
+            showSearch()
         }
 
-        addCard("📱 الإلكترونيات", "البحث في الإلكترونيات") {
-            showMessage("بحث الإلكترونيات")
+        addCard(
+            "الإعلانات",
+            "استعراض الإعلانات"
+        ) {
+            showAds()
         }
 
-        addCard("🍽️ المطاعم", "البحث في المطاعم") {
-            showMessage("بحث المطاعم")
-        }
-    }
-
-    private fun showAds() {
-        setContentView(baseLayout())
-        content.removeAllViews()
-
-        addSection("📢 الإعلانات")
-
-        addCard("🥉 BRONZE", "الإعلان الأساسي") {
-            showMessage("إعلان BRONZE")
+        addCard(
+            "🔐 تسجيل الدخول",
+            "للوصول إلى الميزات الشخصية"
+        ) {
+            showLogin()
         }
 
-        addCard("🥈 SILVER", "ظهور أكبر للإعلان") {
-            showMessage("إعلان SILVER")
-        }
-
-        addCard("🥇 GOLD", "ظهور مميز للإعلان") {
-            showMessage("إعلان GOLD")
-        }
-
-        addSection("إضافة إعلان")
-
-        addCard("➕ إنشاء إعلان جديد", "إضافة منتج أو خدمة") {
-            showMessage("إنشاء الإعلان سيُربط بالنظام لاحقًا")
-        }
-    }
-
-    private fun showAccount() {
-        setContentView(baseLayout())
-        content.removeAllViews()
-
-        addSection("👤 الحساب")
-
-        addCard("تسجيل الدخول", "الدخول إلى حسابك") {
-            showMessage("نظام تسجيل الدخول قيد التجهيز")
-        }
-
-        addCard("إنشاء حساب", "إنشاء حساب جديد") {
-            showMessage("إنشاء الحساب قيد التجهيز")
-        }
-
-        addCard("🌐 اللغة", "العربية / English / لغات أخرى") {
-            showMessage("اختيار اللغات قيد التجهيز")
-        }
-
-        addCard("⚙️ الإعدادات", "إعدادات التطبيق") {
-            showMessage("الإعدادات")
-        }
-
-        addCard("🔔 الإشعارات", "إدارة التنبيهات") {
-            showMessage("الإشعارات قيد التجهيز")
-        }
-
-        addCard("ℹ️ عن CENTRAL MARKET", "معلومات عن المشروع") {
-            showMessage(
-                "CENTRAL MARKET\nمنصة رقمية متعددة الخدمات والأسواق"
-            )
-        }
-    }
-
-    private fun showMessage(message: String) {
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
-    }
-}
+        add
