@@ -7,9 +7,13 @@ import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
-import android.text.InputType
 import android.view.Gravity
-import android.widget.*
+import android.widget.Button
+import android.widget.EditText
+import android.widget.LinearLayout
+import android.widget.ScrollView
+import android.widget.TextView
+import android.widget.Toast
 
 class MainActivity : Activity() {
 
@@ -31,6 +35,7 @@ class MainActivity : Activity() {
     }
 
     private fun baseLayout(): LinearLayout {
+
         val root = LinearLayout(this)
         root.orientation = LinearLayout.VERTICAL
         root.setBackgroundColor(background)
@@ -38,7 +43,7 @@ class MainActivity : Activity() {
         val header = LinearLayout(this)
         header.orientation = LinearLayout.VERTICAL
         header.gravity = Gravity.CENTER
-        header.setPadding(16, 20, 16, 10)
+        header.setPadding(16, 18, 16, 10)
         header.setBackgroundColor(white)
 
         val logo = TextView(this)
@@ -64,6 +69,7 @@ class MainActivity : Activity() {
         header.addView(logo)
         header.addView(market)
         header.addView(line)
+
         root.addView(header)
 
         content = LinearLayout(this)
@@ -151,6 +157,7 @@ class MainActivity : Activity() {
         button.setTextColor(textDark)
         button.gravity = Gravity.CENTER_VERTICAL
         button.setPadding(14, 18, 14, 18)
+
         button.background = roundedBackground(
             white,
             blue,
@@ -184,7 +191,25 @@ class MainActivity : Activity() {
         }
     }
 
+    private fun addInfo(textValue: String) {
+        val text = TextView(this)
+        text.text = textValue
+        text.textSize = 16f
+        text.setTextColor(textDark)
+        text.setPadding(10, 10, 10, 18)
+        content.addView(text)
+    }
+
+    private fun showMessage(message: String) {
+        Toast.makeText(
+            this,
+            message,
+            Toast.LENGTH_LONG
+        ).show()
+    }
+
     private fun showHome() {
+
         setContentView(baseLayout())
         content.removeAllViews()
 
@@ -192,7 +217,8 @@ class MainActivity : Activity() {
 
         val intro = TextView(this)
         intro.text =
-            "منصة واحدة للأسواق والخدمات والتسويق والمركبات والمزيد."
+            "منصة واحدة .. عالم من الفرص.\n\n" +
+            "أسواق وخدمات ومركبات وإعلانات ومشاريع وابتكار."
         intro.textSize = 16f
         intro.setTextColor(muted)
         intro.gravity = Gravity.CENTER
@@ -218,8 +244,8 @@ class MainActivity : Activity() {
         }
 
         addCard(
-            "🛡️ أمان المنطقة",
-            "مؤشر معلومات السلامة"
+            "🛡️ الأمان والخصوصية",
+            "معلومات الحماية والصلاحيات"
         ) {
             showSafety()
         }
@@ -370,10 +396,17 @@ class MainActivity : Activity() {
         addSection("💡 المشاريع والمجتمع")
 
         addCard(
-            "💡 الذكاء البشري",
+            "🧠 الذكاء البشري",
             "أفكار وابتكارات ومشاريع"
         ) {
             showHumanIntelligence()
+        }
+
+        addCard(
+            "🤖 CTM AI",
+            "المساعد الذكي الرسمي للمشروع"
+        ) {
+            showCtmAi()
         }
 
         addCard(
@@ -401,10 +434,35 @@ class MainActivity : Activity() {
 
         addCard(
             "🦡 BADGER",
-            "منظومة الخدمات البنكية المستقبلية"
+            "منظومة مصرفية مستقلة"
         ) {
             showBadger()
-        }    private fun showOnline() {
+        }
+
+        addCard(
+            "🛡️ مكتب الأمن والمعلومات",
+            "الحماية ومكافحة السرقة والاحتيال"
+        ) {
+            showSecurityOffice()
+        }
+
+        addCard(
+            "⚖️ مكتب النائب العام للمشروع",
+            "الملفات القانونية والجهات والشراكات"
+        ) {
+            showAttorneyOffice()
+        }
+
+        addCard(
+            "💰 النظام المالي الخاص",
+            "متابعة الأسهم والمعاملات والدخل"
+        ) {
+            showPrivateFinancialSystem()
+        }
+    }
+
+    private fun showOnline() {
+
         setContentView(baseLayout())
         content.removeAllViews()
 
@@ -417,10 +475,13 @@ class MainActivity : Activity() {
         content.addView(status)
 
         fun checkConnection() {
+
             val manager =
-                getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
+                getSystemService(CONNECTIVITY_SERVICE)
+                        as ConnectivityManager
 
             val network = manager.activeNetwork
+
             val capabilities =
                 manager.getNetworkCapabilities(network)
 
@@ -430,15 +491,20 @@ class MainActivity : Activity() {
                 ) == true
 
             if (online) {
+
                 status.text =
                     "● متصل بالإنترنت\n\n" +
                     "اتصال الإنترنت متاح على الجهاز.\n\n" +
-                    "المرحلة القادمة: ربط البيانات والخدمات بخادم حقيقي."
+                    "الربط الحقيقي بالخدمات السحابية يتم في مرحلة لاحقة."
+
                 status.setTextColor(green)
+
             } else {
+
                 status.text =
                     "● غير متصل بالإنترنت\n\n" +
-                    "يمكنك استخدام الوظائف المحلية."
+                    "يمكن استخدام الوظائف المحلية المتاحة."
+
                 status.setTextColor(red)
             }
         }
@@ -457,7 +523,7 @@ class MainActivity : Activity() {
             "تقليل استهلاك الإنترنت"
         ) {
             showMessage(
-                "وضع البيانات المنخفضة سيتم تطويره في المرحلة التالية"
+                "وضع البيانات المنخفضة قيد التطوير."
             )
         }
 
@@ -466,219 +532,113 @@ class MainActivity : Activity() {
             "قاعدة البيانات والخدمات المتصلة"
         ) {
             showMessage(
-                "البنية السحابية سيتم ربطها لاحقًا"
+                "البنية السحابية ستُربط بعد تجهيز الخادم."
             )
         }
 
         addCard(
             "📱 تجربة التطبيق",
-            "اختبار النسخة على الهاتف"
+            "اختبار نسخة Android الحالية"
         ) {
             showMessage(
-                "التجربة الحالية تتم من خلال نسخة Android"
+                "هذه نسخة Android المحلية الحالية."
             )
+        }
+
+        addCard(
+            "🏠 العودة إلى الرئيسية",
+            "الرجوع"
+        ) {
+            showHome()
         }
     }
 
-    private fun showManagerOffice() {
+    private fun showGuestMode() {
+
         setContentView(baseLayout())
         content.removeAllViews()
 
-        addSection("👔 مكتب المدير")
+        addSection("👤 وضع الزائر")
 
-        val name = TextView(this)
-        name.text = "ياسر حسن موسى عبدالله\nود الريس"
-        name.textSize = 21f
-        name.setTypeface(null, Typeface.BOLD)
-        name.setTextColor(navy)
-        name.gravity = Gravity.CENTER
-        name.setPadding(10, 15, 10, 20)
-        content.addView(name)
+        addInfo(
+            "يمكن للزائر تصفح الأقسام والخدمات العامة " +
+            "دون الوصول إلى الوظائف الخاصة."
+        )
 
         addCard(
-            "📊 لوحة المتابعة",
-            "ملخص المشروع والعمليات"
+            "🔎 تصفح السوق",
+            "مشاهدة المنتجات والخدمات"
         ) {
-            showMessage(
-                "لوحة المتابعة قيد التوسعة"
-            )
+            showProducts()
         }
 
         addCard(
-            "📁 الخزانة الإلكترونية",
-            "العقود والوثائق والشركاء"
-        ) {
-            showDocuments()
-        }
-
-        addCard(
-            "📢 إدارة الإعلانات",
-            "BRONZE / SILVER / GOLD"
+            "📢 مشاهدة الإعلانات",
+            "التعرف على العروض"
         ) {
             showAds()
         }
 
         addCard(
-            "💡 الذكاء البشري",
-            "الأفكار والمشاريع والفرق"
-        ) {
-            showHumanIntelligence()
-        }
-
-        addCard(
-            "🤲 صندوق الدعم",
-            "المبادرات والمتابعة"
-        ) {
-            showCharity()
-        }
-
-        addCard(
-            "🔔 التنبيهات والتقارير",
-            "متابعة التقارير"
-        ) {
-            showMessage(
-                "التقارير قيد التجهيز"
-            )
-        }
-
-        addCard(
-            "🛡️ الأمان والصلاحيات",
-            "إدارة الوصول والحماية"
-        ) {
-            showMessage(
-                "نظام الصلاحيات المتقدم قيد التجهيز"
-            )
-        }
-
-        addCard(
-            "🌐 حالة الخدمات",
-            "الاتصال والخدمات المتصلة"
+            "🌐 التجربة عبر الإنترنت",
+            "اختبار الاتصال"
         ) {
             showOnline()
         }
-    }
-
-    private fun showDocuments() {
-        setContentView(baseLayout())
-        content.removeAllViews()
-
-        addSection("📁 الخزانة الإلكترونية")
 
         addCard(
-            "📄 العقود",
-            "عقود المشروع والشركاء"
+            "🔐 تسجيل الدخول",
+            "الدخول إلى الحساب"
         ) {
-            showMessage(
-                "قسم العقود قيد التجهيز"
-            )
-        }
-
-        addCard(
-            "🤝 الشركاء",
-            "بيانات وملفات الشركاء"
-        ) {
-            showMessage(
-                "ملفات الشركاء قيد التجهيز"
-            )
-        }
-
-        addCard(
-            "🧾 المستندات",
-            "وثائق المشروع"
-        ) {
-            showMessage(
-                "قسم المستندات قيد التجهيز"
-            )
-        }
-
-        addCard(
-            "🔐 الملفات المحمية",
-            "وصول إداري مستقبلي"
-        ) {
-            showMessage(
-                "الحماية المتقدمة ستضاف لاحقًا"
-            )
+            showLogin()
         }
     }
 
-    private fun showBadger() {
+    private fun showSafety() {
+
         setContentView(baseLayout())
         content.removeAllViews()
 
-        addSection("🦡 BADGER")
+        addSection("🛡️ الأمان والخصوصية")
 
-        val intro = TextView(this)
-        intro.text =
-            "منظومة خدمات مالية مستقلة ضمن رؤية المشروع.\n\n" +
-            "هذه الصفحة هي البنية الأولية فقط، ولا تنفذ تحويلات مالية حقيقية."
-
-        intro.textSize = 16f
-        intro.setTextColor(textDark)
-        intro.gravity = Gravity.CENTER
-        intro.setPadding(10, 10, 10, 20)
-        content.addView(intro)
+        addInfo(
+            "CENTRAL MARKET يميز بين الخدمات العامة " +
+            "والأقسام الإدارية والخاصة."
+        )
 
         addCard(
-            "🌍 هوية BADGER",
-            "الغرير والكرة الأرضية والهوية الخاصة"
+            "🔐 حماية الحساب",
+            "إدارة الوصول إلى الحساب"
         ) {
-            showMessage(
-                "هوية BADGER البصرية قيد التطوير"
-            )
+            showMessage("حماية الحساب قيد التطوير.")
         }
 
         addCard(
-            "👤 الحساب",
-            "ملف المستخدم والخدمات المالية"
+            "🛡️ حماية البيانات",
+            "تنظيم الوصول إلى المعلومات"
         ) {
-            showMessage(
-                "الحساب المالي سيتم ربطه لاحقًا"
-            )
+            showMessage("حماية البيانات المتقدمة قيد التطوير.")
         }
 
         addCard(
-            "💰 الرصيد",
-            "عرض الرصيد والخدمات"
+            "🚨 مكافحة الاحتيال",
+            "رصد السلوكيات غير المعتادة"
         ) {
-            showMessage(
-                "بيانات الرصيد غير مرتبطة حاليًا"
-            )
+            showMessage("نظام مكافحة الاحتيال قيد التطوير.")
         }
 
         addCard(
-            "🧾 الإيصالات",
-            "إيصالات وتقارير العمليات"
+            "🔒 الأقسام الخاصة",
+            "الوصول حسب الصلاحيات"
         ) {
-            showMessage(
-                "نظام الإيصالات قيد التطوير"
-            )
+            showMessage("الصلاحيات المتقدمة قيد التطوير.")
         }
 
         addCard(
-            "🚨 التنبيهات والأمان",
-            "الحماية ومكافحة الاحتيال"
+            "🏠 الرئيسية",
+            "العودة"
         ) {
-            showMessage(
-                "نظام الأمان المتقدم قيد التطوير"
-            )
-        }
-
-        addCard(
-            "📊 التقارير",
-            "تقارير شهرية وإدارية"
-        ) {
-            showMessage(
-                "التقارير قيد التجهيز"
-            )
-        }
-
-        addCard(
-            "🔐 الحماية",
-            "القفل والصلاحيات"
-        ) {
-            showMessage(
-                "الحماية المتقدمة سيتم تنفيذها قبل أي ربط مالي حقيقي"
-            )
+            showHome()
         }
     }
 
@@ -686,17 +646,13 @@ class MainActivity : Activity() {
         category: String,
         description: String
     ) {
+
         setContentView(baseLayout())
         content.removeAllViews()
 
         addSection(category)
 
-        val info = TextView(this)
-        info.text = description
-        info.textSize = 16f
-        info.setTextColor(muted)
-        info.setPadding(5, 5, 5, 15)
-        content.addView(info)
+        addInfo(description)
 
         addCard(
             "📦 المنتجات والعروض",
@@ -725,7 +681,6 @@ class MainActivity : Activity() {
         ) {
             showSearch()
         }
-    }
 
         addSection("🔮 خدمات قادمة")
 
@@ -733,16 +688,26 @@ class MainActivity : Activity() {
             "💳 الدفع الإلكتروني",
             "سيتم ربطه لاحقًا"
         ) {
-            showMessage("الدفع الإلكتروني قيد التجهيز")
+            showMessage("الدفع الإلكتروني قيد التجهيز.")
         }
 
         addCard(
             "📍 الخرائط والتتبع",
             "الموقع والتتبع"
         ) {
-            showMessage("الخرائط والتتبع قيد التجهيز")
+            showMessage("الخرائط والتتبع قيد التجهيز.")
         }
-    }    private fun showProducts() {
+
+        addCard(
+            "🏠 العودة إلى الرئيسية",
+            "الرجوع"
+        ) {
+            showHome()
+        }
+    }
+
+    private fun showProducts() {
+
         setContentView(baseLayout())
         content.removeAllViews()
 
@@ -754,7 +719,7 @@ class MainActivity : Activity() {
         ) {
             showDetails(
                 "هاتف ذكي",
-                "منتج تجريبي داخل CENTRAL MARKET"
+                "منتج تجريبي داخل CENTRAL MARKET."
             )
         }
 
@@ -764,7 +729,17 @@ class MainActivity : Activity() {
         ) {
             showDetails(
                 "مركبة",
-                "قسم المركبات قيد التطوير"
+                "قسم المركبات قيد التطوير."
+            )
+        }
+
+        addCard(
+            "🚛 شاحنة ومعدات",
+            "شاحنات ومعدات ثقيلة"
+        ) {
+            showDetails(
+                "شاحنة ومعدات",
+                "قسم الشاحنات والمعدات الثقيلة."
             )
         }
 
@@ -774,7 +749,7 @@ class MainActivity : Activity() {
         ) {
             showDetails(
                 "مطعم",
-                "خدمات المطاعم والتوصيل"
+                "خدمات المطاعم والتوصيل."
             )
         }
 
@@ -784,7 +759,7 @@ class MainActivity : Activity() {
         ) {
             showDetails(
                 "منتجات زراعية",
-                "القسم الزراعي قيد التطوير"
+                "القسم الزراعي قيد التطوير."
             )
         }
 
@@ -794,7 +769,7 @@ class MainActivity : Activity() {
         ) {
             showDetails(
                 "مواد بناء",
-                "قسم مواد البناء والجملة"
+                "قسم مواد البناء والجملة."
             )
         }
 
@@ -804,7 +779,7 @@ class MainActivity : Activity() {
         ) {
             showDetails(
                 "خدمات صحية",
-                "الخدمات الصحية قيد التطوير"
+                "الخدمات الصحية قيد التطوير."
             )
         }
 
@@ -814,15 +789,22 @@ class MainActivity : Activity() {
         ) {
             showDetails(
                 "التعليم",
-                "الخدمات التعليمية قيد التطوير"
+                "الخدمات التعليمية قيد التطوير."
             )
         }
-    }
 
-    private fun showDetails(
+        addCard(
+            "🏠 الرئيسية",
+            "العودة"
+        ) {
+            showHome()
+        }
+    }
+        private fun showDetails(
         title: String,
         description: String
     ) {
+
         setContentView(baseLayout())
         content.removeAllViews()
 
@@ -842,45 +824,56 @@ class MainActivity : Activity() {
         details.textSize = 17f
         details.setTextColor(textDark)
         details.setPadding(12, 15, 12, 20)
+
         content.addView(details)
 
         addCard(
             "❤️ إضافة إلى المفضلة",
             "حفظ العنصر"
         ) {
-            showMessage("تم حفظ العنصر في المفضلة")
+            showMessage("تم حفظ العنصر في المفضلة.")
         }
 
         addCard(
             "📤 مشاركة",
             "مشاركة معلومات العنصر"
         ) {
-            showMessage("المشاركة قيد التجهيز")
+            showMessage("المشاركة قيد التجهيز.")
         }
 
         addCard(
             "🧾 الرقم المرجعي",
             "رقم خاص بالعملية"
         ) {
-            showMessage("سيتم إنشاء الرقم المرجعي عند تنفيذ العملية")
+            showMessage(
+                "سيتم إنشاء الرقم المرجعي عند تنفيذ العملية."
+            )
         }
 
         addCard(
             "💳 الدفع الإلكتروني",
             "سيتم ربطه لاحقًا"
         ) {
-            showMessage("الدفع الإلكتروني قيد التجهيز")
+            showMessage("الدفع الإلكتروني قيد التجهيز.")
         }
 
         addCard(
             "📍 الخرائط والتتبع",
             "الموقع والتتبع"
         ) {
-            showMessage("الخرائط والتتبع قيد التجهيز")
+            showMessage("الخرائط والتتبع قيد التجهيز.")
+        }
+
+        addCard(
+            "🏠 العودة إلى المنتجات",
+            "الرجوع"
+        ) {
+            showProducts()
         }
     }
 
     private fun showAddAd() {
+
         setContentView(baseLayout())
         content.removeAllViews()
 
@@ -913,46 +906,66 @@ class MainActivity : Activity() {
         city.setHintTextColor(muted)
         content.addView(city)
 
+        addSection("📢 مستوى الإعلان")
+
         addCard(
             "🥉 BRONZE",
             "الإعلان الأساسي"
         ) {
-            showMessage("تم اختيار BRONZE")
+            showMessage("تم اختيار BRONZE.")
         }
 
         addCard(
             "🥈 SILVER",
             "ظهور أفضل للإعلان"
         ) {
-            showMessage("تم اختيار SILVER")
+            showMessage("تم اختيار SILVER.")
         }
 
         addCard(
             "🥇 GOLD",
             "ظهور مميز في أعلى النتائج"
         ) {
-            showMessage("تم اختيار GOLD")
+            showMessage("تم اختيار GOLD.")
         }
 
         addCard(
             "📢 نشر الإعلان",
             "إضافة الإعلان إلى السوق"
         ) {
+
+            val productName =
+                name.text.toString().trim()
+
+            val productDescription =
+                description.text.toString().trim()
+
             if (
-                name.text.toString().trim().isEmpty() ||
-                description.text.toString().trim().isEmpty()
+                productName.isEmpty() ||
+                productDescription.isEmpty()
             ) {
-                showMessage("يرجى إدخال اسم المنتج والوصف")
-            } else {
                 showMessage(
-                    "تم تجهيز الإعلان للنشر\n" +
-                            "سيتم إنشاء رقم مرجعي خاص به"
+                    "يرجى إدخال اسم المنتج والوصف."
+                )
+            } else {
+
+                showMessage(
+                    "تم تجهيز الإعلان للنشر.\n" +
+                            "سيتم إنشاء رقم مرجعي خاص به."
                 )
             }
+        }
+
+        addCard(
+            "🏠 الرئيسية",
+            "العودة"
+        ) {
+            showHome()
         }
     }
 
     private fun showSearch() {
+
         setContentView(baseLayout())
         content.removeAllViews()
 
@@ -962,17 +975,25 @@ class MainActivity : Activity() {
         search.hint = "اكتب ما تريد البحث عنه"
         search.setTextColor(textDark)
         search.setHintTextColor(muted)
+
         content.addView(search)
 
         addCard(
             "🔍 تنفيذ البحث",
             "البحث داخل CENTRAL MARKET"
         ) {
-            val query = search.text.toString().trim()
+
+            val query =
+                search.text.toString().trim()
 
             if (query.isEmpty()) {
-                showMessage("اكتب كلمة للبحث")
+
+                showMessage(
+                    "اكتب كلمة للبحث."
+                )
+
             } else {
+
                 showMessage(
                     "نتائج البحث عن:\n$query\n\n" +
                             "سيتم ربط البحث الحقيقي بقاعدة البيانات لاحقًا."
@@ -984,18 +1005,30 @@ class MainActivity : Activity() {
             "📍 البحث حسب المدينة",
             "تحديد النتائج حسب الموقع"
         ) {
-            showMessage("البحث حسب المدينة قيد التطوير")
+            showMessage(
+                "البحث حسب المدينة قيد التطوير."
+            )
         }
 
         addCard(
             "🏷️ البحث حسب القسم",
             "تصفية النتائج"
         ) {
-            showMessage("التصفية حسب القسم قيد التطوير")
+            showMessage(
+                "التصفية حسب القسم قيد التطوير."
+            )
+        }
+
+        addCard(
+            "🏠 الرئيسية",
+            "العودة"
+        ) {
+            showHome()
         }
     }
 
     private fun showFavorites() {
+
         setContentView(baseLayout())
         content.removeAllViews()
 
@@ -1006,7 +1039,7 @@ class MainActivity : Activity() {
             "عرض المنتجات والخدمات التي تم حفظها"
         ) {
             showMessage(
-                "لا توجد عناصر محفوظة حاليًا"
+                "لا توجد عناصر محفوظة حاليًا."
             )
         }
 
@@ -1015,45 +1048,132 @@ class MainActivity : Activity() {
             "حذف العناصر المحفوظة"
         ) {
             showMessage(
-                "إدارة المفضلة سيتم ربطها ببيانات المستخدم لاحقًا"
+                "إدارة المفضلة سيتم ربطها ببيانات المستخدم لاحقًا."
             )
         }
-    }    private fun showGuest() {
+
+        addCard(
+            "🏠 الرئيسية",
+            "العودة"
+        ) {
+            showHome()
+        }
+    }
+
+    private fun showAccount() {
+
         setContentView(baseLayout())
         content.removeAllViews()
 
-        addSection("👤 وضع الزائر")
+        addSection("● الحساب")
 
-        addCard(
-            "🔎 تصفح السوق",
-            "مشاهدة المنتجات والخدمات"
-        ) {
-            showProducts()
-        }
-
-        addCard(
-            "📢 مشاهدة الإعلانات",
-            "التعرف على العروض"
-        ) {
-            showAds()
-        }
-
-        addCard(
-            "🌐 التجربة عبر الإنترنت",
-            "اختبار الاتصال والخدمات"
-        ) {
-            showOnline()
-        }
+        addInfo(
+            "حساب CENTRAL MARKET\n\n" +
+                    "الوظائف الخاصة بالحساب ستعمل وفق نظام " +
+                    "الصلاحيات والهوية عند ربط الخادم."
+        )
 
         addCard(
             "🔐 تسجيل الدخول",
             "الدخول إلى الحساب"
         ) {
             showLogin()
+        }
+
+        addCard(
+            "👤 الملف الشخصي",
+            "معلومات الحساب"
+        ) {
+            showMessage(
+                "الملف الشخصي قيد التطوير."
+            )
+        }
+
+        addCard(
+            "🔔 التنبيهات",
+            "التنبيهات والإشعارات"
+        ) {
+            showMessage(
+                "التنبيهات قيد التطوير."
+            )
+        }
+
+        addCard(
+            "🔒 الخصوصية والصلاحيات",
+            "إدارة إعدادات الوصول"
+        ) {
+            showSafety()
+        }
+
+        addCard(
+            "🏠 الرئيسية",
+            "العودة"
+        ) {
+            showHome()
+        }
+    }
+
+    private fun showLogin() {
+
+        setContentView(baseLayout())
+        content.removeAllViews()
+
+        addSection("🔐 تسجيل الدخول")
+
+        val phone = EditText(this)
+        phone.hint = "رقم الهاتف أو البريد الإلكتروني"
+        phone.setTextColor(textDark)
+        phone.setHintTextColor(muted)
+        content.addView(phone)
+
+        val password = EditText(this)
+        password.hint = "كلمة المرور"
+        password.inputType =
+            android.text.InputType.TYPE_CLASS_TEXT or
+                    android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+        password.setTextColor(textDark)
+        password.setHintTextColor(muted)
+        content.addView(password)
+
+        addCard(
+            "🔑 دخول",
+            "تسجيل الدخول إلى الحساب"
+        ) {
+
+            if (
+                phone.text.toString().trim().isEmpty() ||
+                password.text.toString().trim().isEmpty()
+            ) {
+
+                showMessage(
+                    "يرجى إدخال بيانات الدخول."
+                )
+
+            } else {
+
+                showMessage(
+                    "تسجيل الدخول الحقيقي سيتم ربطه بالخادم الآمن."
+                )
+            }
+        }
+
+        addCard(
+            "👤 متابعة كزائر",
+            "استخدام الخدمات العامة"
+        ) {
+            showGuestMode()
+        }
+
+        addCard(
+            "🏠 الرئيسية",
+            "العودة"
+        ) {
+            showHome()
         }
     }
 
     private fun showAds() {
+
         setContentView(baseLayout())
         content.removeAllViews()
 
@@ -1063,95 +1183,49 @@ class MainActivity : Activity() {
             "🥉 BRONZE",
             "الإعلانات الأساسية"
         ) {
-            showMessage("إعلانات BRONZE")
+            showMessage("إعلانات BRONZE.")
         }
 
         addCard(
             "🥈 SILVER",
             "ظهور أفضل"
         ) {
-            showMessage("إعلانات SILVER")
+            showMessage("إعلانات SILVER.")
         }
 
         addCard(
             "🥇 GOLD",
             "ظهور مميز في أعلى النتائج"
         ) {
-            showMessage("إعلانات GOLD")
+            showMessage("إعلانات GOLD.")
         }
 
         addCard(
             "⭐ إعلان مميز",
             "خيار إضافي للظهور"
         ) {
-            showMessage("الإعلان المميز قيد التجهيز")
-        }
-    }  
-  private fun showGuest() {        setContentView(baseLayout())
-        content.removeAllViews()
-
-        addSection("👤 وضع الزائر")
-
-        addCard(
-            "🔎 تصفح السوق",
-            "مشاهدة المنتجات والخدمات"
-        ) {
-            showProducts()
+            showMessage(
+                "الإعلان المميز قيد التجهيز."
+            )
         }
 
         addCard(
-            "📢 مشاهدة الإعلانات",
-            "التعرف على العروض"
+            "➕ إضافة إعلان",
+            "إنشاء عرض جديد"
         ) {
-            showAds()
+            showAddAd()
         }
 
         addCard(
-            "🌐 التجربة عبر الإنترنت",
-            "اختبار الاتصال والخدمات"
+            "🏠 الرئيسية",
+            "العودة"
         ) {
-            showOnline()
+            showHome()
         }
+    }
 
-        addCard(
-            "🔐 تسجيل الدخول",
-            "الدخول إلى الحساب"
-        ) {
-            showLogin()
-        }    }
+    private fun showPoints() {
 
-    private fun showAds() {
-        setContentView(baseLayout())
-        content.removeAllViews()
-
-        addSection("📢 الإعلانات")
-        addCard(
-            "🥉 BRONZE",
-            "الإعلانات الأساسية"
-        ) {
-            showMessage("إعلانات BRONZE")
-        }
-
-        addCard(
-            "🥈 SILVER",
-            "ظهور أفضل"
-        ) {
-            showMessage("إعلانات SILVER")
-        }
-
-        addCard(
-            "🥇 GOLD",
-            "ظهور مميز في أعلى النتائج"
-        ) {
-            showMessage("إعلانات GOLD")
-        }  
-        addCard(
-            "⭐ إعلان مميز",
-            "خيار إضافي للظهور"
-        ) {
-            showMessage("الإعلان المميز قيد التجهيز")
-        }
-    }    private fun showPoints() {
         setContentView(baseLayout())
         content.removeAllViews()
 
@@ -1161,45 +1235,75 @@ class MainActivity : Activity() {
             "⭐ نقاطي",
             "رصيد النقاط الحالي"
         ) {
-            showMessage("رصيد النقاط: 0")
+            showMessage(
+                "رصيد النقاط: 0"
+            )
         }
 
         addCard(
             "🎁 المكافآت",
             "المكافآت المتاحة"
         ) {
-            showMessage("المكافآت قيد التجهيز")
-        }        addCard(
+            showMessage(
+                "المكافآت قيد التجهيز."
+            )
+        }
+
+        addCard(
             "🏆 مستوى المستخدم",
             "تطور النقاط والمكافآت"
         ) {
-            showMessage("مستوى المستخدم قيد التجهيز")
+            showMessage(
+                "مستوى المستخدم قيد التجهيز."
+            )
         }
 
         addCard(
             "📋 سجل النقاط",
             "متابعة عمليات كسب النقاط"
         ) {
-            showMessage("سجل النقاط قيد التجهيز")
-        }        addCard(
+            showMessage(
+                "سجل النقاط قيد التجهيز."
+            )
+        }
+
+        addCard(
             "🎯 تحديات النقاط",
             "أنشطة للحصول على نقاط"
         ) {
-            showMessage("تحديات النقاط قيد التجهيز")
+            showMessage(
+                "تحديات النقاط قيد التجهيز."
+            )
         }
 
         addCard(
             "🎁 استبدال النقاط",
             "استخدام النقاط في المكافآت"
         ) {
-            showMessage("استبدال النقاط قيد التجهيز")
+            showMessage(
+                "استبدال النقاط قيد التجهيز."
+            )
         }
 
-    }    private fun showHumanIntelligence() {
+        addCard(
+            "🏠 الرئيسية",
+            "العودة"
+        ) {
+            showHome()
+        }
+    }
+
+    private fun showHumanIntelligence() {
+
         setContentView(baseLayout())
         content.removeAllViews()
 
         addSection("🧠 الذكاء البشري")
+
+        addInfo(
+            "مساحة للأفكار والابتكار والمشاريع والتعاون " +
+                    "بين أصحاب المهارات والخبرات."
+        )
 
         addCard(
             "💡 إرسال فكرة",
@@ -1212,908 +1316,1029 @@ class MainActivity : Activity() {
             "🔎 مراجعة الأفكار",
             "تنظيم ومراجعة المقترحات"
         ) {
-            showMessage("مراجعة الأفكار قيد التجهيز")
+            showMessage(
+                "مراجعة الأفكار قيد التجهيز."
+            )
         }
 
         addCard(
             "👥 تكوين الفرق",
             "ربط أصحاب الأفكار والمهارات"
         ) {
-            showMessage("تكوين الفرق قيد التجهيز")
-        }        addCard(
+            showMessage(
+                "تكوين الفرق قيد التجهيز."
+            )
+        }
+
+        addCard(
             "📝 متابعة الفكرة",
             "رقم مرجعي ومراحل التطوير"
         ) {
-            showMessage("متابعة الفكرة قيد التجهيز")
+            showMessage(
+                "متابعة الفكرة قيد التجهيز."
+            )
         }
 
         addCard(
-            "🤖 مساعدة الذكاء الاصطناعي",
-            "إكمال وتحسين معلومات الفكرة"
+            "🤖 مساعدة CTM AI",
+            "تحسين معلومات الفكرة"
         ) {
-            showMessage("مساعدة الذكاء الاصطناعي قيد التجهيز")
+            showCtmAi()
         }
 
         addCard(
             "🏭 تحويل الفكرة إلى مشروع",
-            "استخراج المشاريع والمنتجات المحتملة"
+            "استخراج المشاريع المحتملة"
         ) {
-            showMessage("تحويل الفكرة إلى مشروع قيد التجهيز")
-        }        addCard(
-            "🏭 تحويل الفكرة إلى مشروع",
-            "استخراج المشاريع والمنتجات المحتملة"
-        ) {
-            showMessage("تحويل الفكرة إلى مشروع قيد التجهيز")
+            showMessage(
+                "تحويل الفكرة إلى مشروع قيد التجهيز."
+            )
         }
 
         addCard(
             "🏅 حالة الفكرة",
             "معرفة مرحلة المراجعة والتطوير"
         ) {
-            showMessage("حالة الفكرة قيد التجهيز")
-        }        addCard(
+            showMessage(
+                "حالة الفكرة قيد التجهيز."
+            )
+        }
+
+        addCard(
             "📊 إحصائيات الأفكار",
             "متابعة عدد الأفكار والمشاريع"
         ) {
-            showMessage("إحصائيات الأفكار قيد التجهيز")
+            showMessage(
+                "إحصائيات الأفكار قيد التجهيز."
+            )
         }
 
         addCard(
             "🔢 الرقم المرجعي",
             "رقم خاص لمتابعة كل فكرة"
         ) {
-            showMessage("الرقم المرجعي قيد التجهيز")
-        }        addCard(
+            showMessage(
+                "الرقم المرجعي قيد التجهيز."
+            )
+        }
+
+        addCard(
             "👥 أعضاء الفريق",
             "متابعة المشاركين في المشروع"
         ) {
-            showMessage("أعضاء الفريق قيد التجهيز")
+            showMessage(
+                "أعضاء الفريق قيد التجهيز."
+            )
         }
 
         addCard(
             "🚀 مراحل المشروع",
             "من الفكرة إلى التنفيذ"
         ) {
-            showMessage("مراحل المشروع قيد التجهيز")
-        }        addCard(
+            showMessage(
+                "مراحل المشروع قيد التجهيز."
+            )
+        }
+
+        addCard(
             "💰 تمويل المشروع",
             "خيارات دعم وتمويل المشروع"
         ) {
-            showMessage("تمويل المشروع قيد التجهيز")
+            showMessage(
+                "تمويل المشروع قيد التجهيز."
+            )
         }
 
         addCard(
             "📢 نشر المشروع",
             "عرض المشروع بعد اعتماده"
         ) {
-            showMessage("نشر المشروع قيد التجهيز")
-        }        addCard(
+            showMessage(
+                "نشر المشروع قيد التجهيز."
+            )
+        }
+
+        addCard(
             "⭐ تقييم الفكرة",
             "تقييم مراحل تطوير الفكرة"
         ) {
-            showMessage("تقييم الفكرة قيد التجهيز")
+            showMessage(
+                "تقييم الفكرة قيد التجهيز."
+            )
         }
 
         addCard(
             "📚 دليل الابتكار",
             "معلومات تساعد على تطوير الأفكار"
         ) {
-            showMessage("دليل الابتكار قيد التجهيز")
-        }        addCard(
+            showMessage(
+                "دليل الابتكار قيد التجهيز."
+            )
+        }
+
+        addCard(
             "🌍 التعاون",
             "ربط الأفكار بالخبرات والجهات المناسبة"
         ) {
-            showMessage("التعاون قيد التجهيز")
+            showMessage(
+                "التعاون قيد التجهيز."
+            )
         }
 
         addCard(
             "🔔 إشعارات الفكرة",
             "متابعة آخر التحديثات"
         ) {
-            showMessage("إشعارات الفكرة قيد التجهيز")
-        }        addCard(
+            showMessage(
+                "إشعارات الفكرة قيد التجهيز."
+            )
+        }
+
+        addCard(
             "🧑‍🔬 الخبراء والمختصون",
             "مراجعة الأفكار من أصحاب الخبرة"
         ) {
-            showMessage("الخبراء والمختصون قيد التجهيز")
+            showMessage(
+                "الخبراء والمختصون قيد التجهيز."
+            )
         }
 
         addCard(
             "🔄 تحديث الفكرة",
             "إضافة معلومات وتعديلات جديدة"
         ) {
-            showMessage("تحديث الفكرة قيد التجهيز")
-        }        addCard(
+            showMessage(
+                "تحديث الفكرة قيد التجهيز."
+            )
+        }
+
+        addCard(
             "✅ اعتماد الفكرة",
             "الانتقال إلى مرحلة المشروع"
         ) {
-            showMessage("اعتماد الفكرة قيد التجهيز")
+            showMessage(
+                "اعتماد الفكرة قيد التجهيز."
+            )
         }
 
         addCard(
             "📋 شروط المشروع",
             "متطلبات الانتقال إلى التنفيذ"
         ) {
-            showMessage("شروط المشروع قيد التجهيز")
-        }        addCard(
+            showMessage(
+                "شروط المشروع قيد التجهيز."
+            )
+        }
+
+        addCard(
             "📈 خطة العمل",
             "تنظيم خطوات تنفيذ المشروع"
         ) {
-            showMessage("خطة العمل قيد التجهيز")
+            showMessage(
+                "خطة العمل قيد التجهيز."
+            )
         }
 
         addCard(
             "🛠️ أدوات التنفيذ",
             "الأدوات والخدمات اللازمة للمشروع"
         ) {
-            showMessage("أدوات التنفيذ قيد التجهيز")
-        }        addCard(
+            showMessage(
+                "أدوات التنفيذ قيد التجهيز."
+            )
+        }
+
+        addCard(
             "📅 جدول المشروع",
             "مواعيد ومراحل التنفيذ"
         ) {
-            showMessage("جدول المشروع قيد التجهيز")
+            showMessage(
+                "جدول المشروع قيد التجهيز."
+            )
         }
 
         addCard(
             "📦 المنتجات الناتجة",
-            "عرض المنتجات والخدمات الناتجة عن الفكرة"
+            "عرض المنتجات والخدمات الناتجة"
         ) {
-            showMessage("المنتجات الناتجة قيد التجهيز")
-        }        addCard(
+            showMessage(
+                "المنتجات الناتجة قيد التجهيز."
+            )
+        }
+
+        addCard(
             "🏆 إنجازات المشروع",
             "متابعة ما تم إنجازه"
         ) {
-            showMessage("إنجازات المشروع قيد التجهيز")
+            showMessage(
+                "إنجازات المشروع قيد التجهيز."
+            )
         }
 
         addCard(
             "📊 تقرير المشروع",
             "ملخص شامل عن حالة المشروع"
         ) {
-            showMessage("تقرير المشروع قيد التجهيز")
-        }        addCard(
+            showMessage(
+                "تقرير المشروع قيد التجهيز."
+            )
+        }
+
+        addCard(
             "🔐 حماية الفكرة",
             "حفظ بيانات الفكرة وخصوصيتها"
         ) {
-            showMessage("حماية الفكرة قيد التجهيز")
+            showMessage(
+                "حماية الفكرة قيد التجهيز."
+            )
         }
 
         addCard(
             "🗂️ أرشيف الأفكار",
             "حفظ الأفكار والمشاريع السابقة"
         ) {
-            showMessage("أرشيف الأفكار قيد التجهيز")
-        }        addCard(
-            "📞 التواصل والدعم",
-            "المساعدة والاستفسارات حول الأفكار"
-        ) {
-            showMessage("التواصل والدعم قيد التجهيز")
+            showMessage(
+                "أرشيف الأفكار قيد التجهيز."
+            )
         }
 
         addCard(
-            "🏠 العودة إلى الرئيسية",
-            "الرجوع إلى الصفحة الرئيسية"
+            "📞 التواصل والدعم",
+            "المساعدة والاستفسارات"
         ) {
-            showHome()
-        }        addCard(
+            showMessage(
+                "التواصل والدعم قيد التجهيز."
+            )
+        }
+
+        addCard(
             "🌟 الأفكار المميزة",
-            "عرض الأفكار التي وصلت إلى مراحل متقدمة"
+            "أفكار وصلت إلى مراحل متقدمة"
         ) {
-            showMessage("الأفكار المميزة قيد التجهيز")
+            showMessage(
+                "الأفكار المميزة قيد التجهيز."
+            )
         }
 
         addCard(
             "📢 فرص التعاون",
-            "التعرف على فرص التعاون المتاحة"
+            "فرص التعاون المتاحة"
         ) {
-            showMessage("فرص التعاون قيد التجهيز")
-        }        addCard(
+            showMessage(
+                "فرص التعاون قيد التجهيز."
+            )
+        }
+
+        addCard(
             "💡 أفكار المستقبل",
             "أفكار قابلة للتطوير والتوسع"
         ) {
-            showMessage("أفكار المستقبل قيد التجهيز")
+            showMessage(
+                "أفكار المستقبل قيد التجهيز."
+            )
         }
 
         addCard(
             "🌐 مشاريع دولية",
-            "أفكار ومشاريع قابلة للتوسع خارج السودان"
+            "أفكار قابلة للتوسع خارج السودان"
         ) {
-            showMessage("المشاريع الدولية قيد التجهيز")
-        }        addCard(
+            showMessage(
+                "المشاريع الدولية قيد التجهيز."
+            )
+        }
+
+        addCard(
             "🌱 الاستدامة",
             "أفكار تدعم التنمية والاستفادة من الموارد"
         ) {
-            showMessage("الاستدامة قيد التجهيز")
+            showMessage(
+                "الاستدامة قيد التجهيز."
+            )
         }
 
         addCard(
             "🤝 الشراكات",
             "ربط المشاريع بالجهات والشركاء"
         ) {
-            showMessage("الشراكات قيد التجهيز")
-        }        addCard(
+            showMessage(
+                "الشراكات قيد التجهيز."
+            )
+        }
+
+        addCard(
             "🧭 خارطة الابتكار",
             "متابعة مسار الأفكار والمشاريع"
         ) {
-            showMessage("خارطة الابتكار قيد التجهيز")
+            showMessage(
+                "خارطة الابتكار قيد التجهيز."
+            )
         }
 
         addCard(
             "📌 المشاريع المعتمدة",
             "عرض المشاريع التي تم اعتمادها"
         ) {
-            showMessage("المشاريع المعتمدة قيد التجهيز")
-        }        addCard(
+            showMessage(
+                "المشاريع المعتمدة قيد التجهيز."
+            )
+        }
+
+        addCard(
             "📊 أثر المشروع",
-            "متابعة النتائج والفوائد المتوقعة"
+            "متابعة النتائج والفوائد"
         ) {
-            showMessage("أثر المشروع قيد التجهيز")
+            showMessage(
+                "أثر المشروع قيد التجهيز."
+            )
         }
 
         addCard(
             "🗃️ ملفات المشروع",
             "تنظيم المستندات والمعلومات"
         ) {
-            showMessage("ملفات المشروع قيد التجهيز")
-        }        addCard(
+            showMessage(
+                "ملفات المشروع قيد التجهيز."
+            )
+        }
+
+        addCard(
             "🧪 اختبار الفكرة",
             "تجربة الفكرة قبل التوسع"
         ) {
-            showMessage("اختبار الفكرة قيد التجهيز")
+            showMessage(
+                "اختبار الفكرة قيد التجهيز."
+            )
         }
 
         addCard(
             "🔧 تطوير وتحسين",
             "تحسين المشروع بناءً على النتائج"
         ) {
-            showMessage("تطوير وتحسين قيد التجهيز")
-        }        addCard(
+            showMessage(
+                "تطوير وتحسين قيد التجهيز."
+            )
+        }
+
+        addCard(
             "📈 قياس النتائج",
             "متابعة تطور المشروع ومؤشراته"
         ) {
-            showMessage("قياس النتائج قيد التجهيز")
+            showMessage(
+                "قياس النتائج قيد التجهيز."
+            )
         }
 
         addCard(
             "🔔 تنبيهات المشروع",
             "تنبيهات مهمة حول مراحل المشروع"
         ) {
-            showMessage("تنبيهات المشروع قيد التجهيز")
-        }        addCard(
+            showMessage(
+                "تنبيهات المشروع قيد التجهيز."
+            )
+        }
+
+        addCard(
             "📚 المعرفة والخبرة",
             "مشاركة الخبرات والمعلومات المفيدة"
         ) {
-            showMessage("المعرفة والخبرة قيد التجهيز")
+            showMessage(
+                "المعرفة والخبرة قيد التجهيز."
+            )
         }
 
         addCard(
             "🌍 التوسع",
-            "تطوير الأفكار لتناسب أسواقًا جديدة"
+            "تطوير الأفكار لأسواق جديدة"
         ) {
-            showMessage("التوسع قيد التجهيز")
-        }        addCard(
-            "🧠 مركز الابتكار",
+            showMessage(
+                "التوسع قيد التجهيز."
+            )
+        }
+
+        addCard(
+             "🧠 مركز الابتكار",
             "مساحة تجمع الأفكار والخبرات والمشاريع"
         ) {
-            showMessage("مركز الابتكار قيد التجهيز")
+            showMessage(
+                "مركز الابتكار قيد التجهيز."
+            )
         }
 
         addCard(
-            "🏁 نهاية المرحلة",
-            "الانتقال من الفكرة إلى المشروع"
+            "🏠 العودة إلى الرئيسية",
+            "الرجوع"
         ) {
-            showMessage("الانتقال إلى مرحلة المشروع قيد التجهيز")
-        }        addCard(
-            "📝 تقييم التجربة",
-            "تسجيل الملاحظات بعد تنفيذ المشروع"
-        ) {
-            showMessage("تقييم التجربة قيد التجهيز")
+            showHome()
         }
+    }
+
+    private fun showIdea() {
+
+        setContentView(baseLayout())
+        content.removeAllViews()
+
+        addSection("💡 إرسال فكرة")
+
+        val title = EditText(this)
+        title.hint = "عنوان الفكرة"
+        title.setTextColor(textDark)
+        title.setHintTextColor(muted)
+        content.addView(title)
+
+        val description = EditText(this)
+        description.hint = "شرح الفكرة"
+        description.setTextColor(textDark)
+        description.setHintTextColor(muted)
+        content.addView(description)
+
+        val field = EditText(this)
+        field.hint = "المجال"
+        field.setTextColor(textDark)
+        field.setHintTextColor(muted)
+        content.addView(field)
 
         addCard(
-            "💬 ملاحظات الفريق",
-            "تبادل الملاحظات بين أعضاء المشروع"
+            "💾 حفظ الفكرة",
+            "تجهيز الفكرة للمراجعة"
         ) {
-            showMessage("ملاحظات الفريق قيد التجهيز")
-        }        addCard(
-            "📋 سجل التطوير",
-            "متابعة التغييرات التي تمت على الفكرة"
-        ) {
-            showMessage("سجل التطوير قيد التجهيز")
-        }
 
-        addCard(
-            "🔗 ربط الموارد",
-            "ربط المشروع بالموارد والخدمات المناسبة"
-        ) {
-            showMessage("ربط الموارد قيد التجهيز")
-        }        addCard(
-            "📦 الموارد المتاحة",
-            "عرض الموارد والخدمات المرتبطة بالمشروع"
-        ) {
-            showMessage("الموارد المتاحة قيد التجهيز")
-        }
+            if (
+                title.text.toString().trim().isEmpty() ||
+                description.text.toString().trim().isEmpty()
+            ) {
 
-        addCard(
-            "📍 موقع المشروع",
-            "تحديد موقع المشروع ومجاله"
-        ) {
-            showMessage("موقع المشروع قيد التجهيز")
-        }        addCard(
-            "📍 تحديد النطاق",
-            "تحديد المدن والمناطق المستهدفة"
-        ) {
-            showMessage("تحديد النطاق قيد التجهيز")
-        }
+                showMessage(
+                    "يرجى إدخال عنوان الفكرة وشرحها."
+                )
 
-        addCard(
-            "📣 دعوة المشاركين",
-            "دعوة أصحاب المهارات للمشاركة"
-        ) {
-            showMessage("دعوة المشاركين قيد التجهيز")
-        }        addCard(
-            "👨‍💼 إدارة المشاركين",
-            "تنظيم الأدوار والمهام"
-        ) {
-            showMessage("إدارة المشاركين قيد التجهيز")
-        }
+            } else {
 
-        addCard(
-            "📊 تقدم الفريق",
-            "متابعة تقدم أعضاء الفريق"
-        ) {
-            showMessage("تقدم الفريق قيد التجهيز")
-        }        addCard(
-            "🎯 مهام الفريق",
-            "توزيع ومتابعة المهام"
-        ) {
-            showMessage("مهام الفريق قيد التجهيز")
-        }
-
-        addCard(
-            "⏱️ مواعيد المهام",
-            "متابعة المواعيد والإنجاز"
-        ) {
-            showMessage("مواعيد المهام قيد التجهيز")
-        }        addCard(
-            "📌 أولوية المهام",
-            "ترتيب المهام حسب أهميتها"
-        ) {
-            showMessage("أولوية المهام قيد التجهيز")
-        }
-
-        addCard(
-            "🔄 تحديث حالة المهمة",
-            "تحديث حالة الإنجاز والمتابعة"
-        ) {
-            showMessage("تحديث حالة المهمة قيد التجهيز")
-        }        addCard(
-            "📋 سجل المهام",
-            "متابعة تاريخ المهام والتحديثات"
-        ) {
-            showMessage("سجل المهام قيد التجهيز")
-        }
-
-        addCard(
-            "🏆 إنجازات الفريق",
-            "عرض إنجازات أعضاء الفريق"
-        ) {
-            showMessage("إنجازات الفريق قيد التجهيز")
-        }        addCard(
-            "📈 تقييم أداء الفريق",
-            "متابعة تقدم الفريق ونتائجه"
-        ) {
-            showMessage("تقييم أداء الفريق قيد التجهيز")
-        }
-
-        addCard(
-            "🤝 حل الخلافات",
-            "تنظيم الملاحظات والمشكلات داخل الفريق"
-        ) {
-            showMessage("حل الخلافات قيد التجهيز")
-        }        addCard(
-            "💬 التواصل داخل الفريق",
-            "مشاركة الرسائل والملاحظات"
-        ) {
-            showMessage("التواصل داخل الفريق قيد التجهيز")
-        }
-
-        addCard(
-            "📎 مشاركة الملفات",
-            "مشاركة ملفات المشروع بين المشاركين"
-        ) {
-            showMessage("مشاركة الملفات قيد التجهيز")
-        }        addCard(
-            "📁 مستندات الفريق",
-            "تنظيم مستندات وأوراق المشروع"
-        ) {
-            showMessage("مستندات الفريق قيد التجهيز")
-        }
-
-        addCard(
-            "🔐 صلاحيات الفريق",
-            "تنظيم صلاحيات الوصول للمعلومات"
-        ) {
-            showMessage("صلاحيات الفريق قيد التجهيز")
-        }        addCard(
-            "👤 ملف الفريق",
-            "معلومات المشاركين وأدوارهم"
-        ) {
-            showMessage("ملف الفريق قيد التجهيز")
-        }
-
-        addCard(
-            "🔎 البحث عن مهارات",
-            "العثور على المهارات المناسبة للمشروع"
-        ) {
-            showMessage("البحث عن مهارات قيد التجهيز")
-        }        addCard(
-            "🧩 مطابقة المهارات",
-            "اقتراح أعضاء مناسبين لكل مهمة"
-        ) {
-            showMessage("مطابقة المهارات قيد التجهيز")
-        }
-
-        addCard(
-            "🌟 أفضل المساهمين",
-            "عرض المشاركين الأكثر مساهمة"
-        ) {
-            showMessage("أفضل المساهمين قيد التجهيز")
-        }        addCard(
-            "📣 دعوة خبير",
-            "دعوة خبير للمشاركة في المشروع"
-        ) {
-            showMessage("دعوة الخبير قيد التجهيز")
-        }
-
-        addCard(
-            "🤝 قبول المشاركة",
-            "إدارة طلبات المشاركة في المشروع"
-        ) {
-            showMessage("قبول المشاركة قيد التجهيز")
-        }        addCard(
-            "📨 طلبات المشاركة",
-            "متابعة طلبات الانضمام إلى المشروع"
-        ) {
-            showMessage("طلبات المشاركة قيد التجهيز")
-        }
-
-        addCard(
-            "🚫 إدارة الانسحاب",
-            "تنظيم انسحاب المشاركين من المشروع"
-        ) {
-            showMessage("إدارة الانسحاب قيد التجهيز")
-        }        addCard(
-            "📌 حالة المشاركة",
-            "معرفة حالة طلب المشاركة"
-        ) {
-            showMessage("حالة المشاركة قيد التجهيز")
-        }
-
-        addCard(
-            "🔔 إشعار الفريق",
-            "إرسال تنبيه لأعضاء الفريق"
-        ) {
-            showMessage("إشعار الفريق قيد التجهيز")
-        }        addCard(
-            "👥 قائمة المشاركين",
-            "عرض المشاركين في المشروع"
-        ) {
-            showMessage("قائمة المشاركين قيد التجهيز")
-        }
-
-        addCard(
-            "🔐 أمان المشاركة",
-            "حماية بيانات المشاركين"
-        ) {
-            showMessage("أمان المشاركة قيد التجهيز")
-        }        addCard(
-            "📊 مشاركة الفريق",
-            "متابعة نشاط المشاركين"
-        ) {
-            showMessage("مشاركة الفريق قيد التجهيز")
-        }
-
-        addCard(
-            "🏅 تقدير المساهمين",
-            "تسجيل مساهمات أعضاء الفريق"
-        ) {
-            showMessage("تقدير المساهمين قيد التجهيز")
-        }        addCard(
-            "📑 سجل المشاركة",
-            "حفظ تاريخ مشاركات الفريق"
-        ) {
-            showMessage("سجل المشاركة قيد التجهيز")
-        }
-
-        addCard(
-            "🔎 البحث في الفريق",
-            "البحث عن مشارك أو مهمة"
-        ) {
-            showMessage("البحث في الفريق قيد التجهيز")
-        }        addCard(
-            "📝 طلب تعديل المشاركة",
-            "تحديث بيانات المشاركة في المشروع"
-        ) {
-            showMessage("طلب تعديل المشاركة قيد التجهيز")
-        }
-
-        addCard(
-            "📋 شروط المشاركة",
-            "معرفة متطلبات الانضمام للمشروع"
-        ) {
-            showMessage("شروط المشاركة قيد التجهيز")
-        }
-
-        addCard(
-            "🛡️ حماية بيانات الفريق",
-            "تنظيم حماية معلومات المشاركين"
-        ) {
-            showMessage("حماية بيانات الفريق قيد التجهيز")
-        }
-
-        addCard(
-            "📨 الرسائل المهمة",
-            "متابعة الرسائل المرتبطة بالمشروع"
-        ) {
-            showMessage("الرسائل المهمة قيد التجهيز")
-        }        addCard(
-            "📅 اجتماعات الفريق",
-            "تنظيم مواعيد الاجتماعات"
-        ) {
-            showMessage("اجتماعات الفريق قيد التجهيز")
-        }
-
-        addCard(
-            "🗓️ جدول الفريق",
-            "تنظيم أعمال ومواعيد المشاركين"
-        ) {
-            showMessage("جدول الفريق قيد التجهيز")
-        }
-
-        addCard(
-            "📈 تقرير المشاركة",
-            "ملخص نشاط ومساهمات المشاركين"
-        ) {
-            showMessage("تقرير المشاركة قيد التجهيز")
-        }
-
-        addCard(
-            "🏁 إكمال المشاركة",
-            "إنهاء مرحلة المشاركة في المشروع"
-        ) {
-            showMessage("إكمال المشاركة قيد التجهيز")
-        }        addCard(
-            "📊 إحصاءات الفريق",
-            "متابعة أرقام ونشاط الفريق"
-        ) {
-            showMessage("إحصاءات الفريق قيد التجهيز")
-        }
-
-        addCard(
-            "🎯 أهداف الفريق",
-            "تحديد ومتابعة أهداف المشروع"
-        ) {
-            showMessage("أهداف الفريق قيد التجهيز")
-        }
-
-        addCard(
-            "📌 نقاط المتابعة",
-            "تسجيل أهم نقاط العمل"
-        ) {
-            showMessage("نقاط المتابعة قيد التجهيز")
-        }
-
-        addCard(
-            "🔄 مراجعة التقدم",
-            "مراجعة مراحل تنفيذ المشروع"
-        ) {
-            showMessage("مراجعة التقدم قيد التجهيز")
-        }        addCard(
-            "📂 أرشيف الفريق",
-            "حفظ السجلات والملفات السابقة"
-        ) {
-            showMessage("أرشيف الفريق قيد التجهيز")
-        }
-
-        addCard(
-            "📑 تقارير الفريق",
-            "عرض التقارير الخاصة بالفريق"
-        ) {
-            showMessage("تقارير الفريق قيد التجهيز")
-        }
-
-        addCard(
-            "🔔 تنبيهات المهام",
-            "متابعة التنبيهات المرتبطة بالمهام"
-        ) {
-            showMessage("تنبيهات المهام قيد التجهيز")
-        }
-
-        addCard(
-            "🏢 إدارة المشروع",
-            "تنظيم المشروع ومراحله"
-        ) {
-            showMessage("إدارة المشروع قيد التجهيز")
-        }        addCard(
-            "📋 سجل قرارات الفريق",
-            "حفظ القرارات المهمة للمشروع"
-        ) {
-            showMessage("سجل قرارات الفريق قيد التجهيز")
-        }
-
-        addCard(
-            "🧭 مسار الفريق",
-            "متابعة رحلة الفريق من البداية"
-        ) {
-            showMessage("مسار الفريق قيد التجهيز")
-        }
-
-        addCard(
-            "📢 إعلانات المشروع",
-            "عرض الإعلانات المهمة للفريق"
-        ) {
-            showMessage("إعلانات المشروع قيد التجهيز")
-        }
-
-        addCard(
-            "📬 صندوق الفريق",
-            "متابعة الطلبات والمراسلات"
-        ) {
-            showMessage("صندوق الفريق قيد التجهيز")
-        }        addCard(
-            "🤝 الشراكة داخل الفريق",
-            "تنظيم التعاون بين المشاركين"
-        ) {
-            showMessage("الشراكة داخل الفريق قيد التجهيز")
-        }
-
-        addCard(
-            "📈 نمو الفريق",
-            "متابعة تطور الفريق ومهاراته"
-        ) {
-            showMessage("نمو الفريق قيد التجهيز")
-        }
-
-        addCard(
-            "🏅 شهادات الإنجاز",
-            "توثيق إنجازات المشاركين"
-        ) {
-            showMessage("شهادات الإنجاز قيد التجهيز")
-        }
-
-        addCard(
-            "🔚 إنهاء المشروع",
-            "إجراءات إغلاق المشروع وأرشفة نتائجه"
-        ) {
-            showMessage("إنهاء المشروع قيد التجهيز")
-        }        addCard(
-            "📊 تحليل المشروع",
-            "تحليل البيانات والنتائج"
-        ) {
-            showMessage("تحليل المشروع قيد التجهيز")
-        }
-
-        addCard(
-            "💡 اقتراحات التحسين",
-            "اقتراح أفكار لتطوير المشروع"
-        ) {
-            showMessage("اقتراحات التحسين قيد التجهيز")
-        }
-
-        addCard(
-            "🔍 مراجعة الجودة",
-            "متابعة جودة العمل والمخرجات"
-        ) {
-            showMessage("مراجعة الجودة قيد التجهيز")
-        }
-
-        addCard(
-            "📐 معايير المشروع",
-            "تنظيم المعايير المطلوبة للتنفيذ"
-        ) {
-            showMessage("معايير المشروع قيد التجهيز")
-        }        addCard(
-            "🌱 التطوير المستمر",
-            "تحسين المشروع بعد كل مرحلة"
-        ) {
-            showMessage("التطوير المستمر قيد التجهيز")
-        }
-
-        addCard(
-            "📚 مكتبة المعرفة",
-            "حفظ المعلومات والخبرات المفيدة"
-        ) {
-            showMessage("مكتبة المعرفة قيد التجهيز")
-        }
-
-        addCard(
-            "🗂️ أرشيف المشاريع",
-            "حفظ المشاريع السابقة ونتائجها"
-        ) {
-            showMessage("أرشيف المشاريع قيد التجهيز")
+                showMessage(
+                    "تم تجهيز الفكرة للمراجعة.\n" +
+                            "سيتم إنشاء الرقم المرجعي عند ربط قاعدة البيانات."
+                )
+            }
         }
 
         addCard(
             "🏠 العودة إلى الذكاء البشري",
-            "الرجوع إلى مركز الذكاء البشري"
+            "الرجوع"
         ) {
             showHumanIntelligence()
-        }        addCard(
-            "🧠 تحليل الأفكار",
-            "دراسة الأفكار واستخراج نقاط القوة"
+        }
+    }
+      private fun showManagerOffice() {
+
+        setContentView(baseLayout())
+        content.removeAllViews()
+
+        addSection("🏢 مكتب المدير")
+
+        addInfo(
+            "المالك",
+            "المالك ياسر حسن وشركاؤه"
+        )
+
+        addInfo(
+            "وظيفة المكتب",
+            "إدارة أقسام CENTRAL MARKET ومتابعة التطوير والصلاحيات والإصدارات."
+        )
+
+        addCard(
+            "📋 إدارة المشروع",
+            "متابعة الأقسام والخدمات والإضافات"
         ) {
-            showMessage("تحليل الأفكار قيد التجهيز")
+            showMessage("إدارة المشروع قيد التجهيز.")
         }
 
         addCard(
-            "🔗 ربط الأفكار",
-            "ربط الأفكار المتشابهة والمكملة"
+            "🤖 مكتب CTM AI",
+            "مراجعة الذكاء الاصطناعي قبل تفعيله"
         ) {
-            showMessage("ربط الأفكار قيد التجهيز")
+            showCtmAi()
         }
 
         addCard(
-            "♻️ تطوير الأفكار",
-            "تحويل الأفكار إلى مقترحات قابلة للتطوير"
+            "🛡️ مكتب الأمن والمعلومات",
+            "الحماية والرقابة ومكافحة السرقة والاحتيال"
         ) {
-            showMessage("تطوير الأفكار قيد التجهيز")
+            showSecurityOffice()
         }
 
         addCard(
-            "📝 ملاحظات المراجعة",
-            "حفظ ملاحظات المختصين والخبراء"
+            "⚖️ مكتب النائب العام للمشروع",
+            "الملفات القانونية والاستشارات والصلاحيات"
         ) {
-            showMessage("ملاحظات المراجعة قيد التجهيز")
-        }        addCard(
-            "✅ نتيجة المراجعة",
-            "معرفة نتيجة مراجعة الفكرة"
-        ) {
-            showMessage("نتيجة المراجعة قيد التجهيز")
+            showAttorneyOffice()
         }
 
         addCard(
-            "🚀 جاهزية المشروع",
-            "معرفة مدى جاهزية الفكرة للتنفيذ"
+            "💰 النظام المالي الخاص",
+            "متابعة الأسهم والمعاملات والدخل المخصص للمالك"
         ) {
-            showMessage("جاهزية المشروع قيد التجهيز")
+            showPrivateFinancialSystem()
         }
 
         addCard(
-            "📋 ملف الفكرة",
-            "عرض جميع بيانات الفكرة ومراحلها"
+            "📄 الوثائق والملفات",
+            "تنظيم وثائق المشروع وملفات الإدارة"
         ) {
-            showMessage("ملف الفكرة قيد التجهيز")
+            showDocuments()
         }
 
         addCard(
-            "🏠 الرئيسية",
-            "العودة إلى الصفحة الرئيسية"
+            "📢 الإعلانات",
+            "متابعة الإعلانات والخدمات التجارية"
+        ) {
+            showAds()
+        }
+
+        addCard(
+            "🧠 الذكاء البشري",
+            "الأفكار والخبرات والمشاريع"
+        ) {
+            showHumanIntelligence()
+        }
+
+        addCard(
+            "🤲 صندوق دعم الأيتام والمحتاجين",
+            "قسم الدعم والمساعدة"
+        ) {
+            showCharity()
+        }
+
+        addCard(
+            "🌐 اختبار الاتصال",
+            "فحص حالة الاتصال بالإنترنت"
+        ) {
+            showOnline()
+        }
+
+        addCard(
+            "🏠 العودة إلى الرئيسية",
+            "الرجوع"
         ) {
             showHome()
-        }        addCard(
-            "📊 مؤشرات الأداء",
-            "متابعة مؤشرات تقدم المشروع"
+        }
+    }
+
+    private fun showDocuments() {
+
+        setContentView(baseLayout())
+        content.removeAllViews()
+
+        addSection("📄 الوثائق والملفات")
+
+        addInfo(
+            "حماية الوثائق",
+            "الوثائق الإدارية والملفات الخاصة بالمشروع لا تظهر للمستخدم العادي."
+        )
+
+        addCard(
+            "🗂️ ملفات المشروع",
+            "تنظيم ملفات CENTRAL MARKET"
         ) {
-            showMessage("مؤشرات الأداء قيد التجهيز")
+            showMessage("قسم ملفات المشروع قيد التجهيز.")
         }
 
         addCard(
-            "🎯 أهداف المشروع",
-            "تحديد ومتابعة أهداف المشروع"
+            "🔐 الملفات الخاصة",
+            "الوصول حسب الصلاحيات الممنوحة"
         ) {
-            showMessage("أهداف المشروع قيد التجهيز")
+            showMessage("الملفات الخاصة محمية بالصلاحيات.")
         }
 
         addCard(
-            "📋 خطة التنفيذ",
-            "تنظيم مراحل تنفيذ المشروع"
+            "🧾 سجل الإصدارات",
+            "متابعة نسخ التطبيق والتحديثات"
         ) {
-            showMessage("خطة التنفيذ قيد التجهيز")
+            showMessage("سجل الإصدارات قيد التجهيز.")
         }
 
         addCard(
-            "⏱️ المواعيد المهمة",
-            "متابعة المواعيد والمراحل القادمة"
+            "🛡️ حماية مفاتيح التطبيق",
+            "مفاتيح التوقيع والأسرار لا تعرض للمستخدم"
         ) {
-            showMessage("المواعيد المهمة قيد التجهيز")
-        }        addCard(
-            "💼 نموذج المشروع",
-            "تنظيم طريقة عمل المشروع"
-        ) {
-            showMessage("نموذج المشروع قيد التجهيز")
+            showMessage("حماية مفاتيح التطبيق جزء من نظام الأمان.")
         }
 
         addCard(
-            "💰 الميزانية",
-            "متابعة احتياجات المشروع المالية"
+            "🏠 العودة إلى مكتب المدير",
+            "الرجوع"
         ) {
-            showMessage("الميزانية قيد التجهيز")
+            showManagerOffice()
+        }
+    }
+
+    private fun showBadger() {
+
+        setContentView(baseLayout())
+        content.removeAllViews()
+
+        addSection("🦡 BADGER")
+
+        addInfo(
+            "BADGER",
+            "نظام مصرفي متكامل يمكن تطويره وبيعه للمؤسسات والبنوك وفق العقود والموافقات المطلوبة."
+        )
+
+        addInfo(
+            "الهوية",
+            "غرير العسل + الكرة الأرضية، مع هوية إيصالات زرقاء وذهبية وسوداء."
+        )
+
+        addCard(
+            "🏦 الحسابات والودائع",
+            "عرض معلومات الحسابات والودائع بطريقة منظمة"
+        ) {
+            showMessage("قسم الحسابات والودائع قيد التجهيز.")
         }
 
         addCard(
-            "📦 الموارد",
-            "متابعة الموارد المطلوبة والمتاحة"
+            "📊 التحليل المالي",
+            "تحليل الإيداعات والاستثمارات والأرباح"
         ) {
-            showMessage("الموارد قيد التجهيز")
+            showMessage("التحليل المالي قيد التجهيز.")
         }
 
         addCard(
-            "👥 فريق التنفيذ",
-            "تنظيم المشاركين في تنفيذ المشروع"
+            "💵 العمولات",
+            "العمولات تحدد بعقد وسجلات واضحة"
         ) {
-            showMessage("فريق التنفيذ قيد التجهيز")
-        }        addCard(
-            "🏢 الجهات المرتبطة",
-            "تنظيم الجهات والشركاء المرتبطين"
-        ) {
-            showMessage("الجهات المرتبطة قيد التجهيز")
+            showMessage("العمولات لا تنفذ إلا وفق الاتفاقات والصلاحيات المعتمدة.")
         }
 
         addCard(
-            "📑 المتطلبات",
-            "متابعة متطلبات المشروع"
+            "🧾 الإيصالات",
+            "إيصالات واضحة للعمليات"
         ) {
-            showMessage("المتطلبات قيد التجهيز")
+            showMessage("نظام الإيصالات قيد التجهيز.")
         }
 
         addCard(
-            "⚖️ المتطلبات القانونية",
-            "متابعة الوثائق والمتطلبات القانونية"
+            "🛡️ مكافحة الاحتيال",
+            "مراقبة العمليات غير المعتادة"
         ) {
-            showMessage("المتطلبات القانونية قيد التجهيز")
+            showMessage("نظام مكافحة الاحتيال قيد التجهيز.")
         }
 
         addCard(
-            "🔐 حماية المشروع",
-            "حماية معلومات وبيانات المشروع"
+            "🔒 القفل التلقائي",
+            "حماية الأقسام المدفوعة والحساسة"
         ) {
-            showMessage("حماية المشروع قيد التجهيز")
-        }        addCard(
-            "🗄️ خزانة المشروع",
-            "حفظ وتنظيم ملفات ووثائق المشروع"
-        ) {
-            showMessage("خزانة المشروع قيد التجهيز")
+            showMessage("سيتم تطبيق القفل التلقائي وفق سياسة الأمان.")
         }
 
         addCard(
-            "📋 سجل المشروع",
-            "متابعة مراحل وقرارات وتحديثات المشروع"
+            "✅ تأكيد المالك",
+            "لا يتم تنفيذ الإجراءات الحساسة دون التأكيد والصلاحية المطلوبة"
         ) {
-            showMessage("سجل المشروع قيد التجهيز")
+            showMessage("التنفيذ الحساس يحتاج إلى الصلاحية والتأكيد المناسبين.")
         }
 
         addCard(
-            "👥 فريق العمل",
-            "إدارة أعضاء وفرق العمل المرتبطة بالمشروع"
+            "🏠 العودة إلى الرئيسية",
+            "الرجوع"
         ) {
-            showMessage("فريق العمل قيد التجهيز")
+            showHome()
         }
+    }
 
-          addCard(
-            "🔔 التنبيهات الإدارية",
-            "متابعة التنبيهات والمهام المهمة"
+    private fun showSecurityOffice() {
+
+        setContentView(baseLayout())
+        content.removeAllViews()
+
+        addSection("🛡️ مكتب الأمن والمعلومات")
+
+        addInfo(
+            "الهدف",
+            "حماية المستخدمين والتطبيق والبيانات ومتابعة محاولات التلاعب والسرقة والاحتيال."
+        )
+
+        addCard(
+            "🚨 مكافحة السرقة والاحتيال",
+            "رصد السلوكيات غير المعتادة وتسجيل الأحداث"
         ) {
-            showMessage("التنبيهات الإدارية قيد التجهيز")
+            showMessage("قسم مكافحة السرقة والاحتيال قيد التجهيز.")
         }
 
         addCard(
-            "📊 تقارير المشروع",
-            "متابعة التقارير والبيانات الإدارية"
+            "🔐 حماية الدخول",
+            "المكاتب الإدارية والأمنية لا تظهر للمستخدم العادي"
         ) {
-            showMessage("تقارير المشروع قيد التجهيز")
+            showMessage("الوصول للمكاتب الخاصة يعتمد على الصلاحيات.")
         }
 
         addCard(
-            "🕓 سجل التحديثات",
-            "متابعة آخر التغييرات التي تمت على المشروع"
+            "📝 سجل الحوادث",
+            "توثيق الأحداث والإجراءات الأمنية"
         ) {
-            showMessage("سجل التحديثات قيد التجهيز")
+            showMessage("سجل الحوادث قيد التجهيز.")
         }
 
         addCard(
-            "🚧 الخدمات المستقبلية",
-            "الخدمات والأقسام التي سيتم تطويرها لاحقًا"
+            "🤖 مراقبة CTM AI",
+            "مراقبة محاولات التلاعب والمخاطر وفق الصلاحيات"
         ) {
-            showMessage("الخدمات المستقبلية قيد التجهيز")
+            showCtmAi()
         }
+
+        addCard(
+            "👤 إجراءات الحسابات",
+            "أي إجراء على حساب مستخدم يجب أن يكون وفق سياسة واضحة وتوثيق مناسب"
+        ) {
+            showMessage("إجراءات الحسابات قيد التجهيز.")
+        }
+
+        addCard(
+            "🏠 العودة إلى مكتب المدير",
+            "الرجوع"
+        ) {
+            showManagerOffice()
+        }
+    }
+
+    private fun showAttorneyOffice() {
+
+        setContentView(baseLayout())
+        content.removeAllViews()
+
+        addSection("⚖️ مكتب النائب العام للمشروع")
+
+        addInfo(
+            "الخصوصية",
+            "هذا القسم إداري خاص ولا يظهر للمستخدمين العاديين."
+        )
+
+        addInfo(
+            "الاختصاص",
+            "الاستشارات والملفات القانونية وسجل القضايا والحوادث المتعلقة بالمشروع."
+        )
+
+        addCard(
+            "📁 القضايا والحوادث",
+            "سجل مركزي للأحداث والملفات القانونية"
+        ) {
+            showMessage("سجل القضايا والحوادث قيد التجهيز.")
+        }
+
+        addCard(
+            "🏢 الشركات والمستثمرون",
+            "تنظيم الاستشارات والاجتماعات والدعوات"
+        ) {
+            showMessage("قسم الشركات والمستثمرين قيد التجهيز.")
+        }
+
+        addCard(
+            "📨 الدعوات",
+            "دعوات محددة المدة أو لمرة واحدة"
+        ) {
+            showMessage("نظام الدعوات قيد التجهيز.")
+        }
+
+        addCard(
+            "🔐 الصلاحيات",
+            "لا يتم كشف ملفات المشروع إلا وفق الصلاحية والموافقة المناسبة"
+        ) {
+            showMessage("نظام الصلاحيات قيد التجهيز.")
+        }
+
+        addCard(
+            "👔 مكتب المدير",
+            "عرض المعلومات المسموح بها للإدارة"
+        ) {
+            showManagerOffice()
+        }
+
+        addCard(
+            "🏠 العودة إلى الرئيسية",
+            "الرجوع"
+        ) {
+            showHome()
+        }
+    }
+
+    private fun showPrivateFinancialSystem() {
+
+        setContentView(baseLayout())
+        content.removeAllViews()
+
+        addSection("💰 النظام المالي الخاص")
+
+        addInfo(
+            "الوظيفة",
+            "قسم خاص يتابع الأسهم والمعاملات والدخل الذي يحدده المالك للمراجعة."
+        )
+
+        addInfo(
+            "الخصوصية",
+            "لا تظهر البيانات المالية الخاصة للمستخدمين أو الشركاء إلا وفق الصلاحيات التي يحددها المالك."
+        )
+
+        addCard(
+            "📊 الأسهم",
+            "متابعة الأسهم التي يحددها المالك"
+        ) {
+            showMessage("قسم الأسهم قيد التجهيز.")
+        }
+
+        addCard(
+            "💳 المعاملات",
+            "متابعة المعاملات المحددة للمراجعة"
+        ) {
+            showMessage("قسم المعاملات قيد التجهيز.")
+        }
+
+        addCard(
+            "💵 الدخل",
+            "متابعة الدخل والسجلات الخاصة"
+        ) {
+            showMessage("قسم الدخل قيد التجهيز.")
+        }
+
+        addCard(
+            "🤝 صلاحية الشريك",
+            "السماح بالاطلاع وفق نافذة محددة يوافق عليها المالك"
+        ) {
+            showMessage("صلاحيات الشركاء قيد التجهيز.")
+        }
+
+        addCard(
+            "🏠 العودة إلى مكتب المدير",
+            "الرجوع"
+        ) {
+            showManagerOffice()
+        }
+    }
+
+    private fun showCtmAi() {
+
+        setContentView(baseLayout())
+        content.removeAllViews()
+
+        addSection("🤖 CTM AI")
+
+        addInfo(
+            "الاسم الرسمي",
+            "CTM AI"
+        )
+
+        addInfo(
+            "الوظيفة",
+            "المساعد الرسمي لمنصة CENTRAL MARKET، ويعمل داخل نطاق المعلومات والخدمات المسموح بها في المنصة."
+        )
+
+        addCard(
+            "🔎 البحث الذكي",
+            "مساعدة المستخدم في الوصول إلى أقسام وخدمات CENTRAL MARKET"
+        ) {
+            showMessage("البحث الذكي قيد التجهيز.")
+        }
+
+        addCard(
+            "🎙️ البحث الصوتي",
+            "المساعدة في البحث والقراءة داخل المعلومات المسموح بها"
+        ) {
+            showMessage("البحث الصوتي قيد التجهيز.")
+        }
+
+        addCard(
+            "🗣️ الكلمات المحلية",
+            "تحسين فهم الكلمات المحلية والأخطاء الشائعة"
+        ) {
+            showMessage("تحسين الكلمات المحلية قيد التجهيز.")
+        }
+
+        addCard(
+            "🛡️ مراقبة المخاطر",
+            "مساعدة الإدارة في اكتشاف الأخطاء والمخاطر وفق الصلاحيات"
+        ) {
+            showMessage("مراقبة المخاطر قيد التجهيز.")
+        }
+
+        addCard(
+            "📢 اقتراحات المستخدمين",
+            "تنظيم الاقتراحات والتصويت العام على الأفكار"
+        ) {
+            showMessage("اقتراحات المستخدمين قيد التجهيز.")
+        }
+
+        addCard(
+            "📄 فحص الوثائق",
+            "دعم التحقق من الوثائق وفق النظام والصلاحيات المناسبة"
+        ) {
+            showMessage("فحص الوثائق قيد التجهيز.")
+        }
+
+        addCard(
+            "⏸️ إيقاف CTM AI",
+            "يمكن تعطيل الخدمة أو إيقافها وفق صلاحيات الإدارة"
+        ) {
+            showMessage("إدارة حالة CTM AI قيد التجهيز.")
+        }
+
+        addCard(
+            "ℹ️ نطاق المساعدة",
+            "CTM AI هو مساعد CENTRAL MARKET وليس مساعدًا عامًا خارج المنصة."
+        ) {
+            showMessage("أنا CTM AI، المساعد الرسمي لـ CENTRAL MARKET.")
+        }
+
+        addCard(
+            "🏠 العودة إلى الرئيسية",
+            "الرجوع"
+        ) {
+            showHome()
+        }
+    }
+
+    private fun showCharity() {
+
+        setContentView(baseLayout())
+        content.removeAllViews()
+
+        addSection("🤲 صندوق دعم الأيتام والمحتاجين")
+
+        addInfo(
+            "الهدف",
+            "تنظيم مبادرات الدعم والمساعدة بطريقة واضحة ومسؤولة."
+        )
+
+        addCard(
+            "👶 دعم الأيتام",
+            "مبادرات مخصصة لدعم الأيتام"
+        ) {
+            showMessage("قسم دعم الأيتام قيد التجهيز.")
+        }
+
+        addCard(
+            "🤝 المساعدات",
+            "تنظيم فرص المساعدة والتبرعات وفق القواعد المعتمدة"
+        ) {
+            showMessage("قسم المساعدات قيد التجهيز.")
+        }
+
+        addCard(
+            "📋 الحالات",
+            "تنظيم بيانات الحالات وفق الخصوصية والصلاحيات"
+        ) {
+            showMessage("قسم الحالات قيد التجهيز.")
+        }
+
+        addCard(
+            "🏠 العودة إلى الرئيسية",
+            "الرجوع"
+        ) {
+            showHome()
+        }
+    }
+
+    private fun showKitchen() {
+
+        setContentView(baseLayout())
+        content.removeAllViews()
+
+        addSection("🍲 مطبخ الطيبات")
+
+        addInfo(
+            "الهدف",
+            "قسم للطعام والمنتجات الغذائية والوصفات والخدمات المرتبطة بها."
+        )
+
+        addCard(
+            "🍽️ الأطعمة",
+            "عرض الأطعمة والمنتجات الغذائية"
+        ) {
+            showMessage("قسم الأطعمة قيد التجهيز.")
+        }
+
+        addCard(
+            "👨‍🍳 الوصفات",
+            "مشاركة الوصفات والمعلومات الغذائية"
+        ) {
+            showMessage("قسم الوصفات قيد التجهيز.")
+        }
+
+        addCard(
+            "🚚 التوصيل",
+            "ربط الطعام بخدمات التوصيل المتاحة"
+        ) {
+            showMessage("خدمة التوصيل قيد التجهيز.")
+        }
+
+        addCard(
+            "🏪 المطاعم",
+            "عرض المطاعم والخدمات الغذائية"
+        ) {
+            showMessage("قسم المطاعم قيد التجهيز.")
+        }
+
+        addCard(
+            "🏠 العودة إلى الرئيسية",
+            "الرجوع"
+        ) {
+            showHome()
+        }
+    }
+} 
