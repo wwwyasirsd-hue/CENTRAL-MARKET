@@ -200,6 +200,18 @@ class MainActivity : Activity() {
         content.addView(text)
     }
 
+    private fun addInfo(
+        title: String,
+        description: String
+    ) {
+        val text = TextView(this)
+        text.text = "$title\n$description"
+        text.textSize = 16f
+        text.setTextColor(textDark)
+        text.setPadding(10, 10, 10, 18)
+        content.addView(text)
+    }
+
     private fun showMessage(message: String) {
         Toast.makeText(
             this,
@@ -800,7 +812,8 @@ class MainActivity : Activity() {
             showHome()
         }
     }
-        private fun showDetails(
+
+    private fun showDetails(
         title: String,
         description: String
     ) {
@@ -1027,7 +1040,7 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun showFavorites() {
+       private fun showFavorites() {
 
         setContentView(baseLayout())
         content.removeAllViews()
@@ -1716,7 +1729,7 @@ class MainActivity : Activity() {
         }
 
         addCard(
-             "🧠 مركز الابتكار",
+            "🧠 مركز الابتكار",
             "مساحة تجمع الأفكار والخبرات والمشاريع"
         ) {
             showMessage(
@@ -1787,7 +1800,8 @@ class MainActivity : Activity() {
             showHumanIntelligence()
         }
     }
-      private fun showManagerOffice() {
+
+    private fun showManagerOffice() {
 
         setContentView(baseLayout())
         content.removeAllViews()
@@ -1930,6 +1944,7 @@ class MainActivity : Activity() {
         }
     }
 
+ 
     private fun showBadger() {
 
         setContentView(baseLayout())
@@ -2172,7 +2187,7 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun showCtmAi() {
+        private fun showCtmAi() {
 
         setContentView(baseLayout())
         content.removeAllViews()
@@ -2341,4 +2356,4 @@ class MainActivity : Activity() {
             showHome()
         }
     }
-} 
+}
