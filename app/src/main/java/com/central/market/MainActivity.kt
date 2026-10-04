@@ -8,6 +8,7 @@ import android.graphics.drawable.GradientDrawable
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.view.Gravity
+import android.view.WindowManager
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
@@ -31,6 +32,14 @@ class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        /*
+         * الحماية الأساسية للشاشات الحساسة:
+         * تمنع النظام من السماح بالتقاط الشاشة أو تسجيلها
+         * أثناء عرض المحتوى الحساس.
+         */
+        window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+
         showHome()
     }
 
@@ -122,6 +131,7 @@ class MainActivity : Activity() {
         button.text = title
         button.textSize = 10f
         button.setTextColor(navy)
+
         button.setOnClickListener {
             action()
         }
@@ -152,6 +162,7 @@ class MainActivity : Activity() {
         action: () -> Unit
     ) {
         val button = Button(this)
+
         button.text = "$title\n$description"
         button.textSize = 14f
         button.setTextColor(textDark)
@@ -231,10 +242,12 @@ class MainActivity : Activity() {
         intro.text =
             "منصة واحدة .. عالم من الفرص.\n\n" +
             "أسواق وخدمات ومركبات وإعلانات ومشاريع وابتكار."
+
         intro.textSize = 16f
         intro.setTextColor(muted)
         intro.gravity = Gravity.CENTER
         intro.setPadding(5, 5, 5, 18)
+
         content.addView(intro)
 
         addSection("🌐 الاتصال والتجربة")
@@ -404,6 +417,9 @@ class MainActivity : Activity() {
         ) {
             showPoints()
         }
+    }
+
+        private fun showHomeProjects() {
 
         addSection("💡 المشاريع والمجتمع")
 
@@ -471,6 +487,29 @@ class MainActivity : Activity() {
         ) {
             showPrivateFinancialSystem()
         }
+
+        addSection("🔐 الخدمات الحساسة")
+
+        addCard(
+            "📈 المشاركة في الاستثمار",
+            "الدخول إلى مسار المشاركة الاستثمارية الآمن"
+        ) {
+            showInvestmentParticipation()
+        }
+
+        addCard(
+            "🏗️ المشاركة في مشروع تمويلي",
+            "دراسة الأهلية والمتطلبات قبل المشاركة"
+        ) {
+            showFinancingParticipation()
+        }
+
+        addCard(
+            "🪪 التحقق من الأهلية",
+            "التحقق الرسمي عند توفر التكامل والتفويض القانوني"
+        ) {
+            showEligibilityVerification()
+        }
     }
 
     private fun showOnline() {
@@ -484,6 +523,7 @@ class MainActivity : Activity() {
         status.textSize = 17f
         status.setTextColor(textDark)
         status.setPadding(12, 16, 12, 20)
+
         content.addView(status)
 
         fun checkConnection() {
@@ -574,7 +614,7 @@ class MainActivity : Activity() {
 
         addInfo(
             "يمكن للزائر تصفح الأقسام والخدمات العامة " +
-            "دون الوصول إلى الوظائف الخاصة."
+                    "دون الوصول إلى الوظائف الخاصة."
         )
 
         addCard(
@@ -604,6 +644,13 @@ class MainActivity : Activity() {
         ) {
             showLogin()
         }
+
+        addCard(
+            "🏠 الرئيسية",
+            "العودة"
+        ) {
+            showHome()
+        }
     }
 
     private fun showSafety() {
@@ -614,15 +661,25 @@ class MainActivity : Activity() {
         addSection("🛡️ الأمان والخصوصية")
 
         addInfo(
-            "CENTRAL MARKET يميز بين الخدمات العامة " +
-            "والأقسام الإدارية والخاصة."
+            "الحماية الأساسية",
+            "التطبيق يميز بين الخدمات العامة والأقسام الإدارية والخاصة."
+        )
+
+        addInfo(
+            "الشاشات الحساسة",
+            "يتم استخدام حماية النظام لمنع التقاط الشاشة أثناء عرض البيانات الحساسة."
+        )
+
+        addInfo(
+            "التحقق الرسمي",
+            "أي تحقق من أهلية قانونية يجب أن يتم مستقبلًا عبر جهة مخولة وتكامل رسمي، وليس من خلال تخمين أو قاعدة بيانات غير مصرح بها."
         )
 
         addCard(
             "🔐 حماية الحساب",
             "إدارة الوصول إلى الحساب"
         ) {
-            showMessage("حماية الحساب قيد التطوير.")
+            showMessage("حماية الحساب المتقدمة قيد التطوير.")
         }
 
         addCard(
@@ -644,6 +701,13 @@ class MainActivity : Activity() {
             "الوصول حسب الصلاحيات"
         ) {
             showMessage("الصلاحيات المتقدمة قيد التطوير.")
+        }
+
+        addCard(
+            "📈 الخدمات الاستثمارية الحساسة",
+            "حماية إضافية قبل المشاركة"
+        ) {
+            showInvestmentParticipation()
         }
 
         addCard(
@@ -813,7 +877,7 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun showDetails(
+        private fun showDetails(
         title: String,
         description: String
     ) {
@@ -961,7 +1025,6 @@ class MainActivity : Activity() {
                     "يرجى إدخال اسم المنتج والوصف."
                 )
             } else {
-
                 showMessage(
                     "تم تجهيز الإعلان للنشر.\n" +
                             "سيتم إنشاء رقم مرجعي خاص به."
@@ -1040,7 +1103,7 @@ class MainActivity : Activity() {
         }
     }
 
-       private fun showFavorites() {
+    private fun showFavorites() {
 
         setContentView(baseLayout())
         content.removeAllViews()
@@ -1248,54 +1311,42 @@ class MainActivity : Activity() {
             "⭐ نقاطي",
             "رصيد النقاط الحالي"
         ) {
-            showMessage(
-                "رصيد النقاط: 0"
-            )
+            showMessage("رصيد النقاط: 0")
         }
 
         addCard(
             "🎁 المكافآت",
             "المكافآت المتاحة"
         ) {
-            showMessage(
-                "المكافآت قيد التجهيز."
-            )
+            showMessage("المكافآت قيد التجهيز.")
         }
 
         addCard(
             "🏆 مستوى المستخدم",
             "تطور النقاط والمكافآت"
         ) {
-            showMessage(
-                "مستوى المستخدم قيد التجهيز."
-            )
+            showMessage("مستوى المستخدم قيد التجهيز.")
         }
 
         addCard(
             "📋 سجل النقاط",
             "متابعة عمليات كسب النقاط"
         ) {
-            showMessage(
-                "سجل النقاط قيد التجهيز."
-            )
+            showMessage("سجل النقاط قيد التجهيز.")
         }
 
         addCard(
             "🎯 تحديات النقاط",
             "أنشطة للحصول على نقاط"
         ) {
-            showMessage(
-                "تحديات النقاط قيد التجهيز."
-            )
+            showMessage("تحديات النقاط قيد التجهيز.")
         }
 
         addCard(
             "🎁 استبدال النقاط",
             "استخدام النقاط في المكافآت"
         ) {
-            showMessage(
-                "استبدال النقاط قيد التجهيز."
-            )
+            showMessage("استبدال النقاط قيد التجهيز.")
         }
 
         addCard(
@@ -1306,7 +1357,7 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun showHumanIntelligence() {
+        private fun showHumanIntelligence() {
 
         setContentView(baseLayout())
         content.removeAllViews()
@@ -1314,8 +1365,8 @@ class MainActivity : Activity() {
         addSection("🧠 الذكاء البشري")
 
         addInfo(
-            "مساحة للأفكار والابتكار والمشاريع والتعاون " +
-                    "بين أصحاب المهارات والخبرات."
+            "الهدف",
+            "مساحة للأفكار والابتكار والمشاريع والتعاون بين أصحاب المهارات والخبرات."
         )
 
         addCard(
@@ -1329,27 +1380,21 @@ class MainActivity : Activity() {
             "🔎 مراجعة الأفكار",
             "تنظيم ومراجعة المقترحات"
         ) {
-            showMessage(
-                "مراجعة الأفكار قيد التجهيز."
-            )
+            showMessage("مراجعة الأفكار قيد التجهيز.")
         }
 
         addCard(
             "👥 تكوين الفرق",
             "ربط أصحاب الأفكار والمهارات"
         ) {
-            showMessage(
-                "تكوين الفرق قيد التجهيز."
-            )
+            showMessage("تكوين الفرق قيد التجهيز.")
         }
 
         addCard(
             "📝 متابعة الفكرة",
             "رقم مرجعي ومراحل التطوير"
         ) {
-            showMessage(
-                "متابعة الفكرة قيد التجهيز."
-            )
+            showMessage("متابعة الفكرة قيد التجهيز.")
         }
 
         addCard(
@@ -1363,378 +1408,203 @@ class MainActivity : Activity() {
             "🏭 تحويل الفكرة إلى مشروع",
             "استخراج المشاريع المحتملة"
         ) {
-            showMessage(
-                "تحويل الفكرة إلى مشروع قيد التجهيز."
-            )
+            showMessage("تحويل الفكرة إلى مشروع قيد التجهيز.")
         }
 
         addCard(
             "🏅 حالة الفكرة",
             "معرفة مرحلة المراجعة والتطوير"
         ) {
-            showMessage(
-                "حالة الفكرة قيد التجهيز."
-            )
+            showMessage("حالة الفكرة قيد التجهيز.")
         }
 
         addCard(
             "📊 إحصائيات الأفكار",
             "متابعة عدد الأفكار والمشاريع"
         ) {
-            showMessage(
-                "إحصائيات الأفكار قيد التجهيز."
-            )
+            showMessage("إحصائيات الأفكار قيد التجهيز.")
         }
 
         addCard(
             "🔢 الرقم المرجعي",
             "رقم خاص لمتابعة كل فكرة"
         ) {
-            showMessage(
-                "الرقم المرجعي قيد التجهيز."
-            )
+            showMessage("الرقم المرجعي قيد التجهيز.")
         }
 
         addCard(
             "👥 أعضاء الفريق",
             "متابعة المشاركين في المشروع"
         ) {
-            showMessage(
-                "أعضاء الفريق قيد التجهيز."
-            )
+            showMessage("أعضاء الفريق قيد التجهيز.")
         }
 
         addCard(
             "🚀 مراحل المشروع",
             "من الفكرة إلى التنفيذ"
         ) {
-            showMessage(
-                "مراحل المشروع قيد التجهيز."
-            )
+            showMessage("مراحل المشروع قيد التجهيز.")
         }
 
         addCard(
             "💰 تمويل المشروع",
             "خيارات دعم وتمويل المشروع"
         ) {
-            showMessage(
-                "تمويل المشروع قيد التجهيز."
-            )
+            showFinancingParticipation()
         }
 
         addCard(
             "📢 نشر المشروع",
             "عرض المشروع بعد اعتماده"
         ) {
-            showMessage(
-                "نشر المشروع قيد التجهيز."
-            )
+            showMessage("نشر المشروع قيد التجهيز.")
         }
 
         addCard(
             "⭐ تقييم الفكرة",
             "تقييم مراحل تطوير الفكرة"
         ) {
-            showMessage(
-                "تقييم الفكرة قيد التجهيز."
-            )
+            showMessage("تقييم الفكرة قيد التجهيز.")
         }
 
         addCard(
             "📚 دليل الابتكار",
             "معلومات تساعد على تطوير الأفكار"
         ) {
-            showMessage(
-                "دليل الابتكار قيد التجهيز."
-            )
+            showMessage("دليل الابتكار قيد التجهيز.")
         }
 
         addCard(
             "🌍 التعاون",
             "ربط الأفكار بالخبرات والجهات المناسبة"
         ) {
-            showMessage(
-                "التعاون قيد التجهيز."
-            )
-        }
-
-        addCard(
-            "🔔 إشعارات الفكرة",
-            "متابعة آخر التحديثات"
-        ) {
-            showMessage(
-                "إشعارات الفكرة قيد التجهيز."
-            )
+            showMessage("التعاون قيد التجهيز.")
         }
 
         addCard(
             "🧑‍🔬 الخبراء والمختصون",
             "مراجعة الأفكار من أصحاب الخبرة"
         ) {
-            showMessage(
-                "الخبراء والمختصون قيد التجهيز."
-            )
+            showMessage("الخبراء والمختصون قيد التجهيز.")
         }
 
         addCard(
             "🔄 تحديث الفكرة",
             "إضافة معلومات وتعديلات جديدة"
         ) {
-            showMessage(
-                "تحديث الفكرة قيد التجهيز."
-            )
-        }
-
-        addCard(
-            "✅ اعتماد الفكرة",
-            "الانتقال إلى مرحلة المشروع"
-        ) {
-            showMessage(
-                "اعتماد الفكرة قيد التجهيز."
-            )
-        }
-
-        addCard(
-            "📋 شروط المشروع",
-            "متطلبات الانتقال إلى التنفيذ"
-        ) {
-            showMessage(
-                "شروط المشروع قيد التجهيز."
-            )
+            showMessage("تحديث الفكرة قيد التجهيز.")
         }
 
         addCard(
             "📈 خطة العمل",
             "تنظيم خطوات تنفيذ المشروع"
         ) {
-            showMessage(
-                "خطة العمل قيد التجهيز."
-            )
-        }
-
-        addCard(
-            "🛠️ أدوات التنفيذ",
-            "الأدوات والخدمات اللازمة للمشروع"
-        ) {
-            showMessage(
-                "أدوات التنفيذ قيد التجهيز."
-            )
+            showMessage("خطة العمل قيد التجهيز.")
         }
 
         addCard(
             "📅 جدول المشروع",
             "مواعيد ومراحل التنفيذ"
         ) {
-            showMessage(
-                "جدول المشروع قيد التجهيز."
-            )
-        }
-
-        addCard(
-            "📦 المنتجات الناتجة",
-            "عرض المنتجات والخدمات الناتجة"
-        ) {
-            showMessage(
-                "المنتجات الناتجة قيد التجهيز."
-            )
+            showMessage("جدول المشروع قيد التجهيز.")
         }
 
         addCard(
             "🏆 إنجازات المشروع",
             "متابعة ما تم إنجازه"
         ) {
-            showMessage(
-                "إنجازات المشروع قيد التجهيز."
-            )
-        }
-
-        addCard(
-            "📊 تقرير المشروع",
-            "ملخص شامل عن حالة المشروع"
-        ) {
-            showMessage(
-                "تقرير المشروع قيد التجهيز."
-            )
+            showMessage("إنجازات المشروع قيد التجهيز.")
         }
 
         addCard(
             "🔐 حماية الفكرة",
             "حفظ بيانات الفكرة وخصوصيتها"
         ) {
-            showMessage(
-                "حماية الفكرة قيد التجهيز."
-            )
+            showMessage("حماية الفكرة قيد التجهيز.")
         }
 
         addCard(
             "🗂️ أرشيف الأفكار",
             "حفظ الأفكار والمشاريع السابقة"
         ) {
-            showMessage(
-                "أرشيف الأفكار قيد التجهيز."
-            )
+            showMessage("أرشيف الأفكار قيد التجهيز.")
         }
 
         addCard(
             "📞 التواصل والدعم",
             "المساعدة والاستفسارات"
         ) {
-            showMessage(
-                "التواصل والدعم قيد التجهيز."
-            )
+            showMessage("التواصل والدعم قيد التجهيز.")
         }
 
         addCard(
             "🌟 الأفكار المميزة",
             "أفكار وصلت إلى مراحل متقدمة"
         ) {
-            showMessage(
-                "الأفكار المميزة قيد التجهيز."
-            )
-        }
-
-        addCard(
-            "📢 فرص التعاون",
-            "فرص التعاون المتاحة"
-        ) {
-            showMessage(
-                "فرص التعاون قيد التجهيز."
-            )
-        }
-
-        addCard(
-            "💡 أفكار المستقبل",
-            "أفكار قابلة للتطوير والتوسع"
-        ) {
-            showMessage(
-                "أفكار المستقبل قيد التجهيز."
-            )
-        }
-
-        addCard(
-            "🌐 مشاريع دولية",
-            "أفكار قابلة للتوسع خارج السودان"
-        ) {
-            showMessage(
-                "المشاريع الدولية قيد التجهيز."
-            )
-        }
-
-        addCard(
-            "🌱 الاستدامة",
-            "أفكار تدعم التنمية والاستفادة من الموارد"
-        ) {
-            showMessage(
-                "الاستدامة قيد التجهيز."
-            )
+            showMessage("الأفكار المميزة قيد التجهيز.")
         }
 
         addCard(
             "🤝 الشراكات",
             "ربط المشاريع بالجهات والشركاء"
         ) {
-            showMessage(
-                "الشراكات قيد التجهيز."
-            )
+            showMessage("الشراكات قيد التجهيز.")
         }
 
         addCard(
-            "🧭 خارطة الابتكار",
-            "متابعة مسار الأفكار والمشاريع"
+            "🌐 مشاريع دولية",
+            "أفكار قابلة للتوسع خارج السودان"
         ) {
-            showMessage(
-                "خارطة الابتكار قيد التجهيز."
-            )
+            showMessage("المشاريع الدولية قيد التجهيز.")
         }
 
         addCard(
-            "📌 المشاريع المعتمدة",
-            "عرض المشاريع التي تم اعتمادها"
+            "🌱 الاستدامة",
+            "أفكار تدعم التنمية والاستفادة من الموارد"
         ) {
-            showMessage(
-                "المشاريع المعتمدة قيد التجهيز."
-            )
+            showMessage("الاستدامة قيد التجهيز.")
         }
 
         addCard(
             "📊 أثر المشروع",
             "متابعة النتائج والفوائد"
         ) {
-            showMessage(
-                "أثر المشروع قيد التجهيز."
-            )
-        }
-
-        addCard(
-            "🗃️ ملفات المشروع",
-            "تنظيم المستندات والمعلومات"
-        ) {
-            showMessage(
-                "ملفات المشروع قيد التجهيز."
-            )
+            showMessage("أثر المشروع قيد التجهيز.")
         }
 
         addCard(
             "🧪 اختبار الفكرة",
             "تجربة الفكرة قبل التوسع"
         ) {
-            showMessage(
-                "اختبار الفكرة قيد التجهيز."
-            )
+            showMessage("اختبار الفكرة قيد التجهيز.")
         }
 
         addCard(
             "🔧 تطوير وتحسين",
             "تحسين المشروع بناءً على النتائج"
         ) {
-            showMessage(
-                "تطوير وتحسين قيد التجهيز."
-            )
+            showMessage("تطوير وتحسين قيد التجهيز.")
         }
 
         addCard(
             "📈 قياس النتائج",
             "متابعة تطور المشروع ومؤشراته"
         ) {
-            showMessage(
-                "قياس النتائج قيد التجهيز."
-            )
-        }
-
-        addCard(
-            "🔔 تنبيهات المشروع",
-            "تنبيهات مهمة حول مراحل المشروع"
-        ) {
-            showMessage(
-                "تنبيهات المشروع قيد التجهيز."
-            )
-        }
-
-        addCard(
-            "📚 المعرفة والخبرة",
-            "مشاركة الخبرات والمعلومات المفيدة"
-        ) {
-            showMessage(
-                "المعرفة والخبرة قيد التجهيز."
-            )
+            showMessage("قياس النتائج قيد التجهيز.")
         }
 
         addCard(
             "🌍 التوسع",
             "تطوير الأفكار لأسواق جديدة"
         ) {
-            showMessage(
-                "التوسع قيد التجهيز."
-            )
+            showMessage("التوسع قيد التجهيز.")
         }
 
         addCard(
             "🧠 مركز الابتكار",
             "مساحة تجمع الأفكار والخبرات والمشاريع"
         ) {
-            showMessage(
-                "مركز الابتكار قيد التجهيز."
-            )
+            showMessage("مركز الابتكار قيد التجهيز.")
         }
 
         addCard(
@@ -1779,13 +1649,10 @@ class MainActivity : Activity() {
                 title.text.toString().trim().isEmpty() ||
                 description.text.toString().trim().isEmpty()
             ) {
-
                 showMessage(
                     "يرجى إدخال عنوان الفكرة وشرحها."
                 )
-
             } else {
-
                 showMessage(
                     "تم تجهيز الفكرة للمراجعة.\n" +
                             "سيتم إنشاء الرقم المرجعي عند ربط قاعدة البيانات."
@@ -1848,7 +1715,7 @@ class MainActivity : Activity() {
 
         addCard(
             "💰 النظام المالي الخاص",
-            "متابعة الأسهم والمعاملات والدخل المخصص للمالك"
+            "متابعة الأسهم والمعاملات والدخل"
         ) {
             showPrivateFinancialSystem()
         }
@@ -1879,6 +1746,20 @@ class MainActivity : Activity() {
             "قسم الدعم والمساعدة"
         ) {
             showCharity()
+        }
+
+        addCard(
+            "📈 المشاركة الاستثمارية",
+            "متابعة مسار المشاركة الحساسة"
+        ) {
+            showInvestmentParticipation()
+        }
+
+        addCard(
+            "🏗️ التمويل والمشاريع",
+            "متابعة المشاركة في المشاريع التمويلية"
+        ) {
+            showFinancingParticipation()
         }
 
         addCard(
@@ -1944,8 +1825,7 @@ class MainActivity : Activity() {
         }
     }
 
- 
-    private fun showBadger() {
+        private fun showBadger() {
 
         setContentView(baseLayout())
         content.removeAllViews()
@@ -1954,7 +1834,7 @@ class MainActivity : Activity() {
 
         addInfo(
             "BADGER",
-            "نظام مصرفي متكامل يمكن تطويره وبيعه للمؤسسات والبنوك وفق العقود والموافقات المطلوبة."
+            "نظام مصرفي مستقل يمكن تطويره وبيعه للمؤسسات والبنوك وفق العقود والموافقات المطلوبة."
         )
 
         addInfo(
@@ -1980,7 +1860,9 @@ class MainActivity : Activity() {
             "💵 العمولات",
             "العمولات تحدد بعقد وسجلات واضحة"
         ) {
-            showMessage("العمولات لا تنفذ إلا وفق الاتفاقات والصلاحيات المعتمدة.")
+            showMessage(
+                "العمولات لا تنفذ إلا وفق الاتفاقات والصلاحيات المعتمدة."
+            )
         }
 
         addCard(
@@ -2001,14 +1883,46 @@ class MainActivity : Activity() {
             "🔒 القفل التلقائي",
             "حماية الأقسام المدفوعة والحساسة"
         ) {
-            showMessage("سيتم تطبيق القفل التلقائي وفق سياسة الأمان.")
+            showMessage(
+                "سيتم تطبيق القفل التلقائي وفق سياسة الأمان."
+            )
+        }
+
+        addCard(
+            "📈 المشاركة في الاستثمار",
+            "مسار المشاركة الاستثمارية المحمي"
+        ) {
+            showInvestmentParticipation()
+        }
+
+        addCard(
+            "🏗️ المشاركة في مشروع تمويلي",
+            "مسار المشاركة التمويلية المحمي"
+        ) {
+            showFinancingParticipation()
+        }
+
+        addCard(
+            "🪪 التحقق من الأهلية",
+            "التحقق الرسمي قبل السماح بالمشاركة"
+        ) {
+            showEligibilityVerification()
+        }
+
+        addCard(
+            "🛡️ حماية البيانات الحساسة",
+            "منع التقاط الشاشة أثناء عرض البيانات الحساسة"
+        ) {
+            enableSensitiveScreenProtection()
         }
 
         addCard(
             "✅ تأكيد المالك",
             "لا يتم تنفيذ الإجراءات الحساسة دون التأكيد والصلاحية المطلوبة"
         ) {
-            showMessage("التنفيذ الحساس يحتاج إلى الصلاحية والتأكيد المناسبين.")
+            showMessage(
+                "التنفيذ الحساس يحتاج إلى الصلاحية والتأكيد المناسبين."
+            )
         }
 
         addCard(
@@ -2035,21 +1949,27 @@ class MainActivity : Activity() {
             "🚨 مكافحة السرقة والاحتيال",
             "رصد السلوكيات غير المعتادة وتسجيل الأحداث"
         ) {
-            showMessage("قسم مكافحة السرقة والاحتيال قيد التجهيز.")
+            showMessage(
+                "قسم مكافحة السرقة والاحتيال قيد التجهيز."
+            )
         }
 
         addCard(
             "🔐 حماية الدخول",
             "المكاتب الإدارية والأمنية لا تظهر للمستخدم العادي"
         ) {
-            showMessage("الوصول للمكاتب الخاصة يعتمد على الصلاحيات.")
+            showMessage(
+                "الوصول للمكاتب الخاصة يعتمد على الصلاحيات."
+            )
         }
 
         addCard(
             "📝 سجل الحوادث",
             "توثيق الأحداث والإجراءات الأمنية"
         ) {
-            showMessage("سجل الحوادث قيد التجهيز.")
+            showMessage(
+                "سجل الحوادث قيد التجهيز."
+            )
         }
 
         addCard(
@@ -2060,10 +1980,26 @@ class MainActivity : Activity() {
         }
 
         addCard(
+            "🛡️ حماية الشاشات الحساسة",
+            "حظر التقاط الشاشة وتسجيلها في المناطق الحساسة"
+        ) {
+            enableSensitiveScreenProtection()
+        }
+
+        addCard(
+            "🪪 التحقق القانوني",
+            "تجهيز مسار التحقق الرسمي عند توفر التكامل"
+        ) {
+            showEligibilityVerification()
+        }
+
+        addCard(
             "👤 إجراءات الحسابات",
             "أي إجراء على حساب مستخدم يجب أن يكون وفق سياسة واضحة وتوثيق مناسب"
         ) {
-            showMessage("إجراءات الحسابات قيد التجهيز.")
+            showMessage(
+                "إجراءات الحسابات قيد التجهيز."
+            )
         }
 
         addCard(
@@ -2095,28 +2031,43 @@ class MainActivity : Activity() {
             "📁 القضايا والحوادث",
             "سجل مركزي للأحداث والملفات القانونية"
         ) {
-            showMessage("سجل القضايا والحوادث قيد التجهيز.")
+            showMessage(
+                "سجل القضايا والحوادث قيد التجهيز."
+            )
         }
 
         addCard(
             "🏢 الشركات والمستثمرون",
             "تنظيم الاستشارات والاجتماعات والدعوات"
         ) {
-            showMessage("قسم الشركات والمستثمرين قيد التجهيز.")
+            showMessage(
+                "قسم الشركات والمستثمرين قيد التجهيز."
+            )
         }
 
         addCard(
             "📨 الدعوات",
             "دعوات محددة المدة أو لمرة واحدة"
         ) {
-            showMessage("نظام الدعوات قيد التجهيز.")
+            showMessage(
+                "نظام الدعوات قيد التجهيز."
+            )
         }
 
         addCard(
             "🔐 الصلاحيات",
             "لا يتم كشف ملفات المشروع إلا وفق الصلاحية والموافقة المناسبة"
         ) {
-            showMessage("نظام الصلاحيات قيد التجهيز.")
+            showMessage(
+                "نظام الصلاحيات قيد التجهيز."
+            )
+        }
+
+        addCard(
+            "🪪 أهلية المشاركة",
+            "الإجراءات القانونية اللازمة قبل بعض المشاركات"
+        ) {
+            showEligibilityVerification()
         }
 
         addCard(
@@ -2177,6 +2128,20 @@ class MainActivity : Activity() {
             "السماح بالاطلاع وفق نافذة محددة يوافق عليها المالك"
         ) {
             showMessage("صلاحيات الشركاء قيد التجهيز.")
+        }
+
+        addCard(
+            "📈 الاستثمارات الحساسة",
+            "الوصول إلى مسار المشاركة الاستثمارية"
+        ) {
+            showInvestmentParticipation()
+        }
+
+        addCard(
+            "🏗️ المشاريع التمويلية",
+            "الوصول إلى مسار المشاركة في المشاريع"
+        ) {
+            showFinancingParticipation()
         }
 
         addCard(
@@ -2250,14 +2215,18 @@ class MainActivity : Activity() {
             "⏸️ إيقاف CTM AI",
             "يمكن تعطيل الخدمة أو إيقافها وفق صلاحيات الإدارة"
         ) {
-            showMessage("إدارة حالة CTM AI قيد التجهيز.")
+            showMessage(
+                "إدارة حالة CTM AI قيد التجهيز."
+            )
         }
 
         addCard(
             "ℹ️ نطاق المساعدة",
             "CTM AI هو مساعد CENTRAL MARKET وليس مساعدًا عامًا خارج المنصة."
         ) {
-            showMessage("أنا CTM AI، المساعد الرسمي لـ CENTRAL MARKET.")
+            showMessage(
+                "أنا CTM AI، المساعد الرسمي لـ CENTRAL MARKET."
+            )
         }
 
         addCard(
@@ -2299,6 +2268,15 @@ class MainActivity : Activity() {
             "تنظيم بيانات الحالات وفق الخصوصية والصلاحيات"
         ) {
             showMessage("قسم الحالات قيد التجهيز.")
+        }
+
+        addCard(
+            "🛡️ حماية بيانات المستفيدين",
+            "البيانات الحساسة لا تعرض إلا وفق الصلاحية"
+        ) {
+            showMessage(
+                "حماية بيانات المستفيدين قيد التجهيز."
+            )
         }
 
         addCard(
@@ -2355,5 +2333,1190 @@ class MainActivity : Activity() {
         ) {
             showHome()
         }
+    }
+
+    private fun enableSensitiveScreenProtection() {
+
+        window.addFlags(
+            WindowManager.LayoutParams.FLAG_SECURE
+        )
+
+        showMessage(
+            "تم تفعيل حماية الشاشة لهذه الجلسة."
+        )
+    }
+
+    private fun disableSensitiveScreenProtection() {
+
+        window.clearFlags(
+            WindowManager.LayoutParams.FLAG_SECURE
+        )
+    }
+
+    private fun showSensitiveHeader(
+        title: String,
+        description: String
+    ) {
+
+        enableSensitiveScreenProtection()
+
+        addSection(title)
+
+        addInfo(
+            "🔒 شاشة حساسة",
+            description
+        )
+
+        addInfo(
+            "الحماية",
+            "التقاط الشاشة وتسجيل الشاشة محظوران أثناء تفعيل حماية الشاشة."
+        )
+    }
+
+    private fun showEligibilityVerification() {
+
+        setContentView(baseLayout())
+        content.removeAllViews()
+
+        showSensitiveHeader(
+            "🪪 التحقق من الأهلية",
+            "هذا المسار مخصص للتحقق من المتطلبات القانونية والتنظيمية قبل بعض المشاركات الحساسة."
+        )
+
+        addInfo(
+            "⚖️ التحقق الرسمي",
+            "لا يعتمد النظام على التخمين أو المصادر غير الرسمية. عند بناء الخدمة الفعلية يجب استخدام جهة حكومية أو جهة مخولة، وبالطريقة والتفويض القانوني المناسبين."
+        )
+
+        addInfo(
+            "📋 أمثلة على المتطلبات",
+            "قد تشمل الهوية، أهلية المشاركة، المتطلبات التنظيمية، والموانع القانونية الموثقة عندما يكون ذلك مسموحًا قانونيًا."
+        )
+
+        addInfo(
+            "🔐 الخصوصية",
+            "يجب تقليل البيانات المطلوبة إلى الحد الضروري، مع حماية السجلات وتحديد من يستطيع الوصول إليها."
+        )
+
+        addCard(
+            "🟡 بدء التحقق",
+            "فحص جاهزية التكامل الرسمي"
+        ) {
+            showMessage(
+                "لا يوجد اتصال حكومي فعلي مفعّل في النسخة المحلية الحالية."
+            )
+        }
+
+        addCard(
+            "📄 المتطلبات",
+            "عرض المتطلبات قبل بدء العملية"
+        ) {
+            showEligibilityRequirements()
+        }
+
+        addCard(
+            "🛡️ الحماية",
+            "تأكيد حماية الشاشة والبيانات"
+        ) {
+            enableSensitiveScreenProtection()
+        }
+
+        addCard(
+            "🏠 الرئيسية",
+            "العودة"
+        ) {
+            showHome()
+        }
+    }
+
+    private fun showEligibilityRequirements() {
+
+        setContentView(baseLayout())
+        content.removeAllViews()
+
+        showSensitiveHeader(
+            "📋 متطلبات الأهلية",
+            "قائمة إرشادية فقط، وليست قرارًا قانونيًا أو نتيجة تحقق حكومي."
+        )
+
+        addInfo(
+            "1",
+            "تحديد هوية المشترك وفق النظام المعتمد."
+        )
+
+        addInfo(
+            "2",
+            "تحديد نوع المشاركة والجهة أو المشروع."
+        )
+
+        addInfo(
+            "3",
+            "الحصول على الموافقات والتفويضات المطلوبة."
+        )
+
+        addInfo(
+            "4",
+            "إجراء التحقق عبر الجهة الرسمية المختصة عند توفر التكامل."
+        )
+
+        addInfo(
+            "5",
+            "تسجيل نتيجة التحقق وصلاحيتها دون كشف بيانات غير ضرورية."
+        )
+
+        addCard(
+            "🪪 الانتقال إلى التحقق",
+            "العودة إلى مسار الأهلية"
+        ) {
+            showEligibilityVerification()
+        }
+
+        addCard(
+            "🏠 الرئيسية",
+            "العودة"
+        ) {
+            showHome()
+        }
+    }
+
+        private fun showInvestmentParticipation() {
+
+        setContentView(baseLayout())
+        content.removeAllViews()
+
+        showSensitiveHeader(
+            "📈 المشاركة في الاستثمار",
+            "هذا القسم حساس، ولا يمثل موافقة استثمارية أو عرضًا ماليًا حقيقيًا في النسخة الحالية."
+        )
+
+        addInfo(
+            "🔒 قاعدة الحماية",
+            "لا يتم السماح بتنفيذ عملية مالية حساسة من هذه النسخة المحلية. أي تنفيذ حقيقي يحتاج إلى خادم آمن، صلاحيات، عقود، وضوابط قانونية مناسبة."
+        )
+
+        addInfo(
+            "🪪 الأهلية",
+            "يجب التحقق من أهلية المشترك عبر القنوات الرسمية والمصرح بها قبل السماح بالمشاركة، عندما تكون هذه الخطوة مطلوبة قانونيًا."
+        )
+
+        addInfo(
+            "🚫 الموانع القانونية",
+            "لا يتم البحث عن معلومات شخصية حساسة أو سجلات قانونية من مصادر غير مصرح بها. التحقق الحقيقي يجب أن يتم من خلال الجهة المختصة وبالتفويض القانوني."
+        )
+
+        addInfo(
+            "📱 حماية الشاشة",
+            "حماية الشاشة مفعلة لمنع التقاط المحتوى الحساس أثناء عرض هذا القسم."
+        )
+
+        addCard(
+            "🪪 التحقق من الأهلية",
+            "الانتقال إلى التحقق الرسمي"
+        ) {
+            showEligibilityVerification()
+        }
+
+        addCard(
+            "📋 متطلبات المشاركة",
+            "عرض المتطلبات الأولية"
+        ) {
+            showInvestmentRequirements()
+        }
+
+        addCard(
+            "📄 المستندات",
+            "مراجعة أنواع المستندات المطلوبة"
+        ) {
+            showMessage(
+                "المستندات الحقيقية سيتم التعامل معها عبر نظام آمن ومصرح به."
+            )
+        }
+
+        addCard(
+            "🔐 حالة الحماية",
+            "تفعيل حماية الشاشة"
+        ) {
+            enableSensitiveScreenProtection()
+        }
+
+        addCard(
+            "⚠️ التنفيذ المالي",
+            "لا يوجد تنفيذ مالي حقيقي في هذه النسخة"
+        ) {
+            showMessage(
+                "التنفيذ المالي الحقيقي غير مفعّل في النسخة الحالية."
+            )
+        }
+
+        addCard(
+            "🏠 الرئيسية",
+            "العودة"
+        ) {
+            showHome()
+        }
+    }
+
+    private fun showInvestmentRequirements() {
+
+        setContentView(baseLayout())
+        content.removeAllViews()
+
+        showSensitiveHeader(
+            "📋 متطلبات المشاركة الاستثمارية",
+            "هذه قائمة تنظيمية أولية وليست قرارًا قانونيًا أو ضمانًا للقبول."
+        )
+
+        addInfo(
+            "1️⃣ الهوية",
+            "تأكيد هوية المشترك بالطريقة النظامية المناسبة."
+        )
+
+        addInfo(
+            "2️⃣ الأهلية",
+            "التحقق من أهلية المشترك وفق القوانين واللوائح التي تنطبق على المشروع."
+        )
+
+        addInfo(
+            "3️⃣ الإفصاح",
+            "عرض المعلومات والشروط والمخاطر ذات الصلة قبل اتخاذ القرار."
+        )
+
+        addInfo(
+            "4️⃣ الموافقة",
+            "الحصول على الموافقات المطلوبة وتوثيقها."
+        )
+
+        addInfo(
+            "5️⃣ السجل",
+            "إنشاء سجل آمن للعملية عند تنفيذ النظام الحقيقي."
+        )
+
+        addCard(
+            "🪪 التحقق",
+            "الانتقال إلى مسار الأهلية"
+        ) {
+            showEligibilityVerification()
+        }
+
+        addCard(
+            "📈 العودة للاستثمار",
+            "الرجوع"
+        ) {
+            showInvestmentParticipation()
+        }
+    }
+
+    private fun showFinancingParticipation() {
+
+        setContentView(baseLayout())
+        content.removeAllViews()
+
+        showSensitiveHeader(
+            "🏗️ المشاركة في مشروع تمويلي",
+            "مسار مخصص لدراسة المشاركة في مشروع تمويلي قبل أي التزام أو تنفيذ مالي."
+        )
+
+        addInfo(
+            "🔒 الحماية",
+            "البيانات الحساسة محمية من التقاط الشاشة وتسجيلها في هذه الشاشة."
+        )
+
+        addInfo(
+            "⚖️ الجانب القانوني",
+            "أي مشاركة فعلية يجب أن تمر عبر الشروط والعقود والموافقات التي يفرضها النظام القانوني والجهات المختصة."
+        )
+
+        addInfo(
+            "🪪 الأهلية",
+            "قد تكون هناك حاجة إلى تحقق رسمي من هوية وأهلية المشاركين بحسب نوع المشروع والقوانين المطبقة."
+        )
+
+        addCard(
+            "🪪 التحقق من الأهلية",
+            "الانتقال إلى التحقق الرسمي"
+        ) {
+            showEligibilityVerification()
+        }
+
+        addCard(
+            "📋 متطلبات المشروع",
+            "عرض المتطلبات الأساسية"
+        ) {
+            showFinancingRequirements()
+        }
+
+        addCard(
+            "📄 المستندات",
+            "المستندات التي قد تكون مطلوبة"
+        ) {
+            showMessage(
+                "سيتم ربط المستندات بنظام آمن عند بناء الخادم."
+            )
+        }
+
+        addCard(
+            "🛡️ حماية الشاشة",
+            "تفعيل الحماية مرة أخرى"
+        ) {
+            enableSensitiveScreenProtection()
+        }
+
+        addCard(
+            "⚠️ تنفيذ التمويل",
+            "لا يوجد تنفيذ مالي فعلي"
+        ) {
+            showMessage(
+                "التنفيذ المالي غير مفعّل في النسخة المحلية."
+            )
+        }
+
+        addCard(
+            "🏠 الرئيسية",
+            "العودة"
+        ) {
+            showHome()
+        }
+    }
+
+    private fun showFinancingRequirements() {
+
+        setContentView(baseLayout())
+        content.removeAllViews()
+
+        showSensitiveHeader(
+            "📋 متطلبات المشروع التمويلي",
+            "قائمة تنظيمية أولية لتجهيز النظام المستقبلي."
+        )
+
+        addInfo(
+            "1️⃣ تعريف المشروع",
+            "اسم المشروع ونوعه والجهة المسؤولة عنه."
+        )
+
+        addInfo(
+            "2️⃣ المتطلبات القانونية",
+            "التراخيص والموافقات والعقود المطلوبة."
+        )
+
+        addInfo(
+            "3️⃣ أهلية المشاركين",
+            "التحقق من المتطلبات القانونية والتنظيمية للمشاركين."
+        )
+
+        addInfo(
+            "4️⃣ المخاطر",
+            "عرض المخاطر والشروط بوضوح قبل أي التزام."
+        )
+
+        addInfo(
+            "5️⃣ التوثيق",
+            "تسجيل الموافقات والوثائق بطريقة آمنة عند تشغيل النظام الحقيقي."
+        )
+
+        addCard(
+            "🪪 التحقق",
+            "الانتقال إلى مسار الأهلية"
+        ) {
+            showEligibilityVerification()
+        }
+
+        addCard(
+            "🏗️ العودة للمشروع",
+            "الرجوع"
+        ) {
+            showFinancingParticipation()
+        }
+    }
+
+        private fun showSensitiveAccessPolicy() {
+
+        setContentView(baseLayout())
+        content.removeAllViews()
+
+        showSensitiveHeader(
+            "🔐 سياسة الوصول الحساس",
+            "ضوابط عامة للأقسام الاستثمارية والتمويلية والمالية."
+        )
+
+        addInfo(
+            "1. التحقق",
+            "لا يكفي وجود حساب عادي للوصول إلى الوظائف الحساسة."
+        )
+
+        addInfo(
+            "2. الصلاحيات",
+            "كل إجراء حساس يجب أن يرتبط بصلاحية واضحة."
+        )
+
+        addInfo(
+            "3. التوثيق",
+            "يجب تسجيل الإجراءات الحساسة بطريقة آمنة."
+        )
+
+        addInfo(
+            "4. حماية الشاشة",
+            "يتم استخدام FLAG_SECURE لمنع التقاط الشاشة أثناء عرض البيانات الحساسة."
+        )
+
+        addInfo(
+            "5. التحقق القانوني",
+            "لا يجوز للتطبيق اختراع نتيجة قانونية. النتيجة الفعلية يجب أن تأتي من مصدر رسمي مصرح به."
+        )
+
+        addInfo(
+            "6. أقل قدر من البيانات",
+            "يجب جمع البيانات اللازمة فقط للغرض المحدد."
+        )
+
+        addCard(
+            "🪪 الأهلية",
+            "التحقق من متطلبات الأهلية"
+        ) {
+            showEligibilityVerification()
+        }
+
+        addCard(
+            "📈 الاستثمار",
+            "مسار المشاركة الاستثمارية"
+        ) {
+            showInvestmentParticipation()
+        }
+
+        addCard(
+            "🏗️ التمويل",
+            "مسار المشاركة التمويلية"
+        ) {
+            showFinancingParticipation()
+        }
+
+        addCard(
+            "🏠 الرئيسية",
+            "العودة"
+        ) {
+            showHome()
+        }
+    }
+
+    private fun showSecurityChecklist() {
+
+        setContentView(baseLayout())
+        content.removeAllViews()
+
+        showSensitiveHeader(
+            "🛡️ قائمة فحص الأمان",
+            "فحص محلي مبدئي لطبقات الحماية."
+        )
+
+        addInfo(
+            "حماية التقاط الشاشة",
+            "مفعلة باستخدام FLAG_SECURE."
+        )
+
+        addInfo(
+            "التنفيذ المالي",
+            "غير مفعّل في النسخة المحلية."
+        )
+
+        addInfo(
+            "التحقق الحكومي",
+            "غير متصل حاليًا بأي جهة حكومية."
+        )
+
+        addInfo(
+            "البيانات الحساسة",
+            "يجب عدم تخزينها محليًا بصورة غير آمنة."
+        )
+
+        addInfo(
+            "الخادم",
+            "التكامل الحقيقي يحتاج خادمًا آمنًا وصلاحيات مناسبة."
+        )
+
+        addCard(
+            "🔄 إعادة تفعيل حماية الشاشة",
+            "تطبيق الحماية"
+        ) {
+            enableSensitiveScreenProtection()
+        }
+
+        addCard(
+            "🏠 الرئيسية",
+            "العودة"
+        ) {
+            showHome()
+        }
+    }
+
+    private fun showHomeSecurityLinks() {
+
+        addSection("🔐 الأمان المتقدم")
+
+        addCard(
+            "🛡️ سياسة الوصول الحساس",
+            "قواعد الأقسام المالية والاستثمارية"
+        ) {
+            showSensitiveAccessPolicy()
+        }
+
+        addCard(
+            "✅ قائمة فحص الأمان",
+            "مراجعة حالة الحماية المحلية"
+        ) {
+            showSecurityChecklist()
+        }
+    }
+
+    private fun showHomeFinalLinks() {
+
+        addSection("📌 الإدارة والخدمات الحساسة")
+
+        addCard(
+            "📈 المشاركة الاستثمارية",
+            "مسار محمي قبل أي مشاركة"
+        ) {
+            showInvestmentParticipation()
+        }
+
+        addCard(
+            "🏗️ المشاركة التمويلية",
+            "مسار محمي للمشاريع التمويلية"
+        ) {
+            showFinancingParticipation()
+        }
+
+        addCard(
+            "🪪 التحقق من الأهلية",
+            "التحقق الرسمي عند توفر التكامل"
+        ) {
+            showEligibilityVerification()
+        }
+
+        addCard(
+            "🔐 سياسة الوصول",
+            "ضوابط الأقسام الحساسة"
+        ) {
+            showSensitiveAccessPolicy()
+        }
+    }
+
+    private fun showHomeComplete() {
+
+        showHomeProjects()
+        showHomeSecurityLinks()
+        showHomeFinalLinks()
+    }
+
+    private fun showHomeWrapper() {
+
+        showHome()
+
+        /*
+         * هذه الدالة موجودة كمسار احتياطي للتوسع.
+         * لا تستخدم حاليًا لتجنب إعادة بناء الواجهة مرتين.
+         */
+    }
+
+    private fun showAccessDenied() {
+
+        setContentView(baseLayout())
+        content.removeAllViews()
+
+        addSection("🚫 الوصول غير متاح")
+
+        addInfo(
+            "الصلاحية",
+            "لا تملك هذه الجلسة الصلاحية المطلوبة للوصول إلى القسم."
+        )
+
+        addInfo(
+            "الأمان",
+            "لا يتم تجاوز الصلاحيات من داخل التطبيق."
+        )
+
+        addCard(
+            "🔐 الحساب",
+            "الانتقال إلى الحساب"
+        ) {
+            showAccount()
+        }
+
+        addCard(
+            "🏠 الرئيسية",
+            "العودة"
+        ) {
+            showHome()
+        }
+    }
+
+        private fun showProjectStatus() {
+
+        setContentView(baseLayout())
+        content.removeAllViews()
+
+        addSection("📊 حالة المشروع")
+
+        addInfo(
+            "المنصة",
+            "CENTRAL MARKET"
+        )
+
+        addInfo(
+            "نوع النسخة",
+            "Android"
+        )
+
+        addInfo(
+            "الحالة",
+            "نسخة محلية قابلة للاختبار، مع خدمات مستقبلية قيد الربط."
+        )
+
+        addInfo(
+            "البيانات السحابية",
+            "غير مفعلة في هذه النسخة."
+        )
+
+        addInfo(
+            "العمليات المالية",
+            "غير مفعلة في هذه النسخة."
+        )
+
+        addInfo(
+            "التحقق الحكومي",
+            "غير مفعّل حتى يتم إنشاء التكامل الرسمي والتفويض المناسب."
+        )
+
+        addInfo(
+            "حماية الشاشة",
+            "مفعلة على مستوى النافذة باستخدام FLAG_SECURE."
+        )
+
+        addCard(
+            "🛡️ قائمة الأمان",
+            "مراجعة حماية النسخة"
+        ) {
+            showSecurityChecklist()
+        }
+
+        addCard(
+            "🏠 الرئيسية",
+            "العودة"
+        ) {
+            showHome()
+        }
+    }
+
+    private fun showOwnerApproval() {
+
+        setContentView(baseLayout())
+        content.removeAllViews()
+
+        addSection("✅ موافقة المالك")
+
+        addInfo(
+            "المبدأ",
+            "الإجراءات الحساسة لا تُنفذ بمجرد الضغط على زر داخل التطبيق."
+        )
+
+        addInfo(
+            "التأكيد",
+            "يجب أن يكون هناك نظام صلاحيات وتأكيد مناسب عند تشغيل الخادم الحقيقي."
+        )
+
+        addInfo(
+            "التوثيق",
+            "يجب تسجيل من وافق ومتى وعلى أي إجراء، وفق النظام القانوني وسياسة الخصوصية."
+        )
+
+        addCard(
+            "📈 الاستثمار",
+            "مراجعة المشاركة الاستثمارية"
+        ) {
+            showInvestmentParticipation()
+        }
+
+        addCard(
+            "🏗️ التمويل",
+            "مراجعة المشاركة التمويلية"
+        ) {
+            showFinancingParticipation()
+        }
+
+        addCard(
+            "🏠 الرئيسية",
+            "العودة"
+        ) {
+            showHome()
+        }
+    }
+
+    private fun showAppRules() {
+
+        setContentView(baseLayout())
+        content.removeAllViews()
+
+        addSection("📜 قواعد استخدام المنصة")
+
+        addInfo(
+            "التجارة",
+            "تتم الخدمات التجارية وفق القوانين والشروط التي تنطبق على السوق والجهة."
+        )
+
+        addInfo(
+            "الخصوصية",
+            "لا يتم كشف البيانات الخاصة إلا وفق الصلاحيات والأساس القانوني المناسب."
+        )
+
+        addInfo(
+            "الأمان",
+            "لا يمكن استخدام التطبيق لتجاوز صلاحيات أو أنظمة رسمية."
+        )
+
+        addInfo(
+            "التحقق",
+            "التحقق القانوني الحقيقي يحتاج مصدرًا رسميًا وتكاملًا مصرحًا."
+        )
+
+        addInfo(
+            "المال",
+            "النسخة الحالية لا تنفذ معاملات مالية حقيقية."
+        )
+
+        addCard(
+            "🛡️ سياسة الوصول",
+            "عرض حماية الأقسام الحساسة"
+        ) {
+            showSensitiveAccessPolicy()
+        }
+
+        addCard(
+            "🏠 الرئيسية",
+            "العودة"
+        ) {
+            showHome()
+        }
+    }
+
+    private fun showDiagnostics() {
+
+        setContentView(baseLayout())
+        content.removeAllViews()
+
+        addSection("🔧 الفحص المحلي")
+
+        val manager =
+            getSystemService(CONNECTIVITY_SERVICE)
+                    as ConnectivityManager
+
+        val network = manager.activeNetwork
+
+        val capabilities =
+            manager.getNetworkCapabilities(network)
+
+        val online =
+            capabilities?.hasCapability(
+                NetworkCapabilities.NET_CAPABILITY_INTERNET
+            ) == true
+
+        addInfo(
+            "الاتصال",
+            if (online) {
+                "متصل بالإنترنت."
+            } else {
+                "غير متصل بالإنترنت."
+            }
+        )
+
+        addInfo(
+            "حماية الشاشة",
+            "FLAG_SECURE مفعّل في نافذة التطبيق."
+        )
+
+        addInfo(
+            "قاعدة البيانات",
+            "غير مرتبطة في النسخة المحلية."
+        )
+
+        addInfo(
+            "الخدمات الحكومية",
+            "لا يوجد تكامل حكومي فعلي في النسخة الحالية."
+        )
+
+        addInfo(
+            "الخدمات المالية",
+            "لا يوجد تنفيذ مالي فعلي في النسخة الحالية."
+        )
+
+        addCard(
+            "🔄 إعادة الفحص",
+            "فحص الحالة الحالية"
+        ) {
+            showDiagnostics()
+        }
+
+        addCard(
+            "🏠 الرئيسية",
+            "العودة"
+        ) {
+            showHome()
+        }
+    }
+
+    private fun showDeveloperNotice() {
+
+        setContentView(baseLayout())
+        content.removeAllViews()
+
+        addSection("ℹ️ ملاحظة التطوير")
+
+        addInfo(
+            "النسخة الحالية",
+            "هذه النسخة هي طبقة Android محلية لواجهة المشروع."
+        )
+
+        addInfo(
+            "ما لم يتم ربطه",
+            "الخادم، قاعدة البيانات، الدفع، التحقق الحكومي، والعمليات المالية الحقيقية تحتاج إلى خدمات خلفية منفصلة."
+        )
+
+        addInfo(
+            "الأمان",
+            "الحماية الموجودة في التطبيق لا تغني عن حماية الخادم."
+        )
+
+        addInfo(
+            "التحقق القانوني",
+            "لا يتم اعتبار أي نتيجة محلية قرارًا قانونيًا."
+        )
+
+        addCard(
+            "📊 حالة المشروع",
+            "عرض الحالة الحالية"
+        ) {
+            showProjectStatus()
+        }
+
+        addCard(
+            "🏠 الرئيسية",
+            "العودة"
+        ) {
+            showHome()
+        }
+    }
+
+    /*
+     * دالة إضافية لتنظيف شاشة حساسة عند الحاجة.
+     * لا يتم استدعاؤها تلقائيًا حتى لا نعرض بيانات
+     * حساسة بدون طلب واضح.
+     */
+    private fun clearSensitiveView() {
+
+        content.removeAllViews()
+
+        addSection("🔒 تم إغلاق الشاشة الحساسة")
+
+        addInfo(
+            "الحماية",
+            "تم حذف محتوى الشاشة الحالية من واجهة التطبيق."
+        )
+
+        addCard(
+            "🏠 الرئيسية",
+            "العودة"
+        ) {
+            showHome()
+        }
+    }
+
+    /*
+     * هذه الدالة هي نقطة توحيد مستقبلية لأي عملية
+     * حساسة تحتاج موافقة وصلاحية.
+     */
+    private fun requireSensitiveConfirmation(
+        actionName: String
+    ) {
+
+        enableSensitiveScreenProtection()
+
+        showMessage(
+            "الإجراء الحساس: $actionName\n" +
+                    "يتطلب صلاحية وتأكيدًا مناسبين قبل التنفيذ الحقيقي."
+        )
+    }
+
+        /*
+     * ملاحظة مهمة:
+     * نستخدم هذه الدالة لإعادة رسم الصفحة الرئيسية مع
+     * الإضافات الجديدة بعد اكتمال جميع أجزاء الملف.
+     */
+    private fun renderCompleteHome() {
+
+        setContentView(baseLayout())
+        content.removeAllViews()
+
+        addSection("مرحبًا بك في CENTRAL MARKET")
+
+        val intro = TextView(this)
+        intro.text =
+            "منصة واحدة .. عالم من الفرص.\n\n" +
+                    "أسواق وخدمات ومركبات وإعلانات ومشاريع وابتكار."
+
+        intro.textSize = 16f
+        intro.setTextColor(muted)
+        intro.gravity = Gravity.CENTER
+        intro.setPadding(5, 5, 5, 18)
+
+        content.addView(intro)
+
+        addSection("🌐 الاتصال والتجربة")
+
+        addCard(
+            "🌐 مركز التجربة عبر الإنترنت",
+            "فحص اتصال الجهاز والخدمات المتصلة"
+        ) {
+            showOnline()
+        }
+
+        addSection("⚡ الوصول السريع")
+
+        addCard(
+            "👤 وضع الزائر",
+            "تصفح الخدمات دون تسجيل"
+        ) {
+            showGuestMode()
+        }
+
+        addCard(
+            "🛡️ الأمان والخصوصية",
+            "حماية البيانات والصلاحيات والشاشات الحساسة"
+        ) {
+            showSafety()
+        }
+
+        addCard(
+            "📦 المنتجات والخدمات",
+            "استعراض العروض"
+        ) {
+            showProducts()
+        }
+
+        addSection("🏪 الأقسام الرئيسية")
+
+        addCard("🚛 المركبات والشاحنات", "مركبات وشاحنات ومعدات") {
+            showCategory(
+                "🚛 المركبات والشاحنات",
+                "مركبات وشاحنات ومعدات"
+            )
+        }
+
+        addCard("📱 الهواتف والإلكترونيات", "هواتف وأجهزة وإلكترونيات") {
+            showCategory(
+                "📱 الهواتف والإلكترونيات",
+                "هواتف وأجهزة وإلكترونيات"
+            )
+        }
+
+        addCard("🍽️ المطاعم والتوصيل", "مطاعم وطلبات وتوصيل") {
+            showCategory(
+                "🍽️ المطاعم والتوصيل",
+                "مطاعم وطلبات وتوصيل"
+            )
+        }
+
+        addCard("📢 التسويق والإعلانات", "تسويق وإعلانات وعروض") {
+            showAds()
+        }
+
+        addCard("🛠️ الخدمات", "خدمات للأفراد والشركات") {
+            showCategory(
+                "🛠️ الخدمات",
+                "خدمات متنوعة للأفراد والشركات"
+            )
+        }
+
+        addCard("🌾 الزراعة والثروة الحيوانية", "محاصيل ومواشي ومعدات") {
+            showCategory(
+                "🌾 الزراعة والثروة الحيوانية",
+                "محاصيل ومواشي ومعدات"
+            )
+        }
+
+        addCard("🐟 الثروة السمكية", "أسماك ومعدات وخدمات") {
+            showCategory(
+                "🐟 الثروة السمكية",
+                "أسماك ومعدات وخدمات"
+            )
+        }
+
+        addCard("🏗️ مواد البناء والجملة", "مواد البناء وتجارة الجملة") {
+            showCategory(
+                "🏗️ مواد البناء والجملة",
+                "مواد بناء وتجارة الجملة"
+            )
+        }
+
+        addCard("🏥 الصحة", "عيادات ومختبرات وصيدليات") {
+            showCategory(
+                "🏥 الصحة",
+                "خدمات صحية"
+            )
+        }
+
+        addCard("🏋️ الرياضة والملاعب", "صالات وملاعب") {
+            showCategory(
+                "🏋️ الرياضة والملاعب",
+                "خدمات رياضية"
+            )
+        }
+
+        addCard("⚡ الكهرباء والمياه", "خدمات الكهرباء والمياه") {
+            showCategory(
+                "⚡ الكهرباء والمياه",
+                "الخدمات الأساسية"
+            )
+        }
+
+        addCard("🏫 التعليم", "مدارس وخدمات تعليمية") {
+            showCategory(
+                "🏫 التعليم",
+                "خدمات تعليمية"
+            )
+        }
+
+        addCard("✈️ السفر والتذاكر", "سفر وحجوزات وتذاكر") {
+            showCategory(
+                "✈️ السفر والتذاكر",
+                "السفر والحجوزات والتذاكر"
+            )
+        }
+
+        addCard("⭐ النقاط والمكافآت", "نظام النقاط والمكافآت") {
+            showPoints()
+        }
+
+        addSection("💡 المشاريع والمجتمع")
+
+        addCard(
+            "🧠 الذكاء البشري",
+            "أفكار وابتكارات ومشاريع"
+        ) {
+            showHumanIntelligence()
+        }
+
+        addCard(
+            "🤖 CTM AI",
+            "المساعد الذكي الرسمي"
+        ) {
+            showCtmAi()
+        }
+
+        addCard(
+            "🤲 صندوق دعم الأيتام والمحتاجين",
+            "مبادرات الدعم المجتمعي"
+        ) {
+            showCharity()
+        }
+
+        addCard(
+            "🍲 مطبخ الطيبات",
+            "الطعام والوصفات والخدمات الغذائية"
+        ) {
+            showKitchen()
+        }
+
+        addSection("🏢 الإدارة")
+
+        addCard(
+            "👔 مكتب المدير",
+            "الإدارة والوثائق والتقارير"
+        ) {
+            showManagerOffice()
+        }
+
+        addCard(
+            "🦡 BADGER",
+            "المنظومة المصرفية المستقلة"
+        ) {
+            showBadger()
+        }
+
+        addCard(
+            "🛡️ مكتب الأمن والمعلومات",
+            "الحماية ومكافحة الاحتيال"
+        ) {
+            showSecurityOffice()
+        }
+
+        addCard(
+            "⚖️ مكتب النائب العام للمشروع",
+            "الملفات القانونية"
+        ) {
+            showAttorneyOffice()
+        }
+
+        addCard(
+            "💰 النظام المالي الخاص",
+            "المتابعة المالية الخاصة"
+        ) {
+            showPrivateFinancialSystem()
+        }
+
+        addSection("🔐 الخدمات الحساسة")
+
+        addCard(
+            "📈 المشاركة في الاستثمار",
+            "مسار استثماري محمي"
+        ) {
+            showInvestmentParticipation()
+        }
+
+        addCard(
+            "🏗️ المشاركة في مشروع تمويلي",
+            "مسار تمويلي محمي"
+        ) {
+            showFinancingParticipation()
+        }
+
+        addCard(
+            "🪪 التحقق من الأهلية",
+            "التحقق الرسمي عند توفر التكامل"
+        ) {
+            showEligibilityVerification()
+        }
+
+        addCard(
+            "🛡️ سياسة الوصول الحساس",
+            "قواعد الحماية والصلاحيات"
+        ) {
+            showSensitiveAccessPolicy()
+        }
+
+        addCard(
+            "📊 حالة المشروع",
+            "حالة النسخة والخدمات"
+        ) {
+            showProjectStatus()
+        }
+
+        addCard(
+            "🔧 الفحص المحلي",
+            "تشخيص الاتصال والحماية"
+        ) {
+            showDiagnostics()
+        }
+
+        addCard(
+            "ℹ️ ملاحظات التطوير",
+            "حدود النسخة الحالية والخدمات المستقبلية"
+        ) {
+            showDeveloperNotice()
+        }
+    }
+
+    /*
+     * نقطة البداية النهائية:
+     * نستخدم الصفحة الرئيسية الكاملة بعد تعريف جميع الدوال.
+     */
+    private fun launchCompleteHome() {
+        renderCompleteHome()
     }
 }
