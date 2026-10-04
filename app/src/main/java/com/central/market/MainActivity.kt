@@ -5,7 +5,6 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
-import android.os.Build
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
@@ -15,17 +14,12 @@ import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
 import android.widget.Button
-import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 
 class MainActivity : Activity() {
-
-    // =========================
-    // الألوان الأساسية
-    // =========================
 
     private val navy = Color.rgb(18, 42, 66)
     private val blue = Color.rgb(32, 104, 170)
@@ -38,48 +32,31 @@ class MainActivity : Activity() {
     private val textDark = Color.rgb(30, 43, 55)
     private val muted = Color.rgb(92, 108, 122)
 
-    // =========================
-    // الواجهة
-    // =========================
-
     private lateinit var content: LinearLayout
 
-    // =========================
-    // حماية التطبيق
-    // =========================
-
-    private val idleHandler = Handler(Looper.getMainLooper())
-
+    private val handler = Handler(Looper.getMainLooper())
     private val outsideAppTimeout = 10 * 60 * 1000L
 
     private var outsideAppStartedAt = 0L
     private var sessionLocked = false
 
-    private val outsideAppLockRunnable = Runnable {
+    private val lockRunnable = Runnable {
         lockSession()
     }
-
-    // =========================
-    // بداية التطبيق
-    // =========================
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // حماية الشاشة على مستوى التطبيق بالكامل
+        // حماية شاملة للتطبيق من تصوير وتسجيل الشاشة.
         window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
 
         showHome()
     }
 
-        // =========================
-    // دورة حياة التطبيق والحماية
-    // =========================
-
     override fun onStart() {
         super.onStart()
 
-        idleHandler.removeCallbacks(outsideAppLockRunnable)
+        handler.removeCallbacks(lockRunnable)
 
         if (outsideAppStartedAt > 0L) {
             val elapsed =
@@ -99,373 +76,123 @@ class MainActivity : Activity() {
         outsideAppStartedAt =
             SystemClock.elapsedRealtime()
 
-        idleHandler.removeCallbacks(outsideAppLockRunnable)
-
-        idleHandler.postDelayed(
-            outsideAppLockRunnable,
-            outsideAppTimeout
-        )
+        handler.removeCallbacks(lockRunnable)
+        handler.postDelayed(lockRunnable, outsideAppTimeout)
     }
 
     override fun onDestroy() {
-        idleHandler.removeCallbacks(
-            outsideAppLockRunnable
-        )
+        handler.removeCallbacks(lockRunnable)
         super.onDestroy()
     }
 
     private fun lockSession() {
-        if (sessionLocked) {
-            return
-        }
+        if (sessionLocked) return
 
         sessionLocked = true
+        handler.removeCallbacks(lockRunnable)
 
-        idleHandler.removeCallbacks(
-            outsideAppLockRunnable
+        baseLayout("التطبيق مقفل")
+        addSection("حماية الجلسة")
+
+        addInfo(
+            "تم قفل الجلسة",
+            "مرّت 10 دقائق أثناء وجود التطبيق خارج الشاشة."
         )
 
-        showSessionLocked()
-    }
-
-    private fun unlockSession() {
-        sessionLocked = false
-        outsideAppStartedAt = 0L
-
-        showHome()
-    }
-
-    // =========================
-    // شاشة قفل الجلسة
-    // =========================
-
-    private fun showSessionLocked() {
-        val root = LinearLayout(this)
-
-        root.orientation = LinearLayout.VERTICAL
-        root.gravity = Gravity.CENTER
-        root.setPadding(28, 28, 28, 28)
-        root.setBackgroundColor(background)
-
-        val icon = TextView(this)
-
-        icon.text = "🔒"
-        icon.textSize = 48f
-        icon.gravity = Gravity.CENTER
-
-        root.addView(
-            icon,
-            LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-        )
-
-        val title = TextView(this)
-
-        title.text = "الجلسة مقفلة"
-        title.textSize = 25f
-        title.setTypeface(null, Typeface.BOLD)
-        title.setTextColor(navy)
-        title.gravity = Gravity.CENTER
-        title.setPadding(0, 18, 0, 12)
-
-        root.addView(title)
-
-        val message = TextView(this)
-
-        message.text =
-            "تم قفل الجلسة بعد مرور 10 دقائق " +
-            "خارج التطبيق.\n\n" +
-            "حماية الشاشة مفعلة على مستوى التطبيق."
-
-        message.textSize = 16f
-        message.setTextColor(textDark)
-        message.gravity = Gravity.CENTER
-        message.setPadding(10, 10, 10, 24)
-
-        root.addView(message)
-
-        val continueButton = Button(this)
-
-        continueButton.text = "🔐 متابعة الجلسة"
-        continueButton.textSize = 16f
-        continueButton.setTextColor(white)
-        continueButton.background =
-            roundedBackground(
-                blue,
-                blue,
-                18
-            )
-
-        continueButton.setOnClickListener {
-            unlockSession()
-        }
-
-        root.addView(
-            continueButton,
-            LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                setMargins(0, 8, 0, 8)
-            }
-        )
-
-        val homeButton = Button(this)
-
-        homeButton.text = "🏠 العودة إلى الرئيسية"
-        homeButton.textSize = 15f
-        homeButton.setTextColor(navy)
-        homeButton.background =
-            roundedBackground(
-                white,
-                gold,
-                18
-            )
-
-        homeButton.setOnClickListener {
+        addCard(
+            "🔓 فتح الجلسة",
+            "العودة إلى التطبيق"
+        ) {
             sessionLocked = false
             outsideAppStartedAt = 0L
             showHome()
         }
-
-        root.addView(
-            homeButton,
-            LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                setMargins(0, 8, 0, 8)
-            }
-        )
-
-        setContentView(root)
     }
 
-    // =========================
-    // التخطيط الأساسي
-    // =========================
-
-    private fun baseLayout(): LinearLayout {
-
+    private fun baseLayout(title: String = "CENTRAL MARKET"): LinearLayout {
         val root = LinearLayout(this)
-
         root.orientation = LinearLayout.VERTICAL
         root.setBackgroundColor(background)
 
-        val header = LinearLayout(this)
-
-        header.orientation = LinearLayout.VERTICAL
+        val header = TextView(this)
+        header.text = title
+        header.setTextColor(white)
+        header.textSize = 22f
+        header.setTypeface(null, Typeface.BOLD)
         header.gravity = Gravity.CENTER
-        header.setPadding(16, 18, 16, 12)
+        header.setPadding(16, 24, 16, 24)
+        header.background = roundedBackground(navy, 0f)
 
-        val headerBackground =
-            GradientDrawable().apply {
-                setColor(white)
-                cornerRadius = 0f
-            }
-
-        header.background = headerBackground
-
-        val logo = TextView(this)
-
-        logo.text = "CENTRAL"
-        logo.textSize = 27f
-        logo.setTypeface(null, Typeface.BOLD)
-        logo.setTextColor(navy)
-        logo.gravity = Gravity.CENTER
-
-        val market = TextView(this)
-
-        market.text = "MARKET"
-        market.textSize = 13f
-        market.setTypeface(null, Typeface.BOLD)
-        market.setTextColor(blue)
-        market.gravity = Gravity.CENTER
-
-        val line = TextView(this)
-
-        line.text = "━━━━━━━━━━━━"
-        line.textSize = 10f
-        line.setTextColor(gold)
-        line.gravity = Gravity.CENTER
-
-        header.addView(logo)
-        header.addView(market)
-        header.addView(line)
-
-        root.addView(header)
-
-        content = LinearLayout(this)
-
-        content.orientation =
-            LinearLayout.VERTICAL
-
-        content.setPadding(
-            16,
-            10,
-            16,
-            24
+        root.addView(
+            header,
+            LinearLayout.LayoutParams(
+                -1,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
         )
 
         val scroll = ScrollView(this)
 
-        scroll.isFillViewport = true
+        content = LinearLayout(this)
+        content.orientation = LinearLayout.VERTICAL
+        content.setPadding(16, 16, 16, 24)
+
         scroll.addView(content)
 
         root.addView(
             scroll,
             LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
+                -1,
                 0,
                 1f
             )
         )
 
-        val navigation = LinearLayout(this)
-
-        navigation.orientation =
-            LinearLayout.HORIZONTAL
-
-        navigation.setPadding(
-            4,
-            4,
-            4,
-            4
-        )
-
-        navigation.setBackgroundColor(white)
-
-        addNavButton(
-            navigation,
-            "⌂\nالرئيسية"
-        ) {
-            showHome()
-        }
-
-        addNavButton(
-            navigation,
-            "⌕\nالبحث"
-        ) {
-            showSearch()
-        }
-
-        addNavButton(
-            navigation,
-            "♡\nالمفضلة"
-        ) {
-            showFavorites()
-        }
-
-        addNavButton(
-            navigation,
-            "●\nالحساب"
-        ) {
-            showAccount()
-        }
-
-        root.addView(navigation)
-
-        return root
+        setContentView(root)
+        return content
     }
-
-    // =========================
-    // أزرار التنقل
-    // =========================
-
-    private fun addNavButton(
-        parent: LinearLayout,
-        title: String,
-        action: () -> Unit
-    ) {
-
-        val button = Button(this)
-
-        button.text = title
-        button.textSize = 10f
-        button.setTextColor(navy)
-
-        button.background =
-            roundedBackground(
-                white,
-                gold,
-                12
-            )
-
-        button.setOnClickListener {
-            action()
-        }
-
-        parent.addView(
-            button,
-            LinearLayout.LayoutParams(
-                0,
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                1f
-            ).apply {
-                setMargins(2, 2, 2, 2)
-            }
-        )
-    }
-
-    // =========================
-    // العناوين
-    // =========================
 
     private fun addSection(title: String) {
-
         val text = TextView(this)
-
         text.text = title
-        text.textSize = 20f
-        text.setTypeface(null, Typeface.BOLD)
+        text.textSize = 19f
         text.setTextColor(navy)
-
-        text.setPadding(
-            4,
-            18,
-            4,
-            9
-        )
+        text.setTypeface(null, Typeface.BOLD)
+        text.setPadding(4, 18, 4, 10)
 
         content.addView(text)
     }
 
-    // =========================
-    // البطاقات
-    // =========================
+    private fun addInfo(title: String, body: String) {
+        val box = TextView(this)
+        box.text = "$title\n$body"
+        box.textSize = 15f
+        box.setTextColor(textDark)
+        box.setPadding(18, 16, 18, 16)
+        box.background = roundedBackground(white, 18f)
+
+        content.addView(
+            box,
+            LinearLayout.LayoutParams(
+                -1,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                bottomMargin = 10
+            }
+        )
+    }
 
     private fun addCard(
         title: String,
         description: String,
         action: () -> Unit
     ) {
-
         val button = Button(this)
-
-        button.text =
-            "$title\n$description"
-
-        button.textSize = 14f
-        button.setTextColor(textDark)
-        button.gravity =
-            Gravity.CENTER_VERTICAL
-
-        button.setPadding(
-            16,
-            18,
-            16,
-            18
-        )
-
-        button.background =
-            roundedBackground(
-                white,
-                blue,
-                18
-            )
-
+        button.text = "$title\n$description"
+        button.textSize = 15f
+        button.setTextColor(white)
+        button.setPadding(14, 14, 14, 14)
+        button.background = roundedBackground(blue, 18f)
         button.setOnClickListener {
             action()
         }
@@ -473,1077 +200,597 @@ class MainActivity : Activity() {
         content.addView(
             button,
             LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
+                -1,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             ).apply {
-                setMargins(
-                    0,
-                    5,
-                    0,
-                    5
-                )
+                bottomMargin = 10
             }
         )
     }
 
-    // =========================
-    // خلفية البطاقات
-    // =========================
+    private fun addNavButton(
+        title: String,
+        action: () -> Unit
+    ) {
+        val button = Button(this)
+        button.text = title
+        button.setTextColor(navy)
+        button.setOnClickListener {
+            action()
+        }
+
+        content.addView(
+            button,
+            LinearLayout.LayoutParams(
+                -1,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+        )
+    }
 
     private fun roundedBackground(
-        fill: Int,
-        stroke: Int,
-        radius: Int
+        color: Int,
+        radius: Float
     ): GradientDrawable {
-
         return GradientDrawable().apply {
-
-            setColor(fill)
-
-            cornerRadius =
-                radius.toFloat()
-
-            setStroke(
-                2,
-                stroke
-            )
+            setColor(color)
+            cornerRadius = radius
         }
     }
 
-    // =========================
-    // معلومات نصية
-    // =========================
-
-    private fun addInfo(
-        textValue: String
-    ) {
-
-        val text = TextView(this)
-
-        text.text = textValue
-        text.textSize = 16f
-        text.setTextColor(textDark)
-
-        text.setPadding(
-            10,
-            10,
-            10,
-            18
-        )
-
-        content.addView(text)
-    }
-
-    private fun addInfo(
-        title: String,
-        description: String
-    ) {
-
-        val text = TextView(this)
-
-        text.text =
-            "$title\n$description"
-
-        text.textSize = 16f
-        text.setTextColor(textDark)
-
-        text.setPadding(
-            10,
-            10,
-            10,
-            18
-        )
-
-        content.addView(text)
-    }
-
-    // =========================
-    // الرسائل
-    // =========================
-
-    private fun showMessage(
-        message: String
-    ) {
-
-        Toast.makeText(
-            this,
-            message,
-            Toast.LENGTH_LONG
-        ).show()
-    }
-
-        // =========================
-    // الرئيسية
-    // =========================
-
     private fun showHome() {
+        baseLayout("CENTRAL MARKET")
 
-        val root = baseLayout()
-
-        setContentView(root)
-
-        addSection("🌍 CENTRAL MARKET")
+        addSection("منصة واحدة .. عالم من الفرص.")
 
         addInfo(
-            "منصة واحدة .. عالم من الفرص.",
-            "منظومة تجارية وخدمية قابلة للتوسع محليًا وعالميًا."
+            "المنصة",
+            "منصة منظمة للتجارة والخدمات والمعلومات والمشاريع."
         )
 
-        // بطاقة الحالة العامة
         addCard(
-            "📶 حالة الاتصال",
-            "فحص الاتصال وقدرات الشبكة والجهاز"
+            "🌐 الاتصال",
+            "فحص حالة الإنترنت وقدرات الاتصال"
         ) {
             showOnline()
         }
 
-        // الوضع الضيف
         addCard(
             "👤 وضع الضيف",
-            "تصفح الخدمات العامة بدون الدخول إلى الحساب"
+            "الدخول إلى الخدمات العامة"
         ) {
             showGuestMode()
         }
 
-        // الأمان والخصوصية
         addCard(
-            "🔒 الأمان والخصوصية",
-            "حماية التطبيق والبيانات والصلاحيات"
+            "🛡️ الأمان والخصوصية",
+            "الحماية والخصوصية وقواعد الاستخدام"
         ) {
             showSafety()
         }
 
-        addSection("🛍️ الأسواق والخدمات")
-
         addCard(
-            "🚗 المركبات والشاحنات",
-            "بيع وشراء وخدمات المركبات"
+            "🛍️ المنتجات والأقسام",
+            "استعراض الأسواق والقطاعات"
         ) {
-            showCategory(
-                "🚗 المركبات والشاحنات"
-            )
+            showProducts()
         }
 
         addCard(
-            "📱 الهواتف والإلكترونيات",
-            "أجهزة وتقنيات وإكسسوارات"
+            "🔎 البحث",
+            "البحث داخل محتوى المنصة"
         ) {
-            showCategory(
-                "📱 الهواتف والإلكترونيات"
-            )
-        }
-
-        addCard(
-            "🍽️ المطاعم والتوصيل",
-            "مطاعم وطلبات وخدمات توصيل"
-        ) {
-            showCategory(
-                "🍽️ المطاعم والتوصيل"
-            )
-        }
-
-        addCard(
-            "📢 الإعلانات",
-            "إعلانات BRONZE وSILVER وGOLD"
-        ) {
-            showAds()
-        }
-
-        addCard(
-            "🛠️ الخدمات",
-            "خدمات مهنية وتجارية متنوعة"
-        ) {
-            showCategory(
-                "🛠️ الخدمات"
-            )
-        }
-
-        addSection("🌾 القطاعات الأساسية")
-
-        addCard(
-            "🌾 الزراعة والثروة الحيوانية",
-            "منتجات وخدمات القطاع الزراعي والحيواني"
-        ) {
-            showCategory(
-                "🌾 الزراعة والثروة الحيوانية"
-            )
-        }
-
-        addCard(
-            "🐟 الأسماك",
-            "بيع وخدمات ومنتجات الأسماك"
-        ) {
-            showCategory(
-                "🐟 الأسماك"
-            )
-        }
-
-        addCard(
-            "🏗️ البناء والجملة",
-            "مواد البناء وتجارة الجملة"
-        ) {
-            showCategory(
-                "🏗️ البناء والجملة"
-            )
-        }
-
-        addCard(
-            "🏥 الصحة",
-            "خدمات ومعلومات صحية عامة"
-        ) {
-            showCategory(
-                "🏥 الصحة"
-            )
-        }
-
-        addCard(
-            "⚽ الرياضة",
-            "رياضة ومرافق وخدمات رياضية"
-        ) {
-            showCategory(
-                "⚽ الرياضة"
-            )
-        }
-
-        addCard(
-            "💡 الكهرباء والمياه",
-            "خدمات واحتياجات الكهرباء والمياه"
-        ) {
-            showCategory(
-                "💡 الكهرباء والمياه"
-            )
-        }
-
-        addCard(
-            "🎓 التعليم",
-            "تعليم وتدريب ومصادر تعليمية"
-        ) {
-            showCategory(
-                "🎓 التعليم"
-            )
-        }
-
-        addCard(
-            "✈️ السفر",
-            "سفر وحجوزات وخدمات مرتبطة"
-        ) {
-            showCategory(
-                "✈️ السفر"
-            )
+            showSearch()
         }
 
         addCard(
             "⭐ النقاط",
-            "نظام النقاط والمكافآت"
+            "النقاط والمشاركة المجتمعية"
         ) {
             showPoints()
         }
 
-        addSection("🧠 المشاريع والمنظومة")
-
         addCard(
-            "🧠 Human Superintelligence",
-            "الذكاء البشري والمشاريع والأفكار"
+            "🧠 الذكاء البشري",
+            "المعرفة والخبرات والمبادرات"
         ) {
             showHumanIntelligence()
         }
 
         addCard(
             "🤖 CTM AI",
-            "المساعد الذكي الرسمي للمنصة"
+            "المساعد الرسمي للمنصة"
         ) {
             showCtmAi()
         }
 
         addCard(
-            "❤️ العمل الخيري",
-            "دعم الأيتام والمحتاجين والمبادرات"
+            "❤️ الدعم المجتمعي",
+            "المساعدة والمبادرات الخيرية"
         ) {
             showCharity()
         }
 
         addCard(
-            "🍳 المطبخ",
-            "محتوى وخدمات ومنتجات المطبخ"
-        ) {
-            showKitchen()
-        }
-
-        addCard(
-            "🏢 مكتب الإدارة",
-            "إدارة المنصة وفق الصلاحيات"
+            "🏢 إدارة المنصة",
+            "المكاتب والإدارة والحماية"
         ) {
             showManagerOffice()
-        }
-
-        addCard(
-            "🦡 BADGER",
-            "منظومة مالية مستقلة قابلة للتكامل البنكي"
-        ) {
-            showBadger()
-        }
-
-        addCard(
-            "🛡️ مكتب الأمن والمعلومات",
-            "الأمان ومتابعة المخاطر والحوادث"
-        ) {
-            showSecurityOffice()
-        }
-
-        addCard(
-            "⚖️ المكتب القانوني",
-            "الصلاحيات والمراجعات والإجراءات القانونية"
-        ) {
-            showAttorneyOffice()
-        }
-
-        addCard(
-            "💰 النظام المالي الخاص",
-            "إدارة المعلومات المالية والصلاحيات"
-        ) {
-            showPrivateFinancialSystem()
-        }
-
-        addSection("⚖️ الخدمات الحساسة")
-
-        addCard(
-            "📈 المشاركة الاستثمارية",
-            "طلب المشاركة وفق الأهلية والإجراءات النظامية"
-        ) {
-            showInvestmentParticipation()
-        }
-
-        addCard(
-            "🏗️ المشاركة في المشاريع التمويلية",
-            "طلبات التمويل والمشاركة وفق الضوابط"
-        ) {
-            showFinancingParticipation()
-        }
-
-        addCard(
-            "🪪 التحقق من الأهلية",
-            "التحقق الرسمي عند توفر التكامل والتفويض"
-        ) {
-            showEligibilityVerification()
-        }
-
-        addCard(
-            "🔐 سياسة الوصول الحساس",
-            "قواعد الحماية والصلاحيات للخدمات الحساسة"
-        ) {
-            showSensitiveAccessPolicy()
-        }
-
-        addSection("⚙️ حالة النظام")
-
-        addCard(
-            "📋 قواعد التطبيق",
-            "قواعد الاستخدام والحماية والصلاحيات"
-        ) {
-            showAppRules()
-        }
-
-        addCard(
-            "🔎 تشخيص الجهاز والاتصال",
-            "معلومات تشغيلية تساعد على توافق التطبيق"
-        ) {
-            showDiagnostics()
-        }
-
-        addCard(
-            "📊 حالة المشروع",
-            "معلومات عامة عن حالة المنصة"
-        ) {
-            showProjectStatus()
         }
 
         addInfo(
             "المالك",
             "المالك ياسر حسن وشركاؤه"
         )
-    }
 
-    // =========================
-    // الاتصال والشبكة
-    // =========================
-
-    private fun showOnline() {
-
-        val root = baseLayout()
-
-        setContentView(root)
-
-        addSection(
-            "📶 الاتصال وقدرات الشبكة"
+        addInfo(
+            "الحماية",
+            "حماية الشاشة مفعلة على مستوى التطبيق بالكامل."
         )
 
+        addNavButton("ℹ️ معلومات التطبيق") {
+            showAppInformation()
+        }
+    }
+
+    private fun showOnline() {
+        baseLayout("حالة الاتصال")
+
         val manager =
-            getSystemService(
-                CONNECTIVITY_SERVICE
-            ) as ConnectivityManager
+            getSystemService(CONNECTIVITY_SERVICE)
+                    as ConnectivityManager
 
         val network =
             manager.activeNetwork
 
         val capabilities =
-            network?.let {
-                manager.getNetworkCapabilities(it)
-            }
+            manager.getNetworkCapabilities(network)
 
-        val connected =
-            capabilities != null
+        val online = capabilities != null
 
-        if (connected) {
+        addSection("تشخيص الاتصال")
 
-            addInfo(
-                "الحالة",
-                "🟢 الاتصال متاح"
-            )
+        addInfo(
+            "الحالة",
+            if (online) "متصل بالإنترنت" else "غير متصل"
+        )
 
+        if (capabilities != null) {
             val wifi =
-                capabilities?.hasTransport(
+                capabilities.hasTransport(
                     NetworkCapabilities.TRANSPORT_WIFI
-                ) == true
+                )
 
             val mobile =
-                capabilities?.hasTransport(
+                capabilities.hasTransport(
                     NetworkCapabilities.TRANSPORT_CELLULAR
-                ) == true
+                )
 
             val ethernet =
-                capabilities?.hasTransport(
+                capabilities.hasTransport(
                     NetworkCapabilities.TRANSPORT_ETHERNET
-                ) == true
+                )
 
-            val connectionType =
+            addInfo(
+                "نوع الاتصال",
                 when {
                     wifi -> "Wi-Fi"
                     mobile -> "شبكة الهاتف"
                     ethernet -> "Ethernet"
                     else -> "اتصال آخر"
                 }
-
-            addInfo(
-                "نوع الاتصال",
-                connectionType
             )
-
-            val internet =
-                capabilities?.hasCapability(
-                    NetworkCapabilities.NET_CAPABILITY_INTERNET
-                ) == true
-
-            val validated =
-                capabilities?.hasCapability(
-                    NetworkCapabilities.NET_CAPABILITY_VALIDATED
-                ) == true
 
             addInfo(
                 "الإنترنت",
-                if (internet)
+                if (
+                    capabilities.hasCapability(
+                        NetworkCapabilities.NET_CAPABILITY_INTERNET
+                    )
+                ) {
                     "متاح"
-                else
+                } else {
                     "غير مؤكد"
-            )
-
-            addInfo(
-                "الوصول الفعلي للإنترنت",
-                if (validated)
-                    "متاح"
-                else
-                    "غير مؤكد"
-            )
-
-        } else {
-
-            addInfo(
-                "الحالة",
-                "🔴 لا يوجد اتصال حاليًا"
-            )
-
-            addInfo(
-                "وضع العمل",
-                "يمكن استخدام الوظائف المحلية التي لا تحتاج إلى اتصال."
+                }
             )
         }
 
-        addSection(
-            "📡 الاستخدام الذكي للبيانات"
-        )
-
-        addInfo(
-            "الوضع منخفض البيانات",
-            "تجنب تحميل محتوى ثقيل عند ضعف الاتصال، " +
-                    "مع إبقاء الوظائف الأساسية متاحة قدر الإمكان."
-        )
-
-        addInfo(
-            "الخدمات السحابية",
-            "لا يتم اعتبار أي خدمة خارجية متصلة فعليًا " +
-                    "إلا بعد وجود التكامل الرسمي."
-        )
-
         addCard(
-            "📱 تشخيص الجهاز",
-            "عرض معلومات التشغيل والتوافق"
+            "🔄 فحص مرة أخرى",
+            "تحديث حالة الاتصال"
         ) {
-            showDiagnostics()
+            showOnline()
         }
 
-        addCard(
-            "🏠 العودة للرئيسية",
-            "العودة إلى الصفحة الرئيسية"
-        ) {
+        addNavButton("↩️ الرئيسية") {
             showHome()
         }
     }
 
-    // =========================
-    // وضع الضيف
-    // =========================
+        private fun showGuestMode() {
+        baseLayout("وضع الضيف")
 
-    private fun showGuestMode() {
-
-        val root = baseLayout()
-
-        setContentView(root)
-
-        addSection(
-            "👤 وضع الضيف"
-        )
+        addSection("الدخول العام")
 
         addInfo(
-            "الوصول العام",
-            "يمكن للزائر استعراض الأقسام العامة " +
-                    "دون الوصول إلى البيانات الخاصة."
-        )
-
-        addInfo(
-            "الخصوصية",
-            "الوظائف التي تتطلب حسابًا أو صلاحية " +
-                    "لا تُتاح من وضع الضيف."
+            "وضع الضيف",
+            "يمكن تصفح الخدمات والمعلومات العامة دون فتح الأقسام الخاصة."
         )
 
         addCard(
-            "🛍️ استعراض المنتجات",
-            "الانتقال إلى الأسواق العامة"
+            "🛍️ المنتجات",
+            "استعراض الأقسام العامة"
         ) {
             showProducts()
         }
 
         addCard(
             "🔎 البحث",
-            "البحث في المحتوى المتاح للضيف"
+            "البحث في المعلومات المتاحة"
         ) {
             showSearch()
         }
 
         addCard(
-            "🔐 تسجيل الدخول",
-            "الوصول إلى وظائف الحساب"
+            "🛡️ الخصوصية",
+            "الاطلاع على قواعد حماية البيانات"
         ) {
-            showLogin()
+            showPrivacyCenter()
         }
 
         addCard(
-            "🏠 العودة للرئيسية",
-            "العودة إلى الصفحة الرئيسية"
+            "📋 قواعد الاستخدام",
+            "القواعد العامة للمنصة"
         ) {
+            showAppRules()
+        }
+
+        addNavButton("↩️ الرئيسية") {
             showHome()
         }
     }
-    
-        // =========================
-    // الأمان والخصوصية
-    // =========================
 
     private fun showSafety() {
+        baseLayout("الأمان والخصوصية")
 
-        val root = baseLayout()
-
-        setContentView(root)
-
-        addSection(
-            "🔒 الأمان والخصوصية"
-        )
+        addSection("الحماية الشاملة")
 
         addInfo(
             "حماية الشاشة",
-            "الحماية مفعلة على مستوى التطبيق بالكامل، " +
-                    "ولا يسمح التطبيق بالتقاط الشاشة أو تسجيلها."
+            "يتم منع التقاط الشاشة وتسجيلها على مستوى التطبيق."
         )
 
         addInfo(
-            "قفل الجلسة",
-            "عند خروج التطبيق من الواجهة يبدأ احتساب " +
-                    "10 دقائق، وبعدها يتم قفل الجلسة."
+            "قفل خارج التطبيق",
+            "بعد مرور 10 دقائق خارج التطبيق يتم قفل الجلسة."
         )
 
         addInfo(
             "البيانات",
-            "تتم حماية المعلومات وفق الصلاحيات والوظائف " +
-                    "المعتمدة في النظام."
-        )
-
-        addInfo(
-            "الصلاحيات",
-            "الخدمات الحساسة تحتاج إلى صلاحيات حقيقية " +
-                    "عند ربط النظام بالخدمات الخلفية."
+            "يجب التعامل مع البيانات الحساسة وفق الصلاحيات والقوانين المعمول بها."
         )
 
         addCard(
-            "🛡️ مكتب الأمن والمعلومات",
-            "إدارة الأمان والمخاطر"
-        ) {
-            showSecurityOffice()
-        }
-
-        addCard(
-            "📋 قائمة الأمان",
-            "مراجعة عناصر الحماية"
-        ) {
-            showSecurityChecklist()
-        }
-
-        addCard(
-            "🔐 سياسة الوصول",
-            "الخدمات الحساسة والصلاحيات"
+            "🔐 سياسة الوصول الحساس",
+            "قواعد الوصول إلى الخدمات الحساسة"
         ) {
             showSensitiveAccessPolicy()
         }
 
         addCard(
-            "🏠 الرئيسية",
-            "العودة إلى الصفحة الرئيسية"
+            "✅ قائمة الأمان",
+            "مراجعة متطلبات الحماية"
         ) {
+            showSecurityChecklist()
+        }
+
+        addCard(
+            "🛡️ مركز الخصوصية",
+            "إدارة وفهم الخصوصية"
+        ) {
+            showPrivacyCenter()
+        }
+
+        addCard(
+            "📄 سياسة البيانات",
+            "مبادئ التعامل مع البيانات"
+        ) {
+            showDataPolicy()
+        }
+
+        addCard(
+            "🏢 مكتب الأمن والمعلومات",
+            "قسم الأمن والمعلومات"
+        ) {
+            showSecurityOffice()
+        }
+
+        addNavButton("↩️ الرئيسية") {
             showHome()
         }
     }
 
-    // =========================
-    // المنتجات
-    // =========================
-
     private fun showProducts() {
+        baseLayout("المنتجات والأقسام")
 
-        val root = baseLayout()
-
-        setContentView(root)
-
-        addSection(
-            "🛍️ المنتجات والأسواق"
-        )
-
-        addInfo(
-            "الأسواق",
-            "تصفح المنتجات والخدمات حسب القسم."
-        )
+        addSection("الأسواق والقطاعات")
 
         addCard(
             "🚗 المركبات والشاحنات",
-            "مركبات وشاحنات وملحقاتها"
+            "بيع وشراء وخدمات مرتبطة بالمركبات"
         ) {
-            showCategory(
-                "🚗 المركبات والشاحنات"
-            )
+            showCategory("المركبات والشاحنات")
         }
 
         addCard(
             "📱 الهواتف والإلكترونيات",
-            "هواتف وأجهزة وإلكترونيات"
+            "الأجهزة والمنتجات الإلكترونية"
         ) {
-            showCategory(
-                "📱 الهواتف والإلكترونيات"
-            )
+            showCategory("الهواتف والإلكترونيات")
         }
 
         addCard(
             "🍽️ المطاعم والتوصيل",
-            "مطاعم وطلبات وخدمات توصيل"
+            "المطاعم وخدمات التوصيل"
         ) {
-            showCategory(
-                "🍽️ المطاعم والتوصيل"
-            )
-        }
-
-        addCard(
-            "📢 الإعلانات",
-            "BRONZE / SILVER / GOLD"
-        ) {
-            showAds()
-        }
-
-        addCard(
-            "🛠️ الخدمات",
-            "خدمات مهنية وتجارية"
-        ) {
-            showCategory(
-                "🛠️ الخدمات"
-            )
+            showCategory("المطاعم والتوصيل")
         }
 
         addCard(
             "🌾 الزراعة والثروة الحيوانية",
-            "منتجات وخدمات القطاع"
+            "المنتجات والخدمات الزراعية"
         ) {
-            showCategory(
-                "🌾 الزراعة والثروة الحيوانية"
-            )
+            showCategory("الزراعة والثروة الحيوانية")
         }
 
         addCard(
             "🐟 الأسماك",
-            "منتجات وخدمات الأسماك"
+            "المنتجات والخدمات المرتبطة بالأسماك"
         ) {
-            showCategory(
-                "🐟 الأسماك"
-            )
+            showCategory("الأسماك")
         }
 
-            addCard(
-        "🏗️ البناء والجملة",
-        "مواد البناء وتجارة الجملة"
-    ) {
-        showCategory(
-            "🏗️ البناء والجملة"
-        )
+        addCard(
+            "🏗️ البناء",
+            "مواد البناء والخدمات المرتبطة بها"
+        ) {
+            showCategory("البناء")
+        }
+
+        addCard(
+            "📦 الجملة",
+            "التجارة بالجملة والتوريد"
+        ) {
+            showCategory("الجملة")
+        }
+
+        addCard(
+            "🏥 الصحة",
+            "الخدمات والمعلومات الصحية العامة"
+        ) {
+            showCategory("الصحة")
+        }
+
+        addCard(
+            "⚽ الرياضة",
+            "المنتجات والخدمات الرياضية"
+        ) {
+            showCategory("الرياضة")
+        }
+
+        addCard(
+            "⚡ الكهرباء والمياه",
+            "الخدمات والاحتياجات المتعلقة بالطاقة والمياه"
+        ) {
+            showCategory("الكهرباء والمياه")
+        }
+
+        addCard(
+            "🎓 التعليم",
+            "الخدمات والفرص التعليمية"
+        ) {
+            showCategory("التعليم")
+        }
+
+        addCard(
+            "✈️ السفر",
+            "السفر والخدمات المرتبطة به"
+        ) {
+            showCategory("السفر")
+        }
+
+        addCard(
+            "🛠️ الخدمات",
+            "الخدمات المهنية والعامة"
+        ) {
+            showServices()
+        }
+
+        addCard(
+            "📢 الإعلانات",
+            "الإعلانات التجارية ومستوياتها"
+        ) {
+            showAds()
+        }
+
+        addNavButton("↩️ الرئيسية") {
+            showHome()
+        }
     }
 
-    addCard(
-        "🏥 الصحة",
-        "خدمات ومنتجات مرتبطة بالصحة"
-    ) {
-        showCategory(
-            "🏥 الصحة"
-        )
-    }
+    private fun showCategory(category: String) {
+        baseLayout(category)
 
-    addCard(
-        "⚽ الرياضة",
-        "خدمات ومرافق رياضية"
-    ) {
-        showCategory(
-            "⚽ الرياضة"
-        )
-    }
-
-    addCard(
-        "💡 الكهرباء والمياه",
-        "خدمات واحتياجات الكهرباء والمياه"
-    ) {
-        showCategory(
-            "💡 الكهرباء والمياه"
-        )
-    }
-
-    addCard(
-        "🎓 التعليم",
-        "تعليم وتدريب ومصادر تعليمية"
-    ) {
-        showCategory(
-            "🎓 التعليم"
-        )
-    }
-
-    addCard(
-        "✈️ السفر",
-        "سفر وخدمات مرتبطة"
-    ) {
-        showCategory(
-            "✈️ السفر"
-        )
-    }
-
-    addCard(
-        "⭐ النقاط",
-        "النقاط والمكافآت"
-    ) {
-        showPoints()
-    }
-
-    addCard(
-        "🏠 الرئيسية",
-        "العودة إلى الصفحة الرئيسية"
-    ) {
-        showHome()
-    }
-}
-
-    // =========================
-    // القسم العام
-    // =========================
-
-    private fun showCategory(
-        category: String
-    ) {
-
-        val root = baseLayout()
-
-        setContentView(root)
-
-        addSection(category)
+        addSection("القسم")
 
         addInfo(
-            "القسم",
-            category
-        )
-
-        addInfo(
-            "حالة القسم",
-            "يمكن تجهيز هذا القسم لعرض المنتجات " +
-                    "والخدمات عند توفر مصدر البيانات."
+            category,
+            "يمكن هنا عرض المنتجات والخدمات والإعلانات المتعلقة بهذا القسم."
         )
 
         addCard(
-            "📦 عرض التفاصيل",
-            "استعراض محتوى القسم"
+            "📋 تفاصيل القسم",
+            "عرض المعلومات والخدمات المتاحة"
         ) {
             showDetails(category)
         }
 
         addCard(
-            "➕ إضافة إعلان",
-            "إضافة إعلان وفق الصلاحيات"
+            "📢 إضافة إعلان",
+            "إنشاء إعلان وفق قواعد المنصة"
         ) {
             showAddAd()
         }
 
         addCard(
             "🔎 البحث",
-            "البحث داخل القسم"
+            "البحث داخل هذا القسم"
         ) {
             showSearch()
         }
 
+        addNavButton("↩️ المنتجات والأقسام") {
+            showProducts()
+        }
+
+        addNavButton("🏠 الرئيسية") {
+            showHome()
+        }
+    }
+
+    private fun showDetails(category: String) {
+        baseLayout("تفاصيل القسم")
+
+        addSection(category)
+
+        addInfo(
+            "المحتوى",
+            "هذا القسم مخصص لعرض تفاصيل المنتجات والخدمات والعروض المتاحة."
+        )
+
+        addInfo(
+            "المعاملات",
+            "أي عملية تجارية يجب أن تلتزم بالقوانين والأنظمة المعمول بها."
+        )
+
+        addInfo(
+            "الحماية",
+            "لا تُعرض البيانات الحساسة إلا وفق الصلاحيات المناسبة."
+        )
+
+        addCard(
+            "📦 الخدمات",
+            "عرض الخدمات المتاحة"
+        ) {
+            showServices()
+        }
+
         addCard(
             "📢 الإعلانات",
-            "مشاهدة الإعلانات"
+            "عرض الإعلانات التجارية"
         ) {
             showAds()
         }
 
         addCard(
-            "🏠 الرئيسية",
-            "العودة إلى الصفحة الرئيسية"
-        ) {
-            showHome()
-        }
-    }
-
-    // =========================
-    // تفاصيل القسم
-    // =========================
-
-    private fun showDetails(
-        category: String
-    ) {
-
-        val root = baseLayout()
-
-        setContentView(root)
-
-        addSection(
-            "📦 تفاصيل القسم"
-        )
-
-        addInfo(
-            "القسم",
-            category
-        )
-
-        addInfo(
-            "البيانات",
-            "تظهر المنتجات والخدمات الفعلية " +
-                    "عند توفر مصدر البيانات المعتمد."
-        )
-
-        addInfo(
-            "التجارة المحلية",
-            "تدعم المنصة الخدمات التجارية المحلية " +
-                    "وفق الأنظمة المعمول بها."
-        )
-
-        addInfo(
-            "التجارة العالمية",
-            "يمكن إضافة معلومات الشحن والجمارك " +
-                    "والتقديرات عند توفر التكامل المناسب."
-        )
-
-        addCard(
-            "📢 إضافة إعلان",
-            "إنشاء إعلان"
-        ) {
-            showAddAd()
-        }
-
-        addCard(
             "🔎 البحث",
-            "البحث داخل القسم"
+            "البحث في محتوى المنصة"
         ) {
             showSearch()
         }
 
-        addCard(
-            "↩️ العودة للقسم",
-            "العودة إلى القسم السابق"
-        ) {
+        addNavButton("↩️ العودة للقسم") {
             showCategory(category)
         }
-    }
 
-        private fun showFavorites() {
-        baseLayout("المفضلة")
-
-        addSection("⭐ المفضلة")
-        addInfo(
-            "العناصر المحفوظة",
-            "هنا تظهر المنتجات والخدمات التي تحفظها للرجوع إليها لاحقًا."
-        )
-
-        addCard(
-            "🛍️ المنتجات المحفوظة",
-            "الوصول السريع إلى العناصر المفضلة"
-        ) {
-            showProducts()
-        }
-
-        addCard(
-            "↩️ الرئيسية",
-            "العودة إلى الصفحة الرئيسية"
-        ) {
-            showHome()
-        }
-        }
-
-            private fun showAccount() {
-        baseLayout("الحساب")
-
-        addSection("👤 الحساب")
-        addInfo(
-            "إدارة الحساب",
-            "الوصول إلى بيانات المستخدم وإعدادات الخصوصية والأمان."
-        )
-
-        addCard(
-            "🔐 تسجيل الدخول",
-            "الدخول إلى الحساب"
-        ) {
-            showLogin()
-        }
-
-        addCard(
-            "🛡️ الخصوصية والأمان",
-            "مراجعة إعدادات الحماية"
-        ) {
-            showSafety()
-        }
-
-        addCard(
-            "⭐ النقاط",
-            "عرض النقاط والمزايا"
-        ) {
-            showPoints()
-        }
-
-        addCard(
-            "↩️ الرئيسية",
-            "العودة إلى الصفحة الرئيسية"
-        ) {
+        addNavButton("🏠 الرئيسية") {
             showHome()
         }
     }
 
-    private fun showLogin() {
-        baseLayout("تسجيل الدخول")
+        private fun showSearch() {
+        baseLayout("البحث")
 
-        addSection("🔐 تسجيل الدخول")
+        addSection("البحث داخل المنصة")
+
         addInfo(
-            "الوصول الآمن",
-            "هذه الواجهة مخصصة للدخول إلى الحساب."
+            "البحث",
+            "ابحث عن المنتجات والخدمات والمعلومات المتاحة داخل المنصة."
         )
-
-        val name = EditText(this)
-        name.hint = "اسم المستخدم"
-        content.addView(name)
-
-        val loginButton = Button(this)
-        loginButton.text = "دخول"
-        loginButton.setOnClickListener {
-            showMessage("تم إرسال طلب الدخول للمراجعة.")
-        }
-        content.addView(loginButton)
 
         addCard(
-            "↩️ العودة",
-            "العودة إلى الحساب"
+            "🚗 المركبات والشاحنات",
+            "الوصول إلى قسم المركبات"
         ) {
-            showAccount()
-        }
-    }
-
-    private fun showAds() {
-        baseLayout("الإعلانات")
-
-        addSection("📢 الإعلانات")
-        addInfo(
-            "مستويات الإعلان",
-            "اختر مستوى الإعلان المناسب وفق ضوابط المنصة."
-        )
-
-        addCard("🥉 BRONZE", "إعلان أساسي") {
-            showMessage("تم اختيار مستوى BRONZE.")
-        }
-
-        addCard("🥈 SILVER", "إعلان متقدم") {
-            showMessage("تم اختيار مستوى SILVER.")
-        }
-
-        addCard("🥇 GOLD", "إعلان مميز") {
-            showMessage("تم اختيار مستوى GOLD.")
+            showCategory("المركبات والشاحنات")
         }
 
         addCard(
-            "↩️ الرئيسية",
-            "العودة إلى الصفحة الرئيسية"
+            "📱 الهواتف والإلكترونيات",
+            "الوصول إلى قسم الإلكترونيات"
         ) {
+            showCategory("الهواتف والإلكترونيات")
+        }
+
+        addCard(
+            "🍽️ المطاعم والتوصيل",
+            "الوصول إلى المطاعم والتوصيل"
+        ) {
+            showCategory("المطاعم والتوصيل")
+        }
+
+        addCard(
+            "🛠️ الخدمات",
+            "البحث في الخدمات"
+        ) {
+            showServices()
+        }
+
+        addCard(
+            "📢 الإعلانات",
+            "البحث في الإعلانات"
+        ) {
+            showAds()
+        }
+
+        addNavButton("↩️ الرئيسية") {
             showHome()
         }
     }
 
-        private fun showPoints() {
+    private fun showPoints() {
         baseLayout("النقاط")
 
-        addSection("⭐ النقاط والمزايا")
+        addSection("النقاط والمشاركة")
+
         addInfo(
-            "نظام النقاط",
-            "متابعة النقاط والمزايا المتاحة للمستخدم."
+            "النقاط",
+            "نظام النقاط مخصص للمشاركة والأنشطة المسموح بها داخل المنصة."
+        )
+
+        addInfo(
+            "الاحتساب",
+            "يتم احتساب النقاط وفق قواعد المنصة المعتمدة."
         )
 
         addCard(
-            "📊 رصيد النقاط",
-            "عرض الرصيد الحالي"
+            "📋 حالة النقاط",
+            "عرض المعلومات الحالية للنقاط"
         ) {
-            showMessage("رصيد النقاط سيظهر هنا.")
+            addInfo(
+                "الحالة",
+                "لا توجد بيانات نقاط فعلية مرتبطة بحساب المستخدم حاليًا."
+            )
         }
 
         addCard(
-            "🎁 المزايا",
-            "المزايا المرتبطة بالنقاط"
+            "🧠 الذكاء البشري",
+            "المشاركة بالمعرفة والخبرات"
         ) {
-            showMessage("المزايا متاحة وفق نظام المنصة.")
+            showHumanIntelligence()
         }
 
-        addCard(
-            "📋 سجل النقاط",
-            "مراجعة العمليات السابقة"
-        ) {
-            showMessage("سجل النقاط محفوظ داخل الحساب.")
-        }
-
-        addCard(
-            "↩️ الرئيسية",
-            "العودة إلى الصفحة الرئيسية"
-        ) {
+        addNavButton("↩️ الرئيسية") {
             showHome()
         }
     }
@@ -1551,448 +798,754 @@ class MainActivity : Activity() {
     private fun showHumanIntelligence() {
         baseLayout("الذكاء البشري")
 
-        addSection("🧠 الذكاء البشري")
+        addSection("الذكاء البشري")
+
         addInfo(
-            "منظومة الأفكار والخبرات",
-            "استقبال الأفكار وتنظيم الخبرات وتحويل المقترحات إلى مشاريع قابلة للدراسة."
+            "الفكرة",
+            "مساحة للاستفادة من الخبرات والمعارف البشرية والمبادرات المجتمعية."
+        )
+
+        addInfo(
+            "المشاركة",
+            "تخضع المشاركات للقواعد والصلاحيات والمراجعة المناسبة."
         )
 
         addCard(
-            "💡 تقديم فكرة",
-            "إرسال فكرة جديدة"
+            "🤝 المبادرات",
+            "المشاركة في المبادرات المجتمعية"
         ) {
-            showIdea()
+            showCharity()
         }
 
         addCard(
-            "📋 مراجعة الأفكار",
-            "تنظيم ومتابعة الأفكار"
+            "📄 المستندات",
+            "المعلومات والوثائق المسموح بها"
         ) {
-            showMessage("تتم مراجعة الأفكار وفق نظام المنصة.")
+            showDocuments()
         }
 
-        addCard(
-            "🤝 تكوين فريق",
-            "ربط أصحاب الأفكار والخبرات"
-        ) {
-            showMessage("سيتم تنظيم الفرق وفق الصلاحيات.")
+        addNavButton("↩️ الرئيسية") {
+            showHome()
         }
     }
 
-        private fun showIdea() {
-        baseLayout("تقديم فكرة")
+    private fun showCtmAi() {
+        baseLayout("CTM AI")
 
-        addSection("💡 تقديم فكرة جديدة")
+        addSection("المساعد الرسمي")
+
         addInfo(
-            "منظومة الأفكار",
-            "أدخل فكرة أو مقترحًا يمكن دراسته وتطويره داخل المنصة."
+            "CTM AI",
+            "المساعد الرسمي للمنصة، ويعمل ضمن المعلومات والخدمات المسموح بها."
         )
 
-        val ideaInput = EditText(this)
-        ideaInput.hint = "اكتب الفكرة هنا"
-        ideaInput.minLines = 4
-        content.addView(ideaInput)
+        addInfo(
+            "الصلاحيات",
+            "الوصول إلى المعلومات يكون وفق الصلاحيات المعتمدة من المنصة."
+        )
 
-        val submitButton = Button(this)
-        submitButton.text = "إرسال الفكرة"
-        submitButton.setOnClickListener {
-            if (ideaInput.text.toString().trim().isEmpty()) {
-                showMessage("يرجى كتابة الفكرة أولًا.")
-            } else {
-                showMessage("تم تسجيل الفكرة للمراجعة.")
-            }
-        }
-        content.addView(submitButton)
+        addInfo(
+            "الصوت",
+            "يمكن دعم البحث أو قراءة المعلومات المسموح بها صوتيًا عند توفر الميزة."
+        )
 
-        addCard(
-            "📊 حالة الفكرة",
-            "متابعة مراحل دراسة الفكرة"
-        ) {
-            showMessage("حالة الفكرة تظهر بعد تسجيلها.")
-        }
+        addInfo(
+            "الإدارة",
+            "يمكن إيقاف أو تعديل الخدمة وفق اعتماد إدارة المنصة."
+        )
 
         addCard(
-            "🧠 الخبراء",
-            "الاستفادة من الخبرات المتخصصة"
+            "🔍 البحث",
+            "العودة إلى البحث داخل المنصة"
         ) {
-            showMessage("سيتم ربط الخبرات وفق صلاحيات المنصة.")
+            showSearch()
+        }
+
+        addNavButton("↩️ الرئيسية") {
+            showHome()
+        }
+    }
+
+    private fun showCharity() {
+        baseLayout("الدعم المجتمعي")
+
+        addSection("المساعدة والمبادرات")
+
+        addInfo(
+            "الدعم المجتمعي",
+            "قسم مخصص للمبادرات الخيرية ودعم الأيتام والمحتاجين وفق الأنظمة المعمول بها."
+        )
+
+        addInfo(
+            "الزكاة البشرية",
+            "يمكن أن تشمل النسخة المخصصة للسودان خدمات ومبادرات مرتبطة بالزكاة البشرية وفق الإطار النظامي."
+        )
+
+        addCard(
+            "🍽️ المطبخ",
+            "المبادرات والخدمات المتعلقة بالمطبخ"
+        ) {
+            showKitchen()
         }
 
         addCard(
-            "🤝 التعاون",
-            "إمكانية التعاون حول الأفكار"
+            "📋 المستندات",
+            "المعلومات والوثائق الخاصة بالمبادرات"
         ) {
-            showMessage("التعاون يخضع لقواعد المنصة.")
+            showDocuments()
         }
 
-        addCard(
-            "↩️ الذكاء البشري",
-            "العودة إلى منظومة الذكاء البشري"
-        ) {
-            showHumanIntelligence()
+        addNavButton("↩️ الرئيسية") {
+            showHome()
         }
     }
 
     private fun showManagerOffice() {
-        baseLayout("مكتب المدير")
+        baseLayout("إدارة المنصة")
 
-        addSection("🏢 مكتب المدير")
+        addSection("مكاتب الإدارة")
+
         addInfo(
-            "إدارة المنصة",
-            "مساحة إدارية لمتابعة المشاريع والأقسام والصلاحيات."
+            "مكتب المدير",
+            "قسم إداري مخصص لإدارة المنصة ومتابعة الأقسام والاعتمادات."
+        )
+
+        addInfo(
+            "الصلاحيات",
+            "الوصول إلى وظائف الإدارة يكون حسب مستوى الصلاحية المعتمد."
         )
 
         addCard(
-            "👤 المالك",
-            "المالك ياسر حسن وشركاؤه"
-        ) {
-            showOwnerApproval()
-        }
-
-        addCard(
-            "📁 إدارة المشاريع",
-            "متابعة المشاريع والمهام"
-        ) {
-            showProjectStatus()
-        }
-
-        addCard(
-            "🧠 الذكاء البشري",
-            "متابعة الأفكار والمشاريع"
-        ) {
-            showHumanIntelligence()
-        }
-
-        addCard(
-            "🤖 CTM AI",
-            "المساعد الذكي الرسمي للمنصة"
-        ) {
-            showCtmAi()
-        }
-
-        addCard(
             "🛡️ مكتب الأمن والمعلومات",
-            "الأمان ومتابعة الحوادث"
+            "الأمن وحماية المعلومات"
         ) {
             showSecurityOffice()
         }
 
         addCard(
-            "⚖️ المكتب القانوني",
-            "المتابعة القانونية والصلاحيات"
+            "⚖️ مكتب النائب العام",
+            "معلومات المكتب والصلاحيات"
         ) {
             showAttorneyOffice()
         }
 
         addCard(
-            "💰 النظام المالي الخاص",
-            "إدارة المعلومات المالية"
+            "💼 النظام المالي الخاص",
+            "إدارة المعلومات المالية المسموح بها"
         ) {
             showPrivateFinancialSystem()
         }
 
         addCard(
-            "📢 الإعلانات",
-            "إدارة مستويات الإعلانات"
+            "🤖 CTM AI",
+            "إدارة المساعد الرسمي"
         ) {
-            showAds()
+            showCtmAi()
         }
 
-        addCard(
-            "📄 الوثائق",
-            "إدارة الوثائق والسجلات"
-        ) {
-            showDocuments()
-        }
-
-        addCard(
-            "💙 العمل الخيري",
-            "متابعة مبادرات الدعم"
-        ) {
-            showCharity()
-        }
-
-            private fun showDocuments() {
-        baseLayout("الوثائق")
-
-        addSection("📄 الوثائق والسجلات")
-        addInfo(
-            "إدارة الوثائق",
-            "تنظيم الوثائق والمعلومات المرتبطة بأعمال المنصة."
-        )
-
-        addCard("📁 وثائق المشاريع", "عرض وثائق المشاريع") {
-            showMessage("وثائق المشاريع تخضع للصلاحيات.")
-        }
-
-        addCard("📝 السجلات", "متابعة السجلات الإدارية") {
-            showMessage("السجلات الإدارية محمية.")
-        }
-
-        addCard("🔐 الوثائق الحساسة", "حماية المعلومات الحساسة") {
-            showSensitiveAccessPolicy()
-        }
-
-        addCard("↩️ مكتب المدير", "العودة إلى مكتب المدير") {
-            showManagerOffice()
+        addNavButton("↩️ الرئيسية") {
+            showHome()
         }
     }
 
-    private fun showBadger() {
-        baseLayout("BADGER")
+    private fun showAppInformation() {
+        baseLayout("معلومات التطبيق")
 
-        addSection("🦡 BADGER 🌍")
+        addSection("CENTRAL MARKET")
+
         addInfo(
-            "النظام المالي",
-            "منظومة مالية مستقلة مخصصة لإدارة المعلومات والتحليلات المالية وفق الصلاحيات."
+            "المنصة",
+            "منصة متعددة الأقسام للتجارة والخدمات والمعلومات والمشاريع."
+        )
+
+        addInfo(
+            "المالك",
+            "المالك ياسر حسن وشركاؤه"
+        )
+
+        addInfo(
+            "الحماية",
+            "حماية الشاشة مفعلة على مستوى التطبيق بالكامل."
+        )
+
+        addInfo(
+            "قفل الجلسة",
+            "عند بقاء التطبيق خارج الشاشة لمدة 10 دقائق يتم قفل الجلسة."
+        )
+
+        addInfo(
+            "التوافق",
+            "يتم الاعتماد على قدرات الجهاز والاتصال المتاحين عند الحاجة."
+        )
+
+        addNavButton("↩️ الرئيسية") {
+            showHome()
+        }
+    }
+
+    private fun showPrivacyCenter() {
+        baseLayout("مركز الخصوصية")
+
+        addSection("الخصوصية")
+
+        addInfo(
+            "حماية البيانات",
+            "يجب استخدام البيانات وفق الغرض المسموح والصلاحيات المعتمدة."
+        )
+
+        addInfo(
+            "الخدمات الحساسة",
+            "تطبق عليها ضوابط وصول وحماية إضافية وفق طبيعة الخدمة."
         )
 
         addCard(
-            "👤 الحسابات",
-            "إدارة الحسابات والملفات المالية"
+            "📄 سياسة البيانات",
+            "قراءة مبادئ التعامل مع البيانات"
         ) {
-            showMessage("إدارة الحسابات تخضع للتحقق والصلاحيات.")
+            showDataPolicy()
         }
 
         addCard(
-            "💰 الودائع",
-            "متابعة بيانات الودائع"
+            "🛡️ قواعد الأمان",
+            "مراجعة ضوابط الأمان"
         ) {
-            showMessage("بيانات الودائع للعرض والتحليل فقط.")
+            showSecurityChecklist()
+        }
+
+        addNavButton("↩️ الرئيسية") {
+            showHome()
+        }
+    }
+
+        private fun showDataPolicy() {
+        baseLayout("سياسة البيانات")
+
+        addSection("البيانات والخصوصية")
+
+        addInfo(
+            "المبدأ",
+            "تتعامل المنصة مع البيانات وفق الغرض المسموح والصلاحيات والقوانين المعمول بها."
+        )
+
+        addInfo(
+            "البيانات الحساسة",
+            "لا يتم عرض أو استخدام البيانات الحساسة إلا عند وجود صلاحية وسبب مشروع."
+        )
+
+        addInfo(
+            "الحماية",
+            "حماية الشاشة مفعلة على مستوى التطبيق بالكامل."
+        )
+
+        addInfo(
+            "الجلسة",
+            "إذا بقي التطبيق خارج الشاشة لمدة 10 دقائق يتم قفل الجلسة."
+        )
+
+        addNavButton("↩️ مركز الخصوصية") {
+            showPrivacyCenter()
+        }
+
+        addNavButton("🏠 الرئيسية") {
+            showHome()
+        }
+    }
+
+    private fun showAppRules() {
+        baseLayout("قواعد الاستخدام")
+
+        addSection("القواعد العامة")
+
+        addInfo(
+            "الاستخدام القانوني",
+            "يجب استخدام المنصة في الأنشطة المسموح بها ووفق القوانين والأنظمة."
+        )
+
+        addInfo(
+            "التجارة",
+            "يجب أن تكون الإعلانات والمعاملات التجارية واضحة ومشروعة."
+        )
+
+        addInfo(
+            "المحتوى",
+            "يُمنع نشر معلومات أو محتوى مخالف للقوانين أو حقوق الآخرين."
+        )
+
+        addInfo(
+            "الحسابات",
+            "تخضع الحسابات والصلاحيات لمستوى الوصول المعتمد."
+        )
+
+        addInfo(
+            "الخدمات الحساسة",
+            "قد تتطلب بعض الخدمات تحققًا إضافيًا قبل السماح بالوصول."
+        )
+
+        addNavButton("↩️ الأمان والخصوصية") {
+            showSafety()
+        }
+
+        addNavButton("🏠 الرئيسية") {
+            showHome()
+        }
+    }
+
+    private fun showSensitiveAccessPolicy() {
+        baseLayout("الوصول الحساس")
+
+        addSection("الخدمات الحساسة")
+
+        addInfo(
+            "الحماية",
+            "الحماية مطبقة على مستوى التطبيق بالكامل، ولا تقتصر على شاشة معينة."
+        )
+
+        addInfo(
+            "التقاط الشاشة",
+            "يتم منع التقاط الشاشة وتسجيلها داخل التطبيق."
+        )
+
+        addInfo(
+            "التحقق",
+            "الخدمات الحساسة قد تتطلب تحققًا رسميًا من أهلية المستخدم قبل الوصول."
+        )
+
+        addInfo(
+            "المصادر الرسمية",
+            "يجب أن يتم التحقق عبر الجهات أو المصادر الحكومية المخولة وبالطرق والتفويضات النظامية المناسبة."
+        )
+
+        addInfo(
+            "المشاركة المالية",
+            "المشاركة في الاستثمار أو المشاريع التمويلية لا تُفتح إلا بعد استيفاء المتطلبات المعتمدة."
+        )
+
+        addInfo(
+            "التنفيذ المالي",
+            "لا يتم تنفيذ أي عملية مالية فعلية دون اعتماد وتأكيد الصلاحية المطلوبة."
+        )
+
+        addCard(
+            "✅ التحقق من الأهلية",
+            "متطلبات التحقق الرسمي"
+        ) {
+            showEligibilityVerification()
         }
 
         addCard(
-            "📊 التحليل المالي",
-            "تحليل المعلومات والمؤشرات"
-        ) {
-            showMessage("التحليل المالي لا ينفذ معاملات مالية.")
-        }
-
-        addCard(
-            "🧾 العمولات",
-            "متابعة العمولات المسجلة"
-        ) {
-            showMessage("العمولات يجب أن تكون موثقة تعاقديًا.")
-        }
-
-        addCard(
-            "🧾 الإيصالات",
-            "إدارة الإيصالات"
-        ) {
-            showMessage("الإيصالات تخضع للسجل والصلاحيات.")
-        }
-
-        addCard(
-            "🛡️ مكافحة الاحتيال",
-            "مراقبة المخاطر والعمليات غير المعتادة"
-        ) {
-            showSecurityOffice()
-        }
-
-        addCard(
-            "📈 المشاركة الاستثمارية",
-            "الوصول إلى متطلبات المشاركة"
+            "💰 المشاركة الاستثمارية",
+            "متطلبات المشاركة في الاستثمار"
         ) {
             showInvestmentParticipation()
         }
 
         addCard(
             "🏗️ المشاركة التمويلية",
-            "الوصول إلى متطلبات التمويل"
+            "متطلبات المشاركة في المشاريع التمويلية"
         ) {
             showFinancingParticipation()
         }
 
+        addNavButton("↩️ الأمان والخصوصية") {
+            showSafety()
+        }
+    }
+
+    private fun showSecurityChecklist() {
+        baseLayout("قائمة الأمان")
+
+        addSection("فحص الحماية")
+
+        addInfo(
+            "حماية الشاشة",
+            "مفعلة على مستوى التطبيق."
+        )
+
+        addInfo(
+            "قفل خارج التطبيق",
+            "يبدأ بعد 10 دقائق من بقاء التطبيق خارج الشاشة."
+        )
+
+        addInfo(
+            "الخدمات الحساسة",
+            "تخضع للتحقق والصلاحيات المناسبة."
+        )
+
+        addInfo(
+            "التنفيذ المالي",
+            "لا يتم التنفيذ المالي الفعلي دون الاعتماد المطلوب."
+        )
+
+        addInfo(
+            "الاتصال",
+            "يتم فحص حالة الاتصال وقدرات الشبكة عند الحاجة."
+        )
+
         addCard(
-            "⚖️ التحقق من الأهلية",
-            "التحقق القانوني عبر المسارات الرسمية"
+            "📱 قدرات الجهاز",
+            "فحص قدرات الجهاز المتاحة"
         ) {
-            showEligibilityVerification()
+            showDeviceCapabilities()
         }
 
         addCard(
-            "🔒 الحماية",
-            "حماية المعلومات والشاشة"
+            "🔍 التشخيص",
+            "عرض معلومات التشخيص المتاحة"
         ) {
-            showSensitiveAccessPolicy()
+            showDiagnostics()
         }
 
-        addCard(
-            "👑 موافقة المالك",
-            "لا تنفيذ مالي دون الموافقة المطلوبة"
-        ) {
-            showOwnerApproval()
-        }
-
-        addCard(
-            "↩️ الرئيسية",
-            "العودة إلى الصفحة الرئيسية"
-        ) {
-            showHome()
+        addNavButton("↩️ الأمان والخصوصية") {
+            showSafety()
         }
     }
 
     private fun showSecurityOffice() {
-        baseLayout("مكتب الأمن")
+        baseLayout("مكتب الأمن والمعلومات")
 
-        addSection("🛡️ مكتب الأمن والمعلومات")
+        addSection("الأمن والمعلومات")
+
         addInfo(
-            "الحماية والمراقبة",
-            "متابعة أمن الحسابات والمعلومات والعمليات الحساسة."
+            "المهمة",
+            "متابعة حماية المعلومات والصلاحيات ومخاطر الاستخدام داخل المنصة."
+        )
+
+        addInfo(
+            "الوصول",
+            "هذا القسم مخصص للصلاحيات الإدارية المعتمدة وليس للاستخدام العام."
         )
 
         addCard(
-            "🔐 حماية الشاشة",
-            "الحماية مفعلة على مستوى التطبيق بالكامل"
-        ) {
-            window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
-            showMessage("حماية الشاشة مفعلة.")
-        }
-
-        addCard(
-            "⏱️ قفل خارج التطبيق",
-            "السكون بعد 10 دقائق خارج التطبيق"
-        ) {
-            showMessage("إعداد القفل الخارجي مضبوط على 10 دقائق.")
-        }
-
-        addCard(
-            "🚨 مكافحة الاحتيال",
-            "مراقبة مؤشرات الاحتيال والمخاطر"
-        ) {
-            showMessage("المراقبة الأمنية مفعلة.")
-        }
-
-        addCard(
-            "👤 صلاحيات الوصول",
-            "إدارة الوصول حسب الصلاحية"
-        ) {
-            showMessage("الوصول يعتمد على الصلاحيات المعتمدة.")
-        }
-
-        addCard(
-            "🤖 مراقبة CTM AI",
-            "متابعة المخاطر والأخطاء"
-        ) {
-            showCtmAi()
-        }
-
-        addCard(
-            "⚖️ التحقق القانوني",
-            "التحقق عبر الجهات والمسارات الرسمية"
-        ) {
-            showEligibilityVerification()
-        }
-
-        addCard(
-            "📋 قائمة الأمان",
-            "مراجعة متطلبات الحماية"
+            "🛡️ قائمة الأمان",
+            "مراجعة عناصر الحماية"
         ) {
             showSecurityChecklist()
         }
 
         addCard(
-            "↩️ مكتب المدير",
-            "العودة إلى مكتب المدير"
+            "🔐 سياسة الوصول الحساس",
+            "مراجعة الخدمات الحساسة"
         ) {
+            showSensitiveAccessPolicy()
+        }
+
+        addCard(
+            "🔍 التشخيص",
+            "عرض حالة الجهاز والاتصال"
+        ) {
+            showDiagnostics()
+        }
+
+        addCard(
+            "📄 المستندات",
+            "المستندات المسموح بالوصول إليها"
+        ) {
+            showDocuments()
+        }
+
+        addNavButton("↩️ إدارة المنصة") {
+            showManagerOffice()
+        }
+    }
+
+    private fun showServices() {
+        baseLayout("الخدمات")
+
+        addSection("الخدمات العامة")
+
+        addInfo(
+            "الخدمات",
+            "قسم يجمع الخدمات المهنية والعامة المتاحة عبر المنصة."
+        )
+
+        addCard(
+            "🏥 الصحة",
+            "خدمات ومعلومات صحية عامة"
+        ) {
+            showCategory("الصحة")
+        }
+
+        addCard(
+            "🎓 التعليم",
+            "خدمات وفرص تعليمية"
+        ) {
+            showCategory("التعليم")
+        }
+
+        addCard(
+            "✈️ السفر",
+            "خدمات السفر والمعلومات المرتبطة به"
+        ) {
+            showCategory("السفر")
+        }
+
+        addCard(
+            "⚡ الكهرباء والمياه",
+            "الخدمات المتعلقة بالطاقة والمياه"
+        ) {
+            showCategory("الكهرباء والمياه")
+        }
+
+        addCard(
+            "🏗️ البناء",
+            "الخدمات ومواد البناء"
+        ) {
+            showCategory("البناء")
+        }
+
+        addNavButton("↩️ المنتجات والأقسام") {
+            showProducts()
+        }
+
+        addNavButton("🏠 الرئيسية") {
+            showHome()
+        }
+    }
+
+        private fun showAds() {
+        baseLayout("الإعلانات")
+
+        addSection("مستويات الإعلانات")
+
+        addInfo(
+            "الإعلانات",
+            "نظام إعلانات منظم داخل المنصة وفق مستوى الإعلان والصلاحيات."
+        )
+
+        addCard(
+            "🥉 BRONZE",
+            "المستوى الأساسي للإعلان"
+        ) {
+            showAddAd()
+        }
+
+        addCard(
+            "🥈 SILVER",
+            "مستوى إعلان موسع"
+        ) {
+            showAddAd()
+        }
+
+        addCard(
+            "🥇 GOLD",
+            "مستوى إعلان متقدم"
+        ) {
+            showAddAd()
+        }
+
+        addCard(
+            "➕ إضافة إعلان",
+            "إنشاء إعلان جديد"
+        ) {
+            showAddAd()
+        }
+
+        addNavButton("↩️ المنتجات والأقسام") {
+            showProducts()
+        }
+
+        addNavButton("🏠 الرئيسية") {
+            showHome()
+        }
+    }
+
+    private fun showAddAd() {
+        baseLayout("إضافة إعلان")
+
+        addSection("إعلان جديد")
+
+        addInfo(
+            "المتطلبات",
+            "يجب أن تكون معلومات الإعلان واضحة وصحيحة ومتوافقة مع قواعد المنصة."
+        )
+
+        addInfo(
+            "المراجعة",
+            "قد يخضع الإعلان للمراجعة قبل ظهوره للمستخدمين."
+        )
+
+        addInfo(
+            "المستويات",
+            "يمكن اختيار مستوى الإعلان وفق الخدمات المتاحة والصلاحيات المعتمدة."
+        )
+
+        addCard(
+            "🥉 BRONZE",
+            "اختيار المستوى الأساسي"
+        ) {
+            showOwnerApproval()
+        }
+
+        addCard(
+            "🥈 SILVER",
+            "اختيار المستوى الموسع"
+        ) {
+            showOwnerApproval()
+        }
+
+        addCard(
+            "🥇 GOLD",
+            "اختيار المستوى المتقدم"
+        ) {
+            showOwnerApproval()
+        }
+
+        addNavButton("↩️ الإعلانات") {
+            showAds()
+        }
+    }
+
+    private fun showKitchen() {
+        baseLayout("المطبخ")
+
+        addSection("المطبخ والخدمات الغذائية")
+
+        addInfo(
+            "المطبخ",
+            "قسم للخدمات والمنتجات والمبادرات المتعلقة بالمطبخ والطعام."
+        )
+
+        addCard(
+            "🍽️ المطاعم",
+            "الوصول إلى المطاعم والتوصيل"
+        ) {
+            showCategory("المطاعم والتوصيل")
+        }
+
+        addCard(
+            "❤️ المبادرات",
+            "المبادرات المجتمعية المرتبطة بالطعام"
+        ) {
+            showCharity()
+        }
+
+        addNavButton("↩️ الدعم المجتمعي") {
+            showCharity()
+        }
+    }
+
+    private fun showBadger() {
+        baseLayout("BADGER")
+
+        addSection("BADGER")
+
+        addInfo(
+            "المنتج",
+            "نظام مالي مستقل مخصص للتطوير والتقديم للمؤسسات المالية وفق المتطلبات النظامية."
+        )
+
+        addInfo(
+            "الهوية",
+            "هوية BADGER مرتبطة بالغُرَيْر والعالم، مع تصميمات إيصالات باللون الأزرق والذهبي والأسود."
+        )
+
+        addInfo(
+            "العمولات",
+            "تُسجل العمولات وفق العقود والاتفاقيات المعتمدة."
+        )
+
+        addInfo(
+            "الأمان",
+            "تطبق حماية الشاشة وقواعد الجلسة والحماية الشاملة للتطبيق."
+        )
+
+        addCard(
+            "💰 التحليلات المالية",
+            "عرض التحليلات والمعلومات المسموح بها"
+        ) {
+            showPrivateFinancialSystem()
+        }
+
+        addCard(
+            "💼 المشاركة الاستثمارية",
+            "متطلبات المشاركة"
+        ) {
+            showInvestmentParticipation()
+        }
+
+        addCard(
+            "🏗️ المشاريع التمويلية",
+            "متطلبات المشاركة في المشاريع"
+        ) {
+            showFinancingParticipation()
+        }
+
+        addCard(
+            "🛡️ الأمان",
+            "قواعد حماية BADGER"
+        ) {
+            showSensitiveAccessPolicy()
+        }
+
+        addNavButton("↩️ إدارة المنصة") {
             showManagerOffice()
         }
     }
 
     private fun showAttorneyOffice() {
-        baseLayout("المكتب القانوني")
+        baseLayout("مكتب النائب العام")
 
-        addSection("⚖️ المكتب القانوني")
+        addSection("مكتب النائب العام")
+
         addInfo(
-            "المتابعة القانونية",
-            "إدارة المعلومات القانونية وفق الصلاحيات والأنظمة المعتمدة."
+            "الوصول",
+            "قسم إداري خاص يخضع للصلاحيات والأنظمة المعمول بها."
+        )
+
+        addInfo(
+            "الدور",
+            "يمكن عرض المعلومات المصرح بها دون منح صلاحيات غير معتمدة."
+        )
+
+        addInfo(
+            "الإدارة",
+            "لا يتم تعديل أو إصدار بيانات رسمية من داخل التطبيق دون تفويض قانوني مناسب."
         )
 
         addCard(
-            "📋 الحالات والحوادث",
-            "متابعة الحالات المسجلة"
+            "📄 المستندات",
+            "عرض المستندات المسموح بها"
         ) {
-            showMessage("الحالات القانونية تحتاج صلاحية معتمدة.")
+            showDocuments()
         }
 
         addCard(
-            "🏢 الشركات والمستثمرون",
-            "تنظيم البيانات القانونية"
+            "✅ متطلبات الأهلية",
+            "معلومات التحقق الرسمي"
         ) {
-            showMessage("البيانات القانونية تخضع للتحقق.")
+            showEligibilityVerification()
         }
 
-        addCard(
-            "📨 الدعوات",
-            "إدارة الدعوات والإجراءات"
-        ) {
-            showMessage("الدعوات تخضع للصلاحيات.")
-        }
-
-        addCard(
-            "🔐 الصلاحيات",
-            "مراجعة صلاحيات الوصول"
-        ) {
-            showMessage("لا يتم منح الصلاحيات من هذه الواجهة العامة.")
-        }
-
-        addCard(
-            "⚖️ الأهلية",
-            "متطلبات التحقق القانوني"
-        ) {
-            showEligibilityRequirements()
-        }
-
-        addCard(
-            "🏢 مكتب المدير",
-            "الارتباط الإداري"
-        ) {
+        addNavButton("↩️ إدارة المنصة") {
             showManagerOffice()
-        }
-
-        addCard(
-            "↩️ الرئيسية",
-            "العودة إلى الصفحة الرئيسية"
-        ) {
-            showHome()
         }
     }
 
     private fun showPrivateFinancialSystem() {
         baseLayout("النظام المالي الخاص")
 
-        addSection("💼 النظام المالي الخاص")
+        addSection("المعلومات المالية")
+
         addInfo(
-            "المعلومات المالية",
-            "عرض وتنظيم البيانات المالية دون تنفيذ معاملات مالية حقيقية من التطبيق المحلي."
+            "النظام",
+            "قسم خاص لعرض وإدارة المعلومات المالية المسموح بها وفق الصلاحيات."
+        )
+
+        addInfo(
+            "التنفيذ",
+            "لا يتم تنفيذ تحويل أو استثمار أو عملية مالية فعلية من هذه الواجهة دون الاعتماد والتفويض المطلوب."
+        )
+
+        addInfo(
+            "الأمان",
+            "الخدمات المالية الحساسة تخضع للحماية الشاملة والتحقق المناسب."
         )
 
         addCard(
-            "📈 الاستثمارات",
-            "متابعة معلومات الاستثمار"
+            "💰 الاستثمار",
+            "المشاركة في الاستثمارات"
         ) {
             showInvestmentParticipation()
-        }
-
-        addCard(
-            "💳 المعاملات",
-            "عرض بيانات المعاملات"
-        ) {
-            showMessage("المعاملات المالية الحقيقية تحتاج نظامًا مصرحًا ومتكاملًا.")
-        }
-
-        addCard(
-            "💵 الدخل",
-            "تنظيم بيانات الدخل"
-        ) {
-            showMessage("بيانات الدخل مخصصة للعرض والتنظيم.")
-        }
-
-        addCard(
-            "🤝 صلاحيات الشركاء",
-            "إدارة الوصول حسب الصلاحيات"
-        ) {
-            showMessage("صلاحيات الشركاء تحتاج تحققًا معتمدًا.")
         }
 
         addCard(
@@ -2003,1837 +1556,693 @@ class MainActivity : Activity() {
         }
 
         addCard(
-            "🛡️ الحماية",
-            "حماية المعلومات المالية"
-        ) {
-            showSensitiveAccessPolicy()
-        }
-
-        addCard(
-            "👑 موافقة المالك",
-            "الموافقة المطلوبة قبل التنفيذ"
-        ) {
-            showOwnerApproval()
-        }
-
-        addCard(
-            "↩️ الرئيسية",
-            "العودة إلى الصفحة الرئيسية"
-        ) {
-            showHome()
-        }
-    }
-
-        private fun showCtmAi() {
-        baseLayout("CTM AI")
-
-        addSection("🤖 CTM AI")
-        addInfo(
-            "المساعد الذكي الرسمي",
-            "مساعد ذكي داخل المنصة للبحث والقراءة والمساعدة في المعلومات المسموح بها."
-        )
-
-        addCard(
-            "🔎 البحث الذكي",
-            "البحث داخل معلومات المنصة"
-        ) {
-            showMessage("البحث الذكي يعمل ضمن نطاق المعلومات المسموح بها.")
-        }
-
-        addCard(
-            "🎙️ البحث الصوتي",
-            "استخدام الصوت للبحث"
-        ) {
-            showMessage("البحث الصوتي يقرأ ويبحث في المعلومات المسموح بها.")
-        }
-
-        addCard(
-            "🌍 الكلمات المحلية",
-            "فهم المصطلحات المحلية"
-        ) {
-            showMessage("سيتم دعم المصطلحات المحلية ضمن حزمة اللغة والمنطقة.")
-        }
-
-        addCard(
-            "📄 فحص الوثائق",
-            "مساعدة في تنظيم الوثائق"
-        ) {
-            showDocuments()
-        }
-
-        addCard(
-            "🛡️ مراقبة المخاطر",
-            "متابعة الأخطاء والمخاطر"
-        ) {
-            showSecurityOffice()
-        }
-
-        addCard(
-            "💡 اقتراحات المستخدم",
-            "إرسال مقترح لتطوير المساعد"
-        ) {
-            showIdea()
-        }
-
-        addCard(
-            "⏸️ حالة المساعد",
-            "إمكانية الإيقاف أو التفعيل وفق الصلاحية"
-        ) {
-            showMessage("إدارة حالة CTM AI تخضع للصلاحيات المعتمدة.")
-        }
-
-        addCard(
-            "↩️ الرئيسية",
-            "العودة إلى الصفحة الرئيسية"
-        ) {
-            showHome()
-        }
-    }
-
-    private fun showCharity() {
-        baseLayout("العمل الخيري")
-
-        addSection("💙 العمل الخيري")
-        addInfo(
-            "دعم المحتاجين",
-            "تنظيم المبادرات والمساهمات الخيرية بطريقة واضحة ومسؤولة."
-        )
-
-        addCard(
-            "🤲 الأيتام",
-            "دعم برامج الأيتام"
-        ) {
-            showMessage("برامج الدعم تخضع للتوثيق والضوابط.")
-        }
-
-        addCard(
-            "❤️ المحتاجون",
-            "مبادرات مساعدة المحتاجين"
-        ) {
-            showMessage("يتم تنظيم الدعم وفق البيانات والصلاحيات.")
-        }
-
-        addCard(
-            "📋 المبادرات",
-            "عرض المبادرات الخيرية"
-        ) {
-            showMessage("سيتم تنظيم المبادرات داخل سجل مخصص.")
-        }
-
-        addCard(
-            "🔐 الحماية",
-            "حماية بيانات المستفيدين"
-        ) {
-            showSensitiveAccessPolicy()
-        }
-
-        addCard(
-            "↩️ الرئيسية",
-            "العودة إلى الصفحة الرئيسية"
-        ) {
-            showHome()
-        }
-    }
-
-    private fun showKitchen() {
-        baseLayout("المطبخ")
-
-        addSection("🍳 المطبخ")
-        addInfo(
-            "خدمات ومنتجات المطبخ",
-            "قسم خاص بالمنتجات والخدمات المرتبطة بالطعام والمطابخ."
-        )
-
-        addCard(
-            "🍲 المنتجات",
-            "عرض منتجات المطبخ"
-        ) {
-            showCategory("🍳 المطبخ")
-        }
-
-        addCard(
-            "🚚 التوصيل",
-            "خدمات التوصيل"
-        ) {
-            showMessage("خدمات التوصيل تعتمد على المنطقة والتوفر.")
-        }
-
-        addCard(
-            "🏪 الموردون",
-            "التعامل مع الموردين"
-        ) {
-            showMessage("بيانات الموردين تخضع للتحقق.")
-        }
-
-        addCard(
-            "📍 المنطقة",
-            "تحديد الخدمات المتاحة"
-        ) {
-            showOnline()
-        }
-
-        addCard(
-            "↩️ الرئيسية",
-            "العودة إلى الصفحة الرئيسية"
-        ) {
-            showHome()
-        }
-    }
-
-    private fun showEligibilityVerification() {
-        baseLayout("التحقق من الأهلية")
-
-        addSection("⚖️ التحقق الرسمي من الأهلية")
-        addInfo(
-            "التحقق القانوني",
-            "أي تحقق قانوني رسمي يجب أن يتم عبر جهة حكومية أو مصدر مخول وبالإجراءات والتفويضات النظامية."
-        )
-
-        addCard(
-            "📋 متطلبات التحقق",
-            "عرض المتطلبات الأساسية"
-        ) {
-            showEligibilityRequirements()
-        }
-
-        addCard(
-            "🏛️ الجهات الرسمية",
-            "مصادر حكومية مخولة فقط"
-        ) {
-            showMessage("لا يتم الوصول إلى قواعد بيانات قانونية غير مصرح بها.")
-        }
-
-        addCard(
-            "🔐 التفويض",
-            "التحقق من وجود التفويض النظامي"
-        ) {
-            showMessage("أي تحقق رسمي يحتاج التفويض والإجراء القانوني المناسب.")
-        }
-
-        addCard(
-            "📄 النتائج الموثقة",
-            "التعامل مع النتائج الرسمية"
-        ) {
-            showMessage("النتائج الرسمية تحفظ وفق الصلاحيات والأنظمة.")
-        }
-
-        addCard(
-            "🛡️ حماية البيانات",
-            "حماية المعلومات القانونية"
-        ) {
-            showSensitiveAccessPolicy()
-        }
-
-        addCard(
-            "↩️ الرئيسية",
-            "العودة إلى الصفحة الرئيسية"
-        ) {
-            showHome()
-        }
-    }
-
-    private fun showEligibilityRequirements() {
-        baseLayout("متطلبات الأهلية")
-
-        addSection("📋 متطلبات التحقق")
-        addInfo(
-            "ملاحظة قانونية",
-            "هذه النسخة المحلية لا تحتوي على اتصال حكومي فعلي. أي تكامل مستقبلي يجب أن يكون رسميًا ومصرحًا به."
-        )
-
-        addCard(
-            "🪪 بيانات الهوية",
-            "تقديم البيانات المطلوبة بالطريقة النظامية"
-        ) {
-            showMessage("تُطلب البيانات فقط عند وجود أساس قانوني واضح.")
-        }
-
-        addCard(
-            "🏛️ المصدر الرسمي",
-            "الاعتماد على جهة مخولة"
-        ) {
-            showMessage("المصدر الرسمي يجب أن يكون معتمدًا ومصرحًا به.")
-        }
-
-        addCard(
-            "⚖️ الموانع القانونية",
-            "التحقق من الموانع الموثقة عند السماح بذلك"
-        ) {
-            showMessage("لا يتم استنتاج أو اختلاق أي مانع قانوني.")
-        }
-
-        addCard(
-            "🔐 الموافقة والتفويض",
-            "تطبيق الإجراءات النظامية"
-        ) {
-            showMessage("الموافقة والتفويض يحددان حسب النظام المختص.")
-        }
-
-        addCard(
-            "🛡️ حماية الشاشة",
-            "حماية بيانات التحقق"
-        ) {
-            window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
-            showMessage("حماية الشاشة مفعلة.")
-        }
-
-        addCard(
-            "↩️ التحقق من الأهلية",
-            "العودة إلى صفحة التحقق"
+            "🛡️ التحقق",
+            "التحقق من الأهلية"
         ) {
             showEligibilityVerification()
+        }
+
+        addCard(
+            "📊 حالة المشروع",
+            "عرض حالة المشروع"
+        ) {
+            showProjectStatus()
+        }
+
+        addNavButton("↩️ BADGER") {
+            showBadger()
         }
     }
 
     private fun showInvestmentParticipation() {
         baseLayout("المشاركة الاستثمارية")
 
-        addSection("📈 المشاركة في الاستثمار")
+        addSection("الاستثمار")
+
         addInfo(
-            "خدمة حساسة",
-            "المشاركة الاستثمارية تخضع للتحقق والأهلية والموافقة النظامية."
+            "قبل المشاركة",
+            "يجب استيفاء متطلبات الأهلية والهوية والتفويضات المطلوبة وفق النظام المعمول به."
+        )
+
+        addInfo(
+            "التحقق الرسمي",
+            "يتم التحقق من الأهلية عبر الجهات أو المصادر الحكومية المخولة وبالطرق النظامية."
+        )
+
+        addInfo(
+            "الموانع القانونية",
+            "تُراجع الموانع القانونية الموثقة ذات الصلة بالمشاركة وفق الصلاحيات والأساس القانوني."
+        )
+
+        addInfo(
+            "التنفيذ",
+            "هذه الشاشة لا تنفذ عملية استثمار مالية فعلية."
         )
 
         addCard(
-            "📋 المتطلبات",
-            "مراجعة شروط المشاركة"
+            "✅ متطلبات الاستثمار",
+            "عرض المتطلبات"
         ) {
             showInvestmentRequirements()
         }
 
         addCard(
-            "⚖️ الأهلية",
-            "التحقق الرسمي من الأهلية"
+            "🛡️ التحقق من الأهلية",
+            "بدء مسار التحقق النظامي"
         ) {
             showEligibilityVerification()
         }
 
         addCard(
-            "🔒 الحماية",
-            "حماية بيانات المشاركة"
-        ) {
-            showSensitiveAccessPolicy()
-        }
-
-        addCard(
-            "👑 الموافقة",
-            "الموافقة المطلوبة قبل أي تنفيذ"
+            "📋 اعتماد المالك",
+            "مراجعة الاعتماد المطلوب"
         ) {
             showOwnerApproval()
         }
 
-        addCard(
-            "↩️ الرئيسية",
-            "العودة إلى الصفحة الرئيسية"
-        ) {
-            showHome()
-        }
-    }
-
-    private fun showInvestmentRequirements() {
-        baseLayout("متطلبات الاستثمار")
-
-        addSection("📋 متطلبات المشاركة الاستثمارية")
-        addInfo(
-            "قبل المشاركة",
-            "يجب مراجعة الشروط والأهلية والمخاطر والمعلومات الرسمية قبل أي قرار."
-        )
-
-        addCard(
-            "⚖️ التحقق القانوني",
-            "مراجعة الأهلية عبر المسار الرسمي"
-        ) {
-            showEligibilityVerification()
-        }
-
-        addCard(
-            "📊 المعلومات",
-            "مراجعة بيانات المشروع"
-        ) {
-            showMessage("بيانات المشروع يجب أن تكون موثقة ومحدثة.")
-        }
-
-        addCard(
-            "🛡️ الحماية",
-            "حماية الشاشة والبيانات"
-        ) {
-            window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
-            showMessage("حماية الشاشة مفعلة.")
-        }
-
-        addCard(
-            "👑 الموافقة",
-            "لا تنفيذ مالي تلقائي"
-        ) {
-            showOwnerApproval()
-        }
-
-        addCard(
-            "↩️ العودة",
-            "العودة إلى المشاركة الاستثمارية"
-        ) {
-            showInvestmentParticipation()
+        addNavButton("↩️ النظام المالي") {
+            showPrivateFinancialSystem()
         }
     }
 
         private fun showFinancingParticipation() {
         baseLayout("المشاركة التمويلية")
 
-        addSection("🏗️ المشاركة في المشاريع التمويلية")
+        addSection("المشاريع التمويلية")
+
         addInfo(
-            "خدمة حساسة",
-            "المشاركة التمويلية تحتاج مراجعة المشروع والأهلية والمخاطر والموافقات النظامية."
+            "قبل المشاركة",
+            "يجب استيفاء متطلبات الأهلية والهوية والتفويضات المطلوبة."
+        )
+
+        addInfo(
+            "التحقق الرسمي",
+            "يتم التحقق عبر الجهات أو المصادر الحكومية المخولة وبالطرق النظامية."
+        )
+
+        addInfo(
+            "الموانع القانونية",
+            "تتم مراجعة الموانع القانونية الموثقة ذات الصلة وفق الصلاحيات والأساس القانوني."
+        )
+
+        addInfo(
+            "التنفيذ",
+            "هذه الشاشة لا تنفذ تمويلًا ماليًا فعليًا."
         )
 
         addCard(
-            "📋 المتطلبات",
-            "مراجعة شروط المشاركة"
+            "📋 متطلبات التمويل",
+            "عرض متطلبات المشاركة"
         ) {
             showFinancingRequirements()
         }
 
         addCard(
-            "⚖️ التحقق من الأهلية",
-            "التحقق عبر المسارات الرسمية"
+            "✅ التحقق من الأهلية",
+            "مسار التحقق النظامي"
         ) {
             showEligibilityVerification()
         }
 
         addCard(
-            "📊 معلومات المشروع",
-            "مراجعة بيانات المشروع"
-        ) {
-            showMessage("بيانات المشروع يجب أن تكون موثقة ومحدثة.")
-        }
-
-        addCard(
-            "🔒 حماية المعلومات",
-            "حماية الشاشة والبيانات الحساسة"
-        ) {
-            showSensitiveAccessPolicy()
-        }
-
-        addCard(
-            "👑 موافقة المالك",
-            "لا تنفيذ مالي تلقائي"
+            "📋 اعتماد المالك",
+            "مراجعة الاعتماد المطلوب"
         ) {
             showOwnerApproval()
         }
 
+        addNavButton("↩️ النظام المالي") {
+            showPrivateFinancialSystem()
+        }
+    }
+
+    private fun showEligibilityVerification() {
+        baseLayout("التحقق من الأهلية")
+
+        addSection("التحقق الرسمي")
+
+        addInfo(
+            "الغرض",
+            "التحقق من أهلية المستخدم للخدمات الحساسة وفق المتطلبات النظامية."
+        )
+
+        addInfo(
+            "المصدر",
+            "يجب أن يتم التحقق من خلال جهة حكومية أو مصدر رسمي مخول."
+        )
+
+        addInfo(
+            "التفويض",
+            "لا يجوز الوصول إلى بيانات حكومية أو خاصة دون التفويض والسلطة النظامية المطلوبة."
+        )
+
+        addInfo(
+            "الموانع",
+            "يمكن التحقق من وجود موانع قانونية موثقة ذات صلة بالخدمة، وفق ما يسمح به القانون."
+        )
+
+        addInfo(
+            "الخصوصية",
+            "لا يتم افتراض وجود مانع قانوني ولا يتم استخدام بيانات غير مصرح بالوصول إليها."
+        )
+
         addCard(
-            "↩️ الرئيسية",
-            "العودة إلى الصفحة الرئيسية"
+            "📋 متطلبات الأهلية",
+            "عرض المتطلبات العامة"
         ) {
-            showHome()
+            showEligibilityRequirements()
+        }
+
+        addCard(
+            "💰 متطلبات الاستثمار",
+            "متطلبات المشاركة الاستثمارية"
+        ) {
+            showInvestmentRequirements()
+        }
+
+        addCard(
+            "🏗️ متطلبات التمويل",
+            "متطلبات المشاركة التمويلية"
+        ) {
+            showFinancingRequirements()
+        }
+
+        addNavButton("↩️ الأمان") {
+            showSensitiveAccessPolicy()
+        }
+    }
+
+    private fun showEligibilityRequirements() {
+        baseLayout("متطلبات الأهلية")
+
+        addSection("المتطلبات")
+
+        addInfo(
+            "الهوية",
+            "يجب استخدام وسيلة تحقق هوية معتمدة عندما تتطلب الخدمة ذلك."
+        )
+
+        addInfo(
+            "المصدر الرسمي",
+            "يجب أن يكون مصدر التحقق جهة رسمية مخولة."
+        )
+
+        addInfo(
+            "الموافقة",
+            "يجب الحصول على الموافقات والتفويضات المطلوبة قبل الوصول إلى البيانات المقيدة."
+        )
+
+        addInfo(
+            "النتيجة",
+            "تُستخدم نتيجة التحقق فقط للغرض النظامي المحدد."
+        )
+
+        addInfo(
+            "المراجعة",
+            "أي نتيجة غير واضحة تحتاج إلى مراجعة الجهة المختصة، ولا تُعامل كتأكيد تلقائي."
+        )
+
+        addNavButton("↩️ التحقق من الأهلية") {
+            showEligibilityVerification()
+        }
+    }
+
+    private fun showInvestmentRequirements() {
+        baseLayout("متطلبات الاستثمار")
+
+        addSection("المشاركة الاستثمارية")
+
+        addInfo(
+            "الأهلية",
+            "استيفاء شروط الأهلية المعتمدة للخدمة."
+        )
+
+        addInfo(
+            "التحقق",
+            "إكمال التحقق الرسمي المطلوب قبل المشاركة."
+        )
+
+        addInfo(
+            "الموافقة",
+            "الحصول على الموافقات والاعتمادات المطلوبة."
+        )
+
+        addInfo(
+            "المخاطر",
+            "يجب عرض معلومات المخاطر والشروط قبل أي قرار استثماري."
+        )
+
+        addInfo(
+            "التنفيذ",
+            "لا تنفذ هذه الواجهة أي عملية مالية فعلية."
+        )
+
+        addNavButton("↩️ المشاركة الاستثمارية") {
+            showInvestmentParticipation()
         }
     }
 
     private fun showFinancingRequirements() {
         baseLayout("متطلبات التمويل")
 
-        addSection("📋 متطلبات المشاركة التمويلية")
+        addSection("المشاركة في المشاريع التمويلية")
+
         addInfo(
-            "قبل المشاركة",
-            "يجب مراجعة المشروع والبيانات والشروط والأهلية قبل أي قرار."
+            "الأهلية",
+            "استيفاء شروط الأهلية المعتمدة."
         )
 
-        addCard(
-            "🏗️ المشروع",
-            "مراجعة تفاصيل المشروع"
-        ) {
-            showMessage("تفاصيل المشروع يجب أن تكون موثقة.")
-        }
+        addInfo(
+            "التحقق",
+            "إكمال التحقق الرسمي المطلوب."
+        )
 
-        addCard(
-            "📊 البيانات المالية",
-            "مراجعة المعلومات المالية"
-        ) {
-            showMessage("المعلومات المالية تعرض وفق الصلاحيات.")
-        }
+        addInfo(
+            "الموافقة",
+            "الحصول على الاعتمادات والتفويضات المطلوبة."
+        )
 
-        addCard(
-            "⚖️ الأهلية القانونية",
-            "التحقق من الأهلية بالطريقة الرسمية"
-        ) {
-            showEligibilityVerification()
-        }
+        addInfo(
+            "الشروط",
+            "يجب عرض شروط المشروع والتكاليف والمخاطر والالتزامات بوضوح."
+        )
 
-        addCard(
-            "🔐 التفويض",
-            "التأكد من الصلاحيات المطلوبة"
-        ) {
-            showMessage("أي تحقق رسمي يحتاج تفويضًا مناسبًا.")
-        }
+        addInfo(
+            "التنفيذ",
+            "لا تنفذ هذه الشاشة عملية تمويل فعلية."
+        )
 
-        addCard(
-            "🛡️ الحماية",
-            "حماية بيانات المشاركة"
-        ) {
-            window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
-            showMessage("حماية الشاشة مفعلة.")
-        }
-
-        addCard(
-            "↩️ العودة",
-            "العودة إلى المشاركة التمويلية"
-        ) {
+        addNavButton("↩️ المشاركة التمويلية") {
             showFinancingParticipation()
-        }
-    }
-
-    private fun showSensitiveAccessPolicy() {
-        baseLayout("سياسة الوصول الحساس")
-
-        addSection("🔒 سياسة الخدمات الحساسة")
-        addInfo(
-            "حماية شاملة",
-            "حماية التطبيق مفعلة على مستوى التطبيق بالكامل، وليست مقتصرة على شاشة واحدة."
-        )
-
-        addCard(
-            "📵 منع التقاط الشاشة",
-            "حماية محتوى التطبيق من الالتقاط"
-        ) {
-            window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
-            showMessage("حماية الشاشة مفعلة.")
-        }
-
-        addCard(
-            "🎥 منع تسجيل الشاشة",
-            "حماية المحتوى من تسجيل الشاشة"
-        ) {
-            window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
-            showMessage("حماية تسجيل الشاشة مفعلة.")
-        }
-
-        addCard(
-            "⏱️ السكون خارج التطبيق",
-            "القفل بعد 10 دقائق خارج التطبيق"
-        ) {
-            showMessage("مدة السكون خارج التطبيق: 10 دقائق.")
-        }
-
-        addCard(
-            "⚖️ التحقق الرسمي",
-            "التحقق القانوني عبر الجهات المخولة"
-        ) {
-            showEligibilityVerification()
-        }
-
-        addCard(
-            "💰 الاستثمار",
-            "متطلبات المشاركة الاستثمارية"
-        ) {
-            showInvestmentParticipation()
-        }
-
-        addCard(
-            "🏗️ التمويل",
-            "متطلبات المشاركة التمويلية"
-        ) {
-            showFinancingParticipation()
-        }
-
-        addCard(
-            "👑 الموافقة",
-            "الموافقات المطلوبة قبل التنفيذ"
-        ) {
-            showOwnerApproval()
-        }
-
-        addCard(
-            "↩️ الرئيسية",
-            "العودة إلى الصفحة الرئيسية"
-        ) {
-            showHome()
-        }
-    }
-
-    private fun showSecurityChecklist() {
-        baseLayout("قائمة الأمان")
-
-        addSection("🛡️ قائمة مراجعة الأمان")
-
-        addInfo(
-            "الحماية العامة",
-            "حماية الشاشة مفعلة على مستوى التطبيق بالكامل."
-        )
-
-        addCard(
-            "✅ حماية الشاشة",
-            "FLAG_SECURE مفعلة"
-        ) {
-            window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
-            showMessage("الحماية مفعلة.")
-        }
-
-        addCard(
-            "✅ قفل خارج التطبيق",
-            "السكون بعد 10 دقائق"
-        ) {
-            showMessage("إعداد السكون: 10 دقائق.")
-        }
-
-        addCard(
-            "✅ حماية البيانات",
-            "تقليل عرض البيانات الحساسة"
-        ) {
-            showMessage("البيانات الحساسة تخضع للصلاحيات.")
-        }
-
-        addCard(
-            "✅ التحقق الرسمي",
-            "الاعتماد على المصادر الحكومية المخولة"
-        ) {
-            showEligibilityVerification()
-        }
-
-        addCard(
-            "✅ مكافحة الاحتيال",
-            "متابعة مؤشرات المخاطر"
-        ) {
-            showSecurityOffice()
-        }
-
-        addCard(
-            "↩️ مكتب الأمن",
-            "العودة إلى مكتب الأمن"
-        ) {
-            showSecurityOffice()
         }
     }
 
     private fun showOwnerApproval() {
-        baseLayout("موافقة المالك")
+        baseLayout("اعتماد المالك")
 
-        addSection("👑 موافقة المالك")
+        addSection("المراجعة والاعتماد")
+
         addInfo(
-            "صلاحية إدارية",
-            "العمليات الحساسة والقرارات المالية لا تنفذ تلقائيًا من هذه النسخة."
+            "الاعتماد",
+            "بعض الإجراءات الحساسة تحتاج إلى مراجعة واعتماد صاحب الصلاحية."
+        )
+
+        addInfo(
+            "التنفيذ المالي",
+            "لا يتم تنفيذ أي عملية مالية فعلية تلقائيًا."
+        )
+
+        addInfo(
+            "الحماية",
+            "يجب الحفاظ على حماية البيانات والشاشة أثناء مراجعة المعلومات الحساسة."
         )
 
         addCard(
-            "💰 العمليات المالية",
-            "لا تنفيذ مالي دون الموافقة المطلوبة"
-        ) {
-            showMessage("لا يتم تنفيذ عملية مالية حقيقية من هذه الواجهة.")
-        }
-
-        addCard(
-            "🏗️ المشاريع",
-            "مراجعة المشاريع الحساسة"
+            "📊 حالة المشروع",
+            "عرض حالة الطلب أو المشروع"
         ) {
             showProjectStatus()
         }
 
-        addCard(
-            "🛡️ الأمن",
-            "مراجعة القرارات الأمنية"
-        ) {
-            showSecurityOffice()
-        }
-
-        addCard(
-            "⚖️ القانون",
-            "مراجعة المسائل القانونية"
-        ) {
-            showAttorneyOffice()
-        }
-
-        addCard(
-            "🤖 CTM AI",
-            "إدارة حالة المساعد الذكي"
-        ) {
-            showCtmAi()
-        }
-
-        addCard(
-            "↩️ مكتب المدير",
-            "العودة إلى مكتب المدير"
-        ) {
+        addNavButton("↩️ إدارة المنصة") {
             showManagerOffice()
         }
     }
 
-    private fun showProjectStatus() {
+        private fun showProjectStatus() {
         baseLayout("حالة المشروع")
 
-        addSection("📊 حالة المشروع")
+        addSection("المتابعة")
+
         addInfo(
-            "المتابعة",
-            "عرض حالة الأقسام والمشاريع والتطوير."
+            "الحالة",
+            "لا توجد عملية مالية فعلية مرتبطة بهذه الواجهة."
+        )
+
+        addInfo(
+            "المراجعة",
+            "يمكن استخدام هذا القسم لمتابعة حالة الطلب أو المشروع وفق الصلاحيات."
+        )
+
+        addInfo(
+            "الاعتماد",
+            "أي خطوة حساسة تحتاج إلى الاعتماد المطلوب قبل التنفيذ."
         )
 
         addCard(
-            "🧠 الأفكار",
-            "متابعة الأفكار والمقترحات"
+            "📋 المستندات",
+            "عرض المستندات المرتبطة بالمشروع"
         ) {
-            showHumanIntelligence()
+            showDocuments()
         }
 
         addCard(
-            "🏗️ المشاريع التمويلية",
-            "متابعة المشاريع التمويلية"
+            "🔍 التشخيص",
+            "عرض حالة الجهاز والاتصال"
         ) {
-            showFinancingParticipation()
+            showDiagnostics()
         }
 
-        addCard(
-            "📈 المشاريع الاستثمارية",
-            "متابعة المشاريع الاستثمارية"
-        ) {
-            showInvestmentParticipation()
+        addNavButton("↩️ النظام المالي") {
+            showPrivateFinancialSystem()
         }
+    }
 
-        addCard(
-            "🛡️ الأمن",
-            "حالة منظومة الأمان"
-        ) {
-            showSecurityOffice()
-        }
+    private fun showDiagnostics() {
+        baseLayout("التشخيص")
 
-        addCard(
-            "🤖 CTM AI",
-            "حالة المساعد الذكي"
-        ) {
-            showCtmAi()
-        }
+        addSection("تشخيص التطبيق والجهاز")
+
+        addInfo(
+            "التطبيق",
+            "يعمل الفحص من داخل التطبيق لعرض المعلومات المتاحة عن الاتصال وقدرات الجهاز."
+        )
 
         addCard(
             "🌐 الاتصال",
-            "فحص الاتصال والخدمات"
-        ) {
-            showOnline()
-        }
-
-        addCard(
-            "↩️ الرئيسية",
-            "العودة إلى الصفحة الرئيسية"
-        ) {
-            showHome()
-        }
-    }
-
-    private fun showAppRules() {
-        baseLayout("قواعد التطبيق")
-
-        addSection("📜 قواعد المنصة")
-        addInfo(
-            "الاستخدام المسؤول",
-            "يجب استخدام المنصة وفق القوانين والأنظمة والصلاحيات المعتمدة."
-        )
-
-        addCard(
-            "🔐 الخصوصية",
-            "احترام وحماية بيانات المستخدمين"
-        ) {
-            showSafety()
-        }
-
-        addCard(
-            "⚖️ القانون",
-            "الالتزام بالقواعد النظامية"
-        ) {
-            showAttorneyOffice()
-        }
-
-        addCard(
-            "🛡️ الأمان",
-            "حماية الحسابات والمعلومات"
-        ) {
-            showSecurityOffice()
-        }
-
-        addCard(
-            "💰 الخدمات المالية",
-            "لا تنفيذ مالي تلقائي"
-        ) {
-            showPrivateFinancialSystem()
-        }
-
-        addCard(
-            "🌍 الاستخدام العالمي",
-            "تختلف القواعد حسب الدولة والمنطقة"
-        ) {
-            showMessage("تطبيق القواعد يعتمد على البلد والحزمة المفعلة.")
-        }
-
-        addCard(
-            "↩️ الرئيسية",
-            "العودة إلى الصفحة الرئيسية"
-        ) {
-            showHome()
-        }
-    }
-
-        private fun showDiagnostics() {
-        baseLayout("التشخيص")
-
-        addSection("🔧 تشخيص الجهاز والتطبيق")
-        addInfo(
-            "الفحص التلقائي",
-            "عرض معلومات أساسية عن الاتصال وقدرات الجهاز دون جمع بيانات غير ضرورية."
-        )
-
-        val connectivityManager =
-            getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
-
-        val network = connectivityManager.activeNetwork
-        val capabilities =
-            connectivityManager.getNetworkCapabilities(network)
-
-        val connected =
-            capabilities != null &&
-            capabilities.hasCapability(
-                NetworkCapabilities.NET_CAPABILITY_INTERNET
-            )
-
-        val validated =
-            capabilities != null &&
-            capabilities.hasCapability(
-                NetworkCapabilities.NET_CAPABILITY_VALIDATED
-            )
-
-        addInfo(
-            "الاتصال",
-            if (connected) "متصل" else "غير متصل"
-        )
-
-        addInfo(
-            "الإنترنت",
-            if (validated) "متاح ومتحقق" else "غير متحقق"
-        )
-
-        val networkType = when {
-            capabilities?.hasTransport(
-                NetworkCapabilities.TRANSPORT_WIFI
-            ) == true -> "Wi-Fi"
-
-            capabilities?.hasTransport(
-                NetworkCapabilities.TRANSPORT_CELLULAR
-            ) == true -> "بيانات الهاتف"
-
-            capabilities?.hasTransport(
-                NetworkCapabilities.TRANSPORT_ETHERNET
-            ) == true -> "Ethernet"
-
-            else -> "غير معروف"
-        }
-
-        addInfo(
-            "نوع الاتصال",
-            networkType
-        )
-
-        addInfo(
-            "إصدار Android",
-            Build.VERSION.RELEASE
-        )
-
-        addInfo(
-            "SDK",
-            Build.VERSION.SDK_INT.toString()
-        )
-
-        addInfo(
-            "الجهاز",
-            "${Build.MANUFACTURER} ${Build.MODEL}"
-        )
-
-        addCard(
-            "🌐 اختبار الاتصال",
-            "إعادة فحص حالة الشبكة"
+            "فحص حالة الشبكة"
         ) {
             showOnline()
         }
 
         addCard(
             "📱 قدرات الجهاز",
-            "عرض معلومات توافق الجهاز"
+            "فحص قدرات الجهاز المتاحة"
         ) {
             showDeviceCapabilities()
         }
 
         addCard(
-            "📊 حالة التطبيق",
-            "مراجعة حالة الحماية"
+            "📊 حالة المشروع",
+            "عرض حالة المشروع"
         ) {
             showProjectStatus()
         }
 
-        addCard(
-            "↩️ الرئيسية",
-            "العودة إلى الصفحة الرئيسية"
-        ) {
-            showHome()
+        addNavButton("↩️ قائمة الأمان") {
+            showSecurityChecklist()
         }
     }
 
     private fun showDeviceCapabilities() {
         baseLayout("قدرات الجهاز")
 
-        addSection("📱 قدرات الجهاز والتوافق")
+        addSection("الفحص التلقائي")
+
+        val manager =
+            getSystemService(CONNECTIVITY_SERVICE)
+                    as ConnectivityManager
+
+        val network =
+            manager.activeNetwork
+
+        val capabilities =
+            manager.getNetworkCapabilities(network)
+
+        val hasNetwork =
+            capabilities != null
+
+        addInfo(
+            "الاتصال",
+            if (hasNetwork) {
+                "يوجد اتصال شبكي متاح."
+            } else {
+                "لا يوجد اتصال شبكي حاليًا."
+            }
+        )
+
+        if (capabilities != null) {
+            val wifi =
+                capabilities.hasTransport(
+                    NetworkCapabilities.TRANSPORT_WIFI
+                )
+
+            val mobile =
+                capabilities.hasTransport(
+                    NetworkCapabilities.TRANSPORT_CELLULAR
+                )
+
+            val validated =
+                capabilities.hasCapability(
+                    NetworkCapabilities.NET_CAPABILITY_VALIDATED
+                )
+
+            addInfo(
+                "Wi-Fi",
+                if (wifi) "متاح" else "غير مستخدم حاليًا"
+            )
+
+            addInfo(
+                "شبكة الهاتف",
+                if (mobile) "متاحة" else "غير مستخدمة حاليًا"
+            )
+
+            addInfo(
+                "التحقق من الإنترنت",
+                if (validated) "الاتصال بالإنترنت مؤكد" else "غير مؤكد"
+            )
+        }
+
         addInfo(
             "التوافق",
-            "يتم تصميم التطبيق ليعمل على مجموعة واسعة من أجهزة Android المتوافقة."
+            "تتكيف الخدمات مع قدرات الجهاز والاتصال المتاحين بدل افتراض توفر كل الإمكانات."
         )
 
-        addInfo(
-            "Android",
-            "الإصدار ${Build.VERSION.RELEASE}"
-        )
-
-        addInfo(
-            "SDK",
-            Build.VERSION.SDK_INT.toString()
-        )
-
-        addInfo(
-            "الشركة",
-            Build.MANUFACTURER
-        )
-
-        addInfo(
-            "الطراز",
-            Build.MODEL
-        )
-
-        val connectivityManager =
-            getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
-
-        val network = connectivityManager.activeNetwork
-        val capabilities =
-            connectivityManager.getNetworkCapabilities(network)
-
-        val hasWifi =
-            capabilities?.hasTransport(
-                NetworkCapabilities.TRANSPORT_WIFI
-            ) == true
-
-        val hasMobile =
-            capabilities?.hasTransport(
-                NetworkCapabilities.TRANSPORT_CELLULAR
-            ) == true
-
-        addCard(
-            "📶 Wi-Fi",
-            if (hasWifi) "متاح حاليًا" else "غير متاح حاليًا"
-        ) {
-            showMessage(
-                if (hasWifi) "اتصال Wi-Fi متاح." else "لا يوجد Wi-Fi متاح حاليًا."
-            )
-        }
-
-        addCard(
-            "📡 بيانات الهاتف",
-            if (hasMobile) "متاحة حاليًا" else "غير متاحة حاليًا"
-        ) {
-            showMessage(
-                if (hasMobile) "بيانات الهاتف متاحة." else "بيانات الهاتف غير متاحة."
-            )
-        }
-
-        addCard(
-            "💾 وضع البيانات",
-            "دعم الاتصال المحدود وتقليل الاستخدام غير الضروري"
-        ) {
-            showMessage("التطبيق مصمم لتقليل العمليات غير الضرورية.")
-        }
-
-        addCard(
-            "🧩 التوافق",
-            "مراجعة توافق التطبيق مع الجهاز"
-        ) {
-            showMessage("تم تسجيل معلومات الجهاز للتشخيص المحلي.")
-        }
-
-        addCard(
-            "↩️ التشخيص",
-            "العودة إلى صفحة التشخيص"
-        ) {
+        addNavButton("↩️ التشخيص") {
             showDiagnostics()
         }
     }
 
-    private fun showDeveloperNotice() {
-        baseLayout("ملاحظات التطوير")
+    private fun showDocuments() {
+        baseLayout("المستندات")
 
-        addSection("🧑‍💻 ملاحظات التطوير")
+        addSection("المستندات والمعلومات")
+
         addInfo(
-            "نسخة التطوير",
-            "هذه الواجهة تساعد على متابعة حالة التطبيق أثناء التطوير والاختبار."
+            "الوصول",
+            "يتم عرض المستندات وفق الصلاحيات ومستوى الوصول المعتمد."
+        )
+
+        addInfo(
+            "المستندات الحساسة",
+            "تخضع المستندات الحساسة للحماية والضوابط القانونية المناسبة."
+        )
+
+        addInfo(
+            "الخصوصية",
+            "لا يتم عرض بيانات أو مستندات مقيدة دون الصلاحية اللازمة."
         )
 
         addCard(
-            "🔧 التشخيص",
-            "فحص الجهاز والاتصال"
-        ) {
-            showDiagnostics()
-        }
-
-        addCard(
             "🛡️ الأمان",
-            "مراجعة حماية التطبيق"
+            "مراجعة حماية المعلومات"
         ) {
             showSecurityChecklist()
+        }
+
+        addNavButton("↩️ الرئيسية") {
+            showHome()
+        }
+    }
+
+    private fun showCustoms() {
+        baseLayout("الجمارك والشحن")
+
+        addSection("الشحن والجمارك")
+
+        addInfo(
+            "الشحن",
+            "يمكن عرض تقديرات الشحن وفق المسار والبلد والبيانات المتاحة."
+        )
+
+        addInfo(
+            "الجمارك",
+            "أي تقدير للرسوم الجمركية هو تقدير إرشادي ويجب الرجوع إلى الجهات الرسمية."
+        )
+
+        addInfo(
+            "القواعد الإقليمية",
+            "قد تختلف متطلبات الشحن والاستيراد والتصدير حسب الدولة والمنطقة."
+        )
+
+        addInfo(
+            "المعاملات",
+            "يجب الالتزام بالقوانين والأنظمة المحلية والدولية ذات الصلة."
+        )
+
+        addNavButton("↩️ المنتجات والأقسام") {
+            showProducts()
+        }
+    }
+
+        private fun showCountryPackage() {
+        baseLayout("حزمة الدولة")
+
+        addSection("النظام العالمي")
+
+        addInfo(
+            "الأساس",
+            "المنصة مصممة كأساس عالمي يمكن أن يعمل مع حزم خاصة بالدول والمناطق."
+        )
+
+        addInfo(
+            "السودان",
+            "يمكن أن تتضمن حزمة السودان الخدمات والجهات والميزات الخاصة بها وفق القوانين المحلية."
+        )
+
+        addInfo(
+            "الدول الأخرى",
+            "يتم تفعيل أو تعطيل الميزات الخاصة بالدولة حسب الحزمة المعتمدة."
+        )
+
+        addInfo(
+            "المعاملات الدولية",
+            "تختلف القواعد والرسوم والشحن والجمارك حسب الدولة والمسار."
+        )
+
+        addCard(
+            "📦 الشحن والجمارك",
+            "المعلومات الإرشادية للشحن والجمارك"
+        ) {
+            showCustoms()
         }
 
         addCard(
             "🌐 الاتصال",
-            "فحص الاتصال بالإنترنت"
+            "فحص الاتصال الحالي"
         ) {
             showOnline()
         }
 
-        addCard(
-            "📊 حالة المشروع",
-            "عرض حالة الأقسام"
-        ) {
-            showProjectStatus()
-        }
-
-        addCard(
-            "↩️ الرئيسية",
-            "العودة إلى الصفحة الرئيسية"
-        ) {
+        addNavButton("↩️ الرئيسية") {
             showHome()
         }
     }
 
-    private fun showSearch() {
-        baseLayout("البحث")
+    private fun showRegionalRules() {
+        baseLayout("القواعد الإقليمية")
 
-        addSection("🔎 البحث")
+        addSection("القواعد حسب المنطقة")
+
         addInfo(
-            "البحث داخل المنصة",
-            "اكتب كلمة للبحث عن قسم أو خدمة أو منتج."
+            "الاختلافات",
+            "قد تختلف القوانين والرسوم ومتطلبات التجارة والخدمات من منطقة إلى أخرى."
         )
 
-        val searchInput = EditText(this)
-        searchInput.hint = "اكتب كلمة البحث"
-        content.addView(searchInput)
+        addInfo(
+            "التنبيه",
+            "يجب عرض تنبيه مناسب عندما تختلف متطلبات الخدمة حسب الدولة أو المنطقة."
+        )
 
-        val searchButton = Button(this)
-        searchButton.text = "بحث"
-        searchButton.setOnClickListener {
-            val query = searchInput.text.toString().trim()
-
-            if (query.isEmpty()) {
-                showMessage("اكتب كلمة البحث أولًا.")
-            } else {
-                showMessage(
-                    "تم استلام البحث: $query"
-                )
-            }
-        }
-
-        content.addView(searchButton)
+        addInfo(
+            "المصدر",
+            "المعلومات القانونية والتنظيمية النهائية يجب أن تعتمد على المصادر الرسمية المختصة."
+        )
 
         addCard(
-            "🛍️ المنتجات",
-            "الانتقال إلى الأقسام والمنتجات"
+            "📦 الشحن والجمارك",
+            "عرض المعلومات الإرشادية"
         ) {
-            showProducts()
+            showCustoms()
         }
 
-        addCard(
-            "🤖 CTM AI",
-            "البحث الذكي والمساعدة"
-        ) {
-            showCtmAi()
-        }
-
-        addCard(
-            "📢 الإعلانات",
-            "عرض خدمات الإعلانات"
-        ) {
-            showAds()
-        }
-
-        addCard(
-            "↩️ الرئيسية",
-            "العودة إلى الصفحة الرئيسية"
-        ) {
+        addNavButton("↩️ الرئيسية") {
             showHome()
         }
     }
 
-    private fun showAccessDenied() {
-        baseLayout("الوصول")
+    private fun showBadgerOffice() {
+        baseLayout("BADGER")
 
-        addSection("🔐 الوصول غير متاح")
-        addInfo(
-            "الصلاحية",
-            "هذه الوظيفة تحتاج إلى صلاحية أو تحقق مناسب قبل الوصول إليها."
-        )
-
-        addCard(
-            "🛡️ الأمان",
-            "مراجعة إعدادات الحماية"
-        ) {
-            showSafety()
-        }
-
-        addCard(
-            "👑 موافقة المالك",
-            "مراجعة الصلاحيات الإدارية"
-        ) {
-            showOwnerApproval()
-        }
-
-        addCard(
-            "↩️ الرئيسية",
-            "العودة إلى الصفحة الرئيسية"
-        ) {
-            showHome()
-        }
-    }
-
-    private fun clearSensitiveView() {
-        window.addFlags(
-            WindowManager.LayoutParams.FLAG_SECURE
-        )
-        showHome()
-    }
-
-    private fun requireSensitiveConfirmation(
-        title: String,
-        description: String
-    ) {
-        window.addFlags(
-            WindowManager.LayoutParams.FLAG_SECURE
-        )
-
-        addSection(title)
-        addInfo(
-            "🔒 تأكيد الحماية",
-            description
-        )
-    }
-
-    private fun enableSensitiveScreenProtection() {
-        window.addFlags(
-            WindowManager.LayoutParams.FLAG_SECURE
-        )
-    }
-
-    private fun showSensitiveHeader(
-        title: String,
-        description: String
-    ) {
-        enableSensitiveScreenProtection()
-
-        addSection(title)
+        addSection("إدارة BADGER")
 
         addInfo(
-            "🔒 شاشة محمية",
-            description
+            "المنتج",
+            "BADGER منتج مالي مستقل مخصص للتطوير المؤسسي والتقديم للجهات المالية وفق المتطلبات النظامية."
         )
-    }
 
-        private fun showServices() {
-        baseLayout("الخدمات")
-
-        addSection("🧰 الخدمات")
         addInfo(
-            "خدمات المنصة",
-            "مجموعة من الخدمات العامة والمهنية المتاحة حسب البلد والمنطقة."
+            "الحماية",
+            "تطبق الحماية الشاملة للتطبيق وقواعد قفل الجلسة."
         )
 
         addCard(
-            "🚚 النقل والتوصيل",
-            "خدمات النقل والتوصيل"
+            "💰 النظام المالي",
+            "المعلومات المالية المسموح بها"
         ) {
-            showMessage("الخدمة تعتمد على المنطقة والتوفر.")
+            showPrivateFinancialSystem()
         }
 
         addCard(
-            "🏗️ البناء",
-            "مواد البناء والخدمات المرتبطة بها"
+            "🛡️ حماية الخدمات الحساسة",
+            "قواعد الوصول والحماية"
         ) {
-            showCategory("🏗️ البناء والجملة")
+            showSensitiveAccessPolicy()
         }
 
-        addCard(
-            "🌾 الزراعة والمواشي",
-            "منتجات وخدمات الزراعة والثروة الحيوانية"
-        ) {
-            showCategory("🌾 الزراعة والمواشي")
-        }
-
-        addCard(
-            "🐟 الأسماك",
-            "منتجات وخدمات الأسماك"
-        ) {
-            showCategory("🐟 الأسماك")
-        }
-
-        addCard(
-            "🏥 الصحة",
-            "خدمات ومعلومات صحية عامة"
-        ) {
-            showCategory("🏥 الصحة")
-        }
-
-        addCard(
-            "🎓 التعليم",
-            "الخدمات والموارد التعليمية"
-        ) {
-            showCategory("🎓 التعليم")
-        }
-
-        addCard(
-            "✈️ السفر",
-            "السفر والتنقل والحجوزات"
-        ) {
-            showCategory("✈️ السفر")
-        }
-
-        addCard(
-            "↩️ الرئيسية",
-            "العودة إلى الصفحة الرئيسية"
-        ) {
-            showHome()
+        addNavButton("↩️ إدارة المنصة") {
+            showManagerOffice()
         }
     }
 
-    private fun showAgriculture() {
-        baseLayout("الزراعة والمواشي")
+    private fun showAboutArchitecture() {
+        baseLayout("هيكل المنصة")
 
-        addSection("🌾 الزراعة والمواشي")
-        addInfo(
-            "القطاع الزراعي",
-            "منتجات وخدمات الزراعة والمواشي والثروة الحيوانية."
-        )
+        addSection("التنظيم")
 
-        addCard(
-            "🌱 الزراعة",
-            "منتجات ومستلزمات زراعية"
-        ) {
-            showMessage("سيتم تنظيم المنتجات الزراعية حسب المنطقة.")
-        }
-
-        addCard(
-            "🐄 المواشي",
-            "المواشي والثروة الحيوانية"
-        ) {
-            showMessage("بيانات المواشي تخضع للتوثيق المناسب.")
-        }
-
-        addCard(
-            "🚜 المعدات",
-            "معدات وأدوات زراعية"
-        ) {
-            showMessage("عرض المعدات حسب المنطقة والتوفر.")
-        }
-
-        addCard(
-            "📦 البيع والشراء",
-            "التجارة المحلية للمنتجات"
-        ) {
-            showMessage("المعاملات تخضع لقواعد التجارة المحلية.")
-        }
-
-        addCard(
-            "↩️ المنتجات",
-            "العودة إلى المنتجات"
-        ) {
-            showProducts()
-        }
-    }
-
-    private fun showHealth() {
-        baseLayout("الصحة")
-
-        addSection("🏥 الصحة")
-        addInfo(
-            "الخدمات الصحية",
-            "قسم للمعلومات والخدمات الصحية العامة."
-        )
-
-        addCard(
-            "🏥 الخدمات",
-            "الوصول إلى الخدمات الصحية"
-        ) {
-            showMessage("الخدمات تعتمد على المنطقة والتوفر.")
-        }
-
-        addCard(
-            "💊 المنتجات",
-            "المنتجات الصحية المسموح بعرضها"
-        ) {
-            showMessage("عرض المنتجات وفق القوانين المحلية.")
-        }
-
-        addCard(
-            "📍 المنطقة",
-            "معرفة الخدمات المتاحة"
-        ) {
-            showOnline()
-        }
-
-        addCard(
-            "🔐 الخصوصية",
-            "حماية المعلومات الشخصية"
-        ) {
-            showSafety()
-        }
-
-        addCard(
-            "↩️ المنتجات",
-            "العودة إلى المنتجات"
-        ) {
-            showProducts()
-        }
-    }
-
-    private fun showSports() {
-        baseLayout("الرياضة")
-
-        addSection("⚽ الرياضة")
-        addInfo(
-            "الرياضة والأنشطة",
-            "خدمات ومنتجات ومعلومات رياضية."
-        )
-
-        addCard(
-            "⚽ المنتجات الرياضية",
-            "عرض المنتجات والمستلزمات"
-        ) {
-            showMessage("سيتم تنظيم المنتجات الرياضية.")
-        }
-
-        addCard(
-            "🏟️ الأنشطة",
-            "الأنشطة والفعاليات الرياضية"
-        ) {
-            showMessage("الفعاليات تعتمد على المنطقة.")
-        }
-
-        addCard(
-            "👥 الفرق",
-            "تنظيم الفرق والمجموعات"
-        ) {
-            showMessage("يمكن تنظيم الفرق وفق الصلاحيات.")
-        }
-
-        addCard(
-            "↩️ المنتجات",
-            "العودة إلى المنتجات"
-        ) {
-            showProducts()
-        }
-    }
-
-    private fun showEducation() {
-        baseLayout("التعليم")
-
-        addSection("🎓 التعليم")
-        addInfo(
-            "الخدمات التعليمية",
-            "موارد وخدمات تعليمية للطلاب والمؤسسات."
-        )
-
-        addCard(
-            "📚 الموارد",
-            "الوصول إلى الموارد التعليمية"
-        ) {
-            showMessage("الموارد التعليمية تنظم حسب المجال.")
-        }
-
-        addCard(
-            "🏫 المؤسسات",
-            "معلومات المؤسسات التعليمية"
-        ) {
-            showMessage("بيانات المؤسسات تحتاج مصدرًا موثوقًا.")
-        }
-
-        addCard(
-            "👨‍🏫 الخبراء",
-            "الاستفادة من الخبرات التعليمية"
-        ) {
-            showHumanIntelligence()
-        }
-
-        addCard(
-            "↩️ المنتجات",
-            "العودة إلى المنتجات"
-        ) {
-            showProducts()
-        }
-    }
-
-    private fun showTravel() {
-        baseLayout("السفر")
-
-        addSection("✈️ السفر")
-        addInfo(
-            "السفر والتنقل",
-            "خدمات ومعلومات السفر وفق البلد والمنطقة."
-        )
-
-        addCard(
-            "✈️ الرحلات",
-            "معلومات الرحلات"
-        ) {
-            showMessage("معلومات الرحلات تحتاج مصدرًا محدثًا.")
-        }
-
-        addCard(
-            "🚌 النقل",
-            "خيارات النقل والتنقل"
-        ) {
-            showMessage("خيارات النقل تختلف حسب المنطقة.")
-        }
-
-        addCard(
-            "🛂 المتطلبات",
-            "معلومات عامة عن متطلبات السفر"
-        ) {
-            showMessage("يجب الرجوع إلى الجهات الرسمية للحصول على المتطلبات النهائية.")
-        }
-
-        addCard(
-            "🌍 المناطق",
-            "القواعد تختلف حسب البلد"
-        ) {
-            showMessage("القواعد المحلية تختلف حسب الدولة والمنطقة.")
-        }
-
-        addCard(
-            "↩️ المنتجات",
-            "العودة إلى المنتجات"
-        ) {
-            showProducts()
-        }
-    }
-
-    private fun showElectricityWater() {
-        baseLayout("الكهرباء والمياه")
-
-        addSection("⚡ الكهرباء والمياه")
-        addInfo(
-            "الخدمات الأساسية",
-            "الوصول إلى المعلومات والخدمات المرتبطة بالكهرباء والمياه."
-        )
-
-        addCard(
-            "⚡ الكهرباء",
-            "خدمات ومستلزمات الكهرباء"
-        ) {
-            showMessage("الخدمات تعتمد على المنطقة.")
-        }
-
-        addCard(
-            "💧 المياه",
-            "خدمات ومستلزمات المياه"
-        ) {
-            showMessage("الخدمات تعتمد على المنطقة.")
-        }
-
-        addCard(
-            "🔧 الصيانة",
-            "خدمات الصيانة"
-        ) {
-            showMessage("سيتم تنظيم مقدمي الخدمات وفق المنطقة.")
-        }
-
-        addCard(
-            "↩️ المنتجات",
-            "العودة إلى المنتجات"
-        ) {
-            showProducts()
-        }
-    }
-
-    private fun showVehicles() {
-        baseLayout("المركبات")
-
-        addSection("🚗 المركبات والشاحنات")
-        addInfo(
-            "المركبات",
-            "عرض المركبات والشاحنات والخدمات المرتبطة بها."
-        )
-
-        addCard(
-            "🚗 السيارات",
-            "السيارات والمركبات"
-        ) {
-            showMessage("عرض المركبات حسب المنطقة.")
-        }
-
-        addCard(
-            "🚚 الشاحنات",
-            "الشاحنات ومعدات النقل"
-        ) {
-            showMessage("عرض الشاحنات حسب المنطقة.")
-        }
-
-        addCard(
-            "🔧 قطع الغيار",
-            "قطع الغيار والخدمات"
-        ) {
-            showMessage("سيتم تنظيم قطع الغيار حسب النوع.")
-        }
-
-        addCard(
-            "🛠️ الصيانة",
-            "خدمات الصيانة"
-        ) {
-            showMessage("خدمات الصيانة تعتمد على المنطقة.")
-        }
-
-        addCard(
-            "↩️ المنتجات",
-            "العودة إلى المنتجات"
-        ) {
-            showProducts()
-        }
-    }
-
-    private fun showElectronics() {
-        baseLayout("الإلكترونيات")
-
-        addSection("📱 الهواتف والإلكترونيات")
-        addInfo(
-            "الإلكترونيات",
-            "الهواتف والأجهزة والإكسسوارات والخدمات المرتبطة بها."
-        )
-
-        addCard(
-            "📱 الهواتف",
-            "الهواتف والأجهزة المحمولة"
-        ) {
-            showMessage("عرض الأجهزة حسب المنطقة والتوفر.")
-        }
-
-        addCard(
-            "💻 الأجهزة",
-            "الأجهزة الإلكترونية"
-        ) {
-            showMessage("عرض الأجهزة الإلكترونية.")
-        }
-
-        addCard(
-            "🎧 الإكسسوارات",
-            "الإكسسوارات الإلكترونية"
-        ) {
-            showMessage("عرض الإكسسوارات.")
-        }
-
-        addCard(
-            "🔧 الصيانة",
-            "خدمات صيانة الأجهزة"
-        ) {
-            showMessage("خدمات الصيانة تعتمد على المنطقة.")
-        }
-
-        addCard(
-            "↩️ المنتجات",
-            "العودة إلى المنتجات"
-        ) {
-            showProducts()
-        }
-    }
-
-    private fun showRestaurants() {
-        baseLayout("المطاعم والتوصيل")
-
-        addSection("🍽️ المطاعم والتوصيل")
-        addInfo(
-            "الطعام والتوصيل",
-            "المطاعم وخدمات الطعام والتوصيل حسب المنطقة."
-        )
-
-        addCard(
-            "🍽️ المطاعم",
-            "استكشاف المطاعم"
-        ) {
-            showMessage("المطاعم تعتمد على المنطقة والتوفر.")
-        }
-
-        addCard(
-            "🚚 التوصيل",
-            "خدمات توصيل الطعام"
-        ) {
-            showMessage("التوصيل يعتمد على المنطقة.")
-        }
-
-        addCard(
-            "🍳 المطبخ",
-            "منتجات وخدمات المطبخ"
-        ) {
-            showKitchen()
-        }
-
-        addCard(
-            "↩️ المنتجات",
-            "العودة إلى المنتجات"
-        ) {
-            showProducts()
-        }
-    }
-
-        private fun showBuilding() {
-        baseLayout("البناء والجملة")
-
-        addSection("🏗️ البناء والجملة")
-        addInfo(
-            "مواد البناء والتجارة",
-            "منتجات وخدمات البناء وتجارة الجملة حسب المنطقة."
-        )
-
-        addCard(
-            "🧱 مواد البناء",
-            "عرض مواد البناء"
-        ) {
-            showMessage("مواد البناء تعرض حسب المنطقة والتوفر.")
-        }
-
-        addCard(
-            "🏪 تجارة الجملة",
-            "التعاملات التجارية بالجملة"
-        ) {
-            showMessage("تجارة الجملة تخضع للقواعد المحلية.")
-        }
-
-        addCard(
-            "🚚 النقل",
-            "خدمات نقل المواد"
-        ) {
-            showMessage("خدمات النقل تعتمد على المنطقة.")
-        }
-
-        addCard(
-            "👷 الخدمات",
-            "الخدمات المهنية في البناء"
-        ) {
-            showServices()
-        }
-
-        addCard(
-            "↩️ المنتجات",
-            "العودة إلى المنتجات"
-        ) {
-            showProducts()
-        }
-    }
-
-    private fun showFish() {
-        baseLayout("الأسماك")
-
-        addSection("🐟 الأسماك")
-        addInfo(
-            "منتجات وخدمات الأسماك",
-            "عرض المنتجات والخدمات المرتبطة بالأسماك حسب المنطقة."
-        )
-
-        addCard(
-            "🐟 المنتجات",
-            "الأسماك والمنتجات البحرية"
-        ) {
-            showMessage("المنتجات تعتمد على التوفر والمنطقة.")
-        }
-
-        addCard(
-            "🚚 التوصيل",
-            "خدمات النقل والتوصيل"
-        ) {
-            showMessage("التوصيل يعتمد على المنطقة.")
-        }
-
-        addCard(
-            "🏪 الموردون",
-            "بيانات الموردين"
-        ) {
-            showMessage("الموردون يخضعون للتحقق المناسب.")
-        }
-
-        addCard(
-            "↩️ المنتجات",
-            "العودة إلى المنتجات"
-        ) {
-            showProducts()
-        }
-    }
-
-    private fun showWholesale() {
-        baseLayout("تجارة الجملة")
-
-        addSection("🏪 تجارة الجملة")
         addInfo(
             "التجارة",
-            "خدمات ومنتجات تجارة الجملة والتعامل بين الموردين والعملاء."
-        )
-
-        addCard(
-            "📦 المنتجات",
-            "عرض المنتجات بالجملة"
-        ) {
-            showProducts()
-        }
-
-        addCard(
-            "🤝 الموردون",
-            "تنظيم بيانات الموردين"
-        ) {
-            showMessage("بيانات الموردين تخضع للتحقق.")
-        }
-
-        addCard(
-            "🚚 الشحن",
-            "خدمات النقل والشحن"
-        ) {
-            showMessage("تكلفة الشحن تعتمد على المنطقة والمسافة.")
-        }
-
-        addCard(
-            "📋 القواعد",
-            "القواعد التجارية المحلية"
-        ) {
-            showAppRules()
-        }
-
-        addCard(
-            "↩️ البناء",
-            "العودة إلى قسم البناء والجملة"
-        ) {
-            showBuilding()
-        }
-    }
-
-    private fun showFavoritesEmpty() {
-        baseLayout("المفضلة")
-
-        addSection("⭐ المفضلة")
-        addInfo(
-            "المفضلة",
-            "احفظ المنتجات والخدمات المهمة للوصول إليها بسرعة."
-        )
-
-        addCard(
-            "🛍️ استكشاف المنتجات",
-            "إضافة عناصر إلى المفضلة"
-        ) {
-            showProducts()
-        }
-
-        addCard(
-            "🔎 البحث",
-            "البحث عن منتج أو خدمة"
-        ) {
-            showSearch()
-        }
-
-        addCard(
-            "↩️ الرئيسية",
-            "العودة إلى الرئيسية"
-        ) {
-            showHome()
-        }
-    }
-
-    private fun showAccountSettings() {
-        baseLayout("إعدادات الحساب")
-
-        addSection("⚙️ إعدادات الحساب")
-        addInfo(
-            "إدارة الحساب",
-            "إعدادات عامة للحساب والخصوصية والحماية."
-        )
-
-        addCard(
-            "🛡️ الخصوصية",
-            "إعدادات الخصوصية والأمان"
-        ) {
-            showSafety()
-        }
-
-        addCard(
-            "🔐 الحماية",
-            "مراجعة حماية التطبيق"
-        ) {
-            showSecurityChecklist()
-        }
-
-        addCard(
-            "👤 الحساب",
-            "العودة إلى الحساب"
-        ) {
-            showAccount()
-        }
-
-        addCard(
-            "↩️ الرئيسية",
-            "العودة إلى الرئيسية"
-        ) {
-            showHome()
-        }
-    }
-
-    private fun showNetworkStatus() {
-        baseLayout("حالة الاتصال")
-
-        addSection("🌐 حالة الاتصال")
-
-        val manager =
-            getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
-
-        val network = manager.activeNetwork
-        val capabilities =
-            manager.getNetworkCapabilities(network)
-
-        val online =
-            capabilities != null &&
-            capabilities.hasCapability(
-                NetworkCapabilities.NET_CAPABILITY_INTERNET
-            )
-
-        val validated =
-            capabilities != null &&
-            capabilities.hasCapability(
-                NetworkCapabilities.NET_CAPABILITY_VALIDATED
-            )
-
-        addInfo(
-            "الحالة",
-            if (online) "متصل" else "غير متصل"
+            "المنتجات والإعلانات والخدمات التجارية ضمن أقسام منظمة."
         )
 
         addInfo(
-            "الإنترنت",
-            if (validated) "متاح" else "غير متحقق"
+            "الخدمات",
+            "الخدمات العامة والمهنية والمعلوماتية حسب الدولة والمنطقة."
         )
 
-        addCard(
-            "📶 فحص الشبكة",
-            "إعادة فحص الاتصال"
-        ) {
-            showOnline()
-        }
+        addInfo(
+            "الأمان",
+            "الحماية مطبقة على مستوى التطبيق بالكامل."
+        )
 
-        addCard(
-            "🔧 التشخيص",
-            "عرض تفاصيل الجهاز والاتصال"
-        ) {
-            showDiagnostics()
-        }
+        addInfo(
+            "الذكاء",
+            "يشمل المشروع الذكاء البشري وCTM AI وفق الصلاحيات المعتمدة."
+        )
 
-        addCard(
-            "↩️ الرئيسية",
-            "العودة إلى الرئيسية"
-        ) {
-            showHome()
+        addInfo(
+            "BADGER",
+            "منتج مستقل ضمن منظومة المشروع، مع ضوابط خاصة للخدمات المالية."
+        )
+
+        addNavButton("↩️ معلومات التطبيق") {
+            showAppInformation()
         }
     }
 
-    private fun showOwnerPanel() {
-        baseLayout("إدارة المالك")
+    private fun showOwnerControls() {
+        baseLayout("صلاحيات المالك")
 
-        addSection("👑 إدارة المالك")
+        addSection("الاعتماد والإدارة")
+
         addInfo(
             "المالك",
             "المالك ياسر حسن وشركاؤه"
+        )
+
+        addInfo(
+            "الاعتماد",
+            "التغييرات الحساسة والأقسام الخاصة تخضع للاعتماد والصلاحيات المناسبة."
+        )
+
+        addInfo(
+            "الاختبار",
+            "يتم اعتماد النسخ والتغييرات قبل استبدال النسخة المستخدمة."
+        )
+
+        addInfo(
+            "المالية",
+            "لا يتم تنفيذ العمليات المالية الفعلية من هذه الواجهة."
         )
 
         addCard(
@@ -3844,1696 +2253,144 @@ class MainActivity : Activity() {
         }
 
         addCard(
-            "🧠 الذكاء البشري",
-            "متابعة الأفكار والمشاريع"
-        ) {
-            showHumanIntelligence()
-        }
-
-        addCard(
-            "🤖 CTM AI",
-            "إدارة المساعد الذكي"
-        ) {
-            showCtmAi()
-        }
-
-        addCard(
             "🛡️ الأمن",
-            "مراجعة الحماية"
+            "مراجعة الأمان"
         ) {
-            showSecurityOffice()
+            showSecurityChecklist()
         }
 
-        addCard(
-            "⚖️ القانون",
-            "المتابعة القانونية"
-        ) {
-            showAttorneyOffice()
-        }
-
-        addCard(
-            "💼 النظام المالي",
-            "المعلومات المالية الخاصة"
-        ) {
-            showPrivateFinancialSystem()
-        }
-
-        addCard(
-            "🦡 BADGER",
-            "النظام المالي المستقل"
-        ) {
-            showBadger()
-        }
-
-        addCard(
-            "↩️ الرئيسية",
-            "العودة إلى الرئيسية"
-        ) {
-            showHome()
-        }
-    }
-
-    private fun showGlobalPackages() {
-        baseLayout("الحزم والمناطق")
-
-        addSection("🌍 الحزم العالمية")
-        addInfo(
-            "النظام العالمي",
-            "تصميم المنصة يسمح بتفعيل خصائص مختلفة حسب الدولة والمنطقة."
-        )
-
-        addCard(
-            "🇸🇩 حزمة السودان",
-            "خصائص وخدمات السودان عند تفعيلها رسميًا"
-        ) {
-            showMessage("الحزمة الإقليمية تخضع للإعداد والصلاحيات.")
-        }
-
-        addCard(
-            "🌍 النسخة العالمية",
-            "الخدمات العامة المشتركة"
-        ) {
-            showMessage("النسخة العالمية لا تفترض خصائص دولة محددة.")
-        }
-
-        addCard(
-            "📍 المنطقة",
-            "تطبيق القواعد حسب المنطقة"
-        ) {
-            showMessage("القواعد والخدمات تختلف حسب الدولة والمنطقة.")
-        }
-
-        addCard(
-            "🚚 الشحن والجمارك",
-            "تقديرات الشحن والقواعد"
-        ) {
-            showMessage("التقديرات تعتمد على الدولة والمسار.")
-        }
-
-        addCard(
-            "🎫 السفر",
-            "معلومات السفر حسب البلد"
-        ) {
-            showTravel()
-        }
-
-        addCard(
-            "↩️ الرئيسية",
-            "العودة إلى الرئيسية"
-        ) {
-            showHome()
-        }
-    }
-
-    private fun showAppInformation() {
-        baseLayout("معلومات التطبيق")
-
-        addSection("ℹ️ معلومات التطبيق")
-        addInfo(
-            "CENTRAL MARKET",
-            "منصة متعددة الخدمات والأسواق، قابلة للتوسع حسب الدولة والمنطقة."
-        )
-
-        addInfo(
-            "الحماية",
-            "حماية الشاشة مفعلة على مستوى التطبيق."
-        )
-
-        addInfo(
-            "السكون الخارجي",
-            "10 دقائق خارج التطبيق."
-        )
-
-        addInfo(
-            "الاتصال",
-            "يتم اكتشاف حالة الاتصال تلقائيًا."
-        )
-
-        addInfo(
-            "التوافق",
-            "مصمم للعمل على أجهزة Android المتوافقة."
-        )
-
-        addCard(
-            "🔧 التشخيص",
-            "فحص الجهاز والاتصال"
-        ) {
-            showDiagnostics()
-        }
-
-        addCard(
-            "📜 القواعد",
-            "مراجعة قواعد الاستخدام"
-        ) {
-            showAppRules()
-        }
-
-        addCard(
-            "↩️ الرئيسية",
-            "العودة إلى الرئيسية"
-        ) {
-            showHome()
-        }
-    }
-
-        private fun showManagerDocuments() {
-        baseLayout("وثائق الإدارة")
-
-        addSection("📂 وثائق الإدارة")
-        addInfo(
-            "السجلات الإدارية",
-            "تنظيم الوثائق المتعلقة بإدارة المشروع والأقسام."
-        )
-
-        addCard(
-            "📄 وثائق المشاريع",
-            "متابعة وثائق المشاريع"
-        ) {
-            showDocuments()
-        }
-
-        addCard(
-            "⚖️ الوثائق القانونية",
-            "المعلومات القانونية المصرح بها"
-        ) {
-            showAttorneyOffice()
-        }
-
-        addCard(
-            "🛡️ السجلات الأمنية",
-            "معلومات الحماية والحوادث"
-        ) {
-            showSecurityOffice()
-        }
-
-        addCard(
-            "💼 السجلات المالية",
-            "المعلومات المالية المصرح بها"
-        ) {
-            showPrivateFinancialSystem()
-        }
-
-        addCard(
-            "🔐 الوثائق الحساسة",
-            "حماية المعلومات الحساسة"
-        ) {
-            showSensitiveAccessPolicy()
-        }
-
-        addCard(
-            "↩️ مكتب المدير",
-            "العودة إلى مكتب المدير"
-        ) {
+        addNavButton("↩️ إدارة المنصة") {
             showManagerOffice()
         }
     }
 
-    private fun showHumanProjects() {
-        baseLayout("مشاريع الذكاء البشري")
+    private fun showHomeNavigation() {
+        baseLayout("التنقل")
 
-        addSection("🧠 المشاريع والأفكار")
-        addInfo(
-            "تطوير الأفكار",
-            "تنظيم الأفكار ومتابعتها وتحويل المناسب منها إلى مشاريع قابلة للدراسة."
-        )
+        addSection("أقسام المنصة")
 
         addCard(
-            "💡 الأفكار الجديدة",
-            "إضافة فكرة جديدة"
+            "🏠 الرئيسية",
+            "الصفحة الرئيسية"
         ) {
-            showIdea()
+            showHome()
         }
-
-        addCard(
-            "📊 التقييم",
-            "مراجعة الأفكار والمشاريع"
-        ) {
-            showMessage("التقييم يتم وفق معايير المشروع والصلاحيات.")
-        }
-
-        addCard(
-            "🤝 الفرق",
-            "تكوين فرق العمل"
-        ) {
-            showMessage("تكوين الفرق يعتمد على الخبرات والصلاحيات.")
-        }
-
-        addCard(
-            "📅 خطة العمل",
-            "تنظيم مراحل المشروع"
-        ) {
-            showMessage("يمكن تنظيم مراحل المشروع حسب نوعه.")
-        }
-
-        addCard(
-            "🏆 الإنجازات",
-            "متابعة الإنجازات"
-        ) {
-            showMessage("سيتم حفظ الإنجازات ضمن سجل المشروع.")
-        }
-
-        addCard(
-            "🌍 المشاريع الدولية",
-            "تطوير المشاريع القابلة للتوسع"
-        ) {
-            showGlobalPackages()
-        }
-
-        addCard(
-            "↩️ الذكاء البشري",
-            "العودة إلى المنظومة"
-        ) {
-            showHumanIntelligence()
-        }
-    }
-
-    private fun showCtmAiSettings() {
-        baseLayout("إعدادات CTM AI")
-
-        addSection("🤖 إعدادات CTM AI")
-        addInfo(
-            "المساعد الرسمي",
-            "CTM AI يعمل ضمن نطاق المعلومات والوظائف المسموح بها."
-        )
 
         addCard(
             "🔎 البحث",
-            "البحث الذكي"
+            "البحث داخل المنصة"
         ) {
-            showCtmAi()
+            showSearch()
         }
 
         addCard(
-            "🎙️ الصوت",
-            "البحث والقراءة الصوتية"
+            "⭐ النقاط",
+            "النقاط والمشاركة"
         ) {
-            showMessage("الوظائف الصوتية تخضع لقدرات الجهاز والصلاحيات.")
+            showPoints()
         }
 
         addCard(
-            "🛡️ مراقبة المخاطر",
-            "متابعة الأخطاء والمخاطر"
-        ) {
-            showSecurityOffice()
-        }
-
-        addCard(
-            "⏸️ الإيقاف",
-            "إدارة حالة المساعد"
-        ) {
-            showMessage("إيقاف أو تفعيل CTM AI يحتاج الصلاحية المناسبة.")
-        }
-
-        addCard(
-            "↩️ CTM AI",
-            "العودة إلى المساعد"
-        ) {
-            showCtmAi()
-        }
-    }
-
-    private fun showBadgerSecurity() {
-        baseLayout("أمان BADGER")
-
-        addSection("🦡🛡️ أمان BADGER")
-        addInfo(
-            "حماية النظام المالي",
-            "حماية المعلومات المالية ومنع الوصول غير المصرح به."
-        )
-
-        addCard(
-            "🔒 حماية الشاشة",
-            "منع التقاط وتسجيل الشاشة"
-        ) {
-            window.addFlags(
-                WindowManager.LayoutParams.FLAG_SECURE
-            )
-            showMessage("حماية الشاشة مفعلة.")
-        }
-
-        addCard(
-            "⏱️ السكون",
-            "قفل الجلسة بعد 10 دقائق خارج التطبيق"
-        ) {
-            showMessage("السكون الخارجي مضبوط على 10 دقائق.")
-        }
-
-        addCard(
-            "🚨 مكافحة الاحتيال",
-            "متابعة مؤشرات المخاطر"
-        ) {
-            showSecurityOffice()
-        }
-
-        addCard(
-            "⚖️ الأهلية",
-            "التحقق الرسمي عند الحاجة"
-        ) {
-            showEligibilityVerification()
-        }
-
-        addCard(
-            "👑 الموافقة",
-            "الموافقة المطلوبة للعمليات الحساسة"
-        ) {
-            showOwnerApproval()
-        }
-
-        addCard(
-            "↩️ BADGER",
-            "العودة إلى BADGER"
-        ) {
-            showBadger()
-        }
-    }
-
-    private fun showInvestmentSafety() {
-        baseLayout("أمان الاستثمار")
-
-        addSection("📈🛡️ أمان المشاركة الاستثمارية")
-        addInfo(
-            "خدمة حساسة",
-            "لا يتم تنفيذ أي عملية مالية حقيقية تلقائيًا من هذه الواجهة."
-        )
-
-        addCard(
-            "📵 حماية الشاشة",
-            "الحماية الشاملة مفعلة"
-        ) {
-            window.addFlags(
-                WindowManager.LayoutParams.FLAG_SECURE
-            )
-            showMessage("حماية الشاشة مفعلة.")
-        }
-
-        addCard(
-            "⚖️ الأهلية",
-            "التحقق عبر المسار الرسمي"
-        ) {
-            showEligibilityVerification()
-        }
-
-        addCard(
-            "📋 الشروط",
-            "مراجعة متطلبات الاستثمار"
-        ) {
-            showInvestmentRequirements()
-        }
-
-        addCard(
-            "👑 الموافقة",
-            "مراجعة الموافقة المطلوبة"
-        ) {
-            showOwnerApproval()
-        }
-
-        addCard(
-            "↩️ الاستثمار",
-            "العودة إلى المشاركة الاستثمارية"
-        ) {
-            showInvestmentParticipation()
-        }
-    }
-
-    private fun showFinancingSafety() {
-        baseLayout("أمان التمويل")
-
-        addSection("🏗️🛡️ أمان المشاركة التمويلية")
-        addInfo(
-            "خدمة حساسة",
-            "حماية المعلومات شرط أساسي قبل أي مشاركة أو إجراء."
-        )
-
-        addCard(
-            "📵 حماية الشاشة",
-            "منع التقاط الشاشة وتسجيلها"
-        ) {
-            window.addFlags(
-                WindowManager.LayoutParams.FLAG_SECURE
-            )
-            showMessage("حماية الشاشة مفعلة.")
-        }
-
-        addCard(
-            "⚖️ الأهلية",
-            "التحقق الرسمي"
-        ) {
-            showEligibilityVerification()
-        }
-
-        addCard(
-            "📋 الشروط",
-            "مراجعة متطلبات التمويل"
-        ) {
-            showFinancingRequirements()
-        }
-
-        addCard(
-            "👑 الموافقة",
-            "الموافقة قبل أي إجراء حساس"
-        ) {
-            showOwnerApproval()
-        }
-
-        addCard(
-            "↩️ التمويل",
-            "العودة إلى المشاركة التمويلية"
-        ) {
-            showFinancingParticipation()
-        }
-    }
-
-    private fun showRegionalRules() {
-        baseLayout("قواعد المنطقة")
-
-        addSection("🌍 قواعد الدولة والمنطقة")
-        addInfo(
-            "القواعد المحلية",
-            "الخدمات والمعاملات تختلف حسب الدولة والمنطقة والقوانين المطبقة."
-        )
-
-        addCard(
-            "📍 المنطقة",
-            "تحديد الخدمات المناسبة"
-        ) {
-            showDiagnostics()
-        }
-
-        addCard(
-            "🚚 الشحن والجمارك",
-            "معلومات عامة عن الشحن"
-        ) {
-            showMessage("التقديرات تعتمد على الدولة والمسار.")
-        }
-
-        addCard(
-            "🎫 السفر",
-            "قواعد السفر حسب البلد"
-        ) {
-            showTravel()
-        }
-
-        addCard(
-            "⚖️ المتطلبات القانونية",
-            "مراجعة القواعد الرسمية"
-        ) {
-            showAttorneyOffice()
-        }
-
-        addCard(
-            "🌍 الحزم",
-            "الحزم الإقليمية والعالمية"
-        ) {
-            showGlobalPackages()
-        }
-
-        addCard(
-            "↩️ الرئيسية",
-            "العودة إلى الصفحة الرئيسية"
-        ) {
-            showHome()
-        }
-    }
-
-    private fun showConnectionHelp() {
-        baseLayout("مساعدة الاتصال")
-
-        addSection("📶 مساعدة الاتصال")
-        addInfo(
-            "الاتصال بالإنترنت",
-            "إذا كان الاتصال ضعيفًا، يتم تقليل العمليات غير الضرورية قدر الإمكان."
-        )
-
-        addCard(
-            "🔄 إعادة الفحص",
-            "فحص الاتصال مرة أخرى"
-        ) {
-            showOnline()
-        }
-
-        addCard(
-            "📱 بيانات الهاتف",
-            "مراجعة نوع الاتصال"
-        ) {
-            showNetworkStatus()
-        }
-
-        addCard(
-            "🔧 التشخيص",
-            "فحص الجهاز والشبكة"
-        ) {
-            showDiagnostics()
-        }
-
-        addCard(
-            "↩️ الرئيسية",
-            "العودة إلى الصفحة الرئيسية"
-        ) {
-            showHome()
-        }
-    }
-
-        private fun showHelpCenter() {
-        baseLayout("مركز المساعدة")
-
-        addSection(
-            "🆘 مركز المساعدة",
-            "إرشادات مختصرة لاستخدام المنصة بأمان وسهولة"
-        )
-
-        addCard(
-            "📶 الاتصال",
-            "حلول مشاكل الاتصال والعمل مع الشبكات الضعيفة"
-        ) {
-            showConnectionHelp()
-        }
-
-        addCard(
-            "🔐 الأمان والخصوصية",
-            "مراجعة حماية التطبيق والبيانات"
-        ) {
-            showSafety()
-        }
-
-        addCard(
-            "📱 تشخيص الجهاز",
-            "فحص قدرات الجهاز والاتصال"
-        ) {
-            showDiagnostics()
-        }
-
-        addCard(
-            "👤 وضع الضيف",
-            "الوصول إلى الخدمات العامة دون فتح الأقسام الخاصة"
+            "👤 الضيف",
+            "وضع الضيف"
         ) {
             showGuestMode()
         }
 
         addCard(
-            "🏠 الرئيسية",
-            "العودة إلى الصفحة الرئيسية"
-        ) {
-            showHome()
-        }
-    }
-
-    private fun showPrivacyCenter() {
-        baseLayout("مركز الخصوصية")
-
-        showSensitiveHeader(
-            "🔐 مركز الخصوصية",
-            "إدارة مبادئ الخصوصية والحماية داخل المنصة"
-        )
-
-        addInfo(
-            "حماية الشاشة",
-            "حماية التطبيق من التقاط الشاشة أو التسجيل باستخدام FLAG_SECURE."
-        )
-
-        addInfo(
-            "حماية التطبيق كاملة",
-            "الحماية مطبقة على مستوى التطبيق وليست مقتصرة على شاشة واحدة."
-        )
-
-        addInfo(
-            "السكون خارج التطبيق",
-            "بعد مرور 10 دقائق خارج التطبيق يتم قفل الجلسة تلقائيًا."
-        )
-
-        addInfo(
-            "البيانات",
-            "لا ينبغي جمع أو مشاركة أي بيانات إلا للغرض المعلن وبالحد الأدنى اللازم."
-        )
-
-        addInfo(
-            "الصلاحيات",
-            "أي صلاحية يجب أن تكون مرتبطة بوظيفة واضحة ومعلنة للمستخدم."
-        )
-
-        addCard(
-            "🛡️ قائمة الأمان",
-            "مراجعة ضوابط الأمان الحالية"
-        ) {
-            showSecurityChecklist()
-        }
-
-        addCard(
-            "↩️ العودة",
-            "العودة إلى الرئيسية"
-        ) {
-            showHome()
-        }
-    }
-
-    private fun showDataPolicy() {
-        baseLayout("سياسة البيانات")
-
-        addSection(
-            "📄 سياسة البيانات",
-            "مبادئ عامة للتعامل مع معلومات المستخدمين"
-        )
-
-        addInfo(
-            "تقليل البيانات",
-            "يتم تصميم الخدمات بحيث لا تعتمد على بيانات غير ضرورية."
-        )
-
-        addInfo(
-            "الشفافية",
-            "يجب توضيح سبب طلب البيانات وطريقة استخدامها قبل الاعتماد عليها."
-        )
-
-        addInfo(
-            "الحماية",
-            "المعلومات الحساسة تحتاج إلى حماية تقنية وإدارية مناسبة."
-        )
-
-        addInfo(
-            "الوصول",
-            "الوصول إلى البيانات الخاصة يجب أن يكون وفق صلاحيات محددة."
-        )
-
-        addInfo(
-            "الاحتفاظ",
-            "لا ينبغي الاحتفاظ بالبيانات لفترة أطول من الحاجة النظامية لها."
-        )
-
-        addInfo(
-            "المراجعة",
-            "تخضع سياسات البيانات للمراجعة قبل إطلاق الخدمات الحساسة."
-        )
-
-        addCard(
-            "🔐 مركز الخصوصية",
-            "عرض ضوابط الخصوصية"
-        ) {
-            showPrivacyCenter()
-        }
-
-        addCard(
-            "🏠 الرئيسية",
-            "العودة إلى الرئيسية"
-        ) {
-            showHome()
-        }
-    }
-
-    private fun showShipping() {
-        baseLayout("الشحن")
-
-        addSection(
-            "🚚 الشحن والخدمات اللوجستية",
-            "معلومات عامة عن نقل المنتجات والطلبات"
-        )
-
-        addInfo(
-            "الشحن المحلي",
-            "يمكن عرض خيارات النقل المحلية وفق المنطقة والمنتج."
-        )
-
-        addInfo(
-            "الشحن الدولي",
-            "الطلبات الدولية تحتاج إلى مراعاة بلد المصدر وبلد الوصول."
-        )
-
-        addInfo(
-            "التكلفة",
-            "تقدير التكلفة يعتمد على الوزن والحجم والمسافة وطريقة النقل."
-        )
-
-        addInfo(
-            "التتبع",
-            "يمكن دعم التتبع عندما تتوفر خدمة تتبع موثوقة من شركة النقل."
-        )
-
-        addInfo(
-            "الجمارك",
-            "الشحن الدولي قد يخضع لإجراءات ورسوم جمركية وفق القوانين المعمول بها."
-        )
-
-        addCard(
-            "🧾 الجمارك",
-            "معلومات عامة عن الإجراءات والرسوم"
-        ) {
-            showCustoms()
-        }
-
-        addCard(
-            "🏠 الرئيسية",
-            "العودة إلى الرئيسية"
-        ) {
-            showHome()
-        }
-    }
-
-    private fun showCustoms() {
-        baseLayout("الجمارك")
-
-        addSection(
-            "🧾 الجمارك والاستيراد",
-            "معلومات إرشادية وليست بديلاً عن الجهات الرسمية"
-        )
-
-        addInfo(
-            "التصنيف",
-            "قد تختلف المتطلبات حسب نوع المنتج وتصنيفه القانوني."
-        )
-
-        addInfo(
-            "الرسوم",
-            "الرسوم والضرائب تختلف حسب البلد والمنتج وقيمة الشحنة."
-        )
-
-        addInfo(
-            "المستندات",
-            "قد تحتاج بعض الشحنات إلى فواتير أو مستندات منشأ أو تصاريح."
-        )
-
-        addInfo(
-            "التحقق",
-            "يجب الاعتماد على المصادر والجهات الرسمية عند اتخاذ قرار استيراد."
-        )
-
-        addInfo(
-            "تنبيه",
-            "المنصة لا تعتبر هذا القسم تصريحًا جمركيًا أو موافقة حكومية."
-        )
-
-        addCard(
-            "🚚 الشحن",
-            "العودة إلى خدمات الشحن"
-        ) {
-            showShipping()
-        }
-
-        addCard(
-            "🏠 الرئيسية",
-            "العودة إلى الرئيسية"
-        ) {
-            showHome()
-        }
-    }
-
-    private fun showInternationalProjects() {
-        baseLayout("المشاريع الدولية")
-
-        addSection(
-            "🌍 المشاريع الدولية",
-            "تصور للتعاون التجاري والمشاريع العابرة للحدود"
-        )
-
-        addInfo(
-            "الأسواق",
-            "يمكن تنظيم الفرص حسب الدولة والمنطقة والقطاع."
-        )
-
-        addInfo(
-            "القوانين",
-            "كل مشروع دولي يجب أن يراعي قوانين بلد التشغيل والتجارة."
-        )
-
-        addInfo(
-            "الشحن",
-            "تقديرات النقل والجمارك تعتمد على البيانات الفعلية المتاحة."
-        )
-
-        addInfo(
-            "التحقق",
-            "المشاريع الحساسة لا تنتقل إلى مرحلة المشاركة دون استكمال متطلبات التحقق."
-        )
-
-        addInfo(
-            "الاعتماد",
-            "الموافقات الداخلية لا تستبدل التراخيص أو الموافقات الرسمية المطلوبة."
-        )
-
-        addCard(
-            "📦 الشحن",
-            "الخدمات اللوجستية"
-        ) {
-            showShipping()
-        }
-
-        addCard(
-            "📋 قواعد المناطق",
-            "مراجعة قواعد المناطق والدول"
-        ) {
-            showRegionalRules()
-        }
-
-        addCard(
-            "🏠 الرئيسية",
-            "العودة إلى الرئيسية"
-        ) {
-            showHome()
-        }
-    }
-
-    private fun showSustainability() {
-        baseLayout("الاستدامة")
-
-        addSection(
-            "🌱 الاستدامة",
-            "تشجيع المشاريع والخدمات ذات الأثر الإيجابي"
-        )
-
-        addInfo(
-            "الطاقة",
-            "تشجيع الحلول التي تساعد على الاستخدام المسؤول للطاقة."
-        )
-
-        addInfo(
-            "المياه",
-            "دعم التوعية بحماية المياه وتحسين استخدامها."
-        )
-
-        addInfo(
-            "الزراعة",
-            "تشجيع المشاريع الزراعية والإنتاج المحلي."
-        )
-
-        addInfo(
-            "المجتمع",
-            "ربط المشاريع ذات الأثر الاجتماعي بالمجتمعات المستفيدة."
-        )
-
-        addInfo(
-            "المسؤولية",
-            "لا يعني عرض المشروع أن المنصة تضمن نجاحه أو عوائده."
-        )
-
-        addCard(
-            "🌾 الزراعة والثروة الحيوانية",
-            "العودة إلى قطاع الزراعة"
-        ) {
-            showAgriculture()
-        }
-
-        addCard(
-            "💧 الكهرباء والمياه",
-            "الخدمات المرتبطة بالطاقة والمياه"
-        ) {
-            showElectricityWater()
-        }
-
-        addCard(
-            "🏠 الرئيسية",
-            "العودة إلى الرئيسية"
-        ) {
-            showHome()
-        }
-    }
-
-    private fun showInnovationCenter() {
-        baseLayout("مركز الابتكار")
-
-        addSection(
-            "💡 مركز الابتكار",
-            "أفكار ومشاريع تقنية وتجارية قابلة للدراسة"
-        )
-
-        addInfo(
-            "الأفكار",
-            "يمكن تسجيل الأفكار ومراجعتها قبل اعتمادها ضمن المشروع."
-        )
-
-        addInfo(
-            "الذكاء الاصطناعي",
-            "يمكن استخدام CTM AI ضمن الحدود والوظائف التي يعتمدها المشروع."
-        )
-
-        addInfo(
-            "الذكاء البشري",
-            "الخبرة البشرية والمراجعة المتخصصة تظل جزءًا أساسيًا من القرارات المهمة."
-        )
-
-        addInfo(
-            "السلامة",
-            "أي ميزة جديدة تمر بمراجعة أمنية وتقنية قبل الإطلاق."
-        )
-
-        addInfo(
-            "التجربة",
-            "المزايا الجديدة لا تمنح صلاحيات مالية أو قانونية تلقائيًا."
-        )
-
-        addCard(
-            "🤖 CTM AI",
-            "إعدادات ووظائف المساعد الرسمي"
-        ) {
-            showCtmAi()
-        }
-
-        addCard(
-            "🧠 الذكاء البشري",
-            "المشاريع والخبرات البشرية"
-        ) {
-            showHumanIntelligence()
-        }
-
-        addCard(
-            "💭 فكرة أو اقتراح",
-            "عرض مساحة الأفكار"
-        ) {
-            showIdea()
-        }
-
-        addCard(
-            "🏠 الرئيسية",
-            "العودة إلى الرئيسية"
-        ) {
-            showHome()
-        }
-    }
-
-    private fun showCooperation() {
-        baseLayout("التعاون والشراكات")
-
-        addSection(
-            "🤝 التعاون والشراكات",
-            "تنظيم فرص التعاون ضمن ضوابط واضحة"
-        )
-
-        addInfo(
-            "الشراكات",
-            "تخضع الشراكات المقترحة للمراجعة القانونية والإدارية المناسبة."
-        )
-
-        addInfo(
-            "الأطراف",
-            "يجب تحديد الأطراف والصلاحيات والمسؤوليات بشكل واضح."
-        )
-
-        addInfo(
-            "العقود",
-            "العمولات والالتزامات يجب أن تكون موثقة في عقود واضحة."
-        )
-
-        addInfo(
-            "المخاطر",
-            "تتم مراجعة المخاطر قبل اعتماد المشاريع الحساسة."
-        )
-
-        addInfo(
-            "الاعتماد",
-            "عرض فرصة أو شراكة داخل التطبيق لا يعني اعتمادها تلقائيًا."
-        )
-
-        addCard(
-            "📁 المشاريع البشرية",
-            "مشاريع وخبرات المجتمع"
-        ) {
-            showHumanProjects()
-        }
-
-        addCard(
-            "🏢 مكتب المدير",
-            "إدارة ومراجعة المشاريع"
-        ) {
-            showManagerOffice()
-        }
-
-        addCard(
-            "🏠 الرئيسية",
-            "العودة إلى الرئيسية"
-        ) {
-            showHome()
-        }
-    }
-
-    private fun showExperts() {
-        baseLayout("الخبراء")
-
-        addSection(
-            "👥 الخبراء والمختصون",
-            "تنظيم المعرفة والخبرات لدعم المستخدمين والمشاريع"
-        )
-
-        addInfo(
-            "التخصصات",
-            "يمكن تصنيف الخبرات حسب المجال والقطاع والمنطقة."
-        )
-
-        addInfo(
-            "التحقق",
-            "الصفة المهنية أو الترخيص الرسمي يجب التحقق منه عبر القنوات المناسبة."
-        )
-
-        addInfo(
-            "المسؤولية",
-            "عرض ملف خبير لا يعني ضمان جودة أي استشارة يقدمها."
-        )
-
-        addInfo(
-            "الخصوصية",
-            "يجب عدم نشر بيانات شخصية غير لازمة."
-        )
-
-        addCard(
-            "🧠 الذكاء البشري",
-            "الوصول إلى منظومة الخبرات"
-        ) {
-            showHumanIntelligence()
-        }
-
-        addCard(
-            "🤝 التعاون",
-            "الشراكات والمشاريع"
-        ) {
-            showCooperation()
-        }
-
-        addCard(
-            "🏠 الرئيسية",
-            "العودة إلى الرئيسية"
-        ) {
-            showHome()
-        }
-    }
-
-        private fun showNotifications() {
-        baseLayout("الإشعارات")
-
-        addSection(
-            "🔔 الإشعارات",
-            "تنبيهات المنصة والتنبيهات المهمة للمستخدم"
-        )
-
-        addInfo(
-            "تنبيهات النظام",
-            "تظهر هنا التنبيهات المتعلقة بالخدمات والتحديثات المهمة."
-        )
-
-        addInfo(
-            "تنبيهات الأمان",
-            "قد تظهر تنبيهات عند وجود إجراء أمني يحتاج إلى مراجعة."
-        )
-
-        addInfo(
-            "تنبيهات المشاريع",
-            "المشاريع والمشاركات الحساسة تخضع لإشعارات واضحة قبل أي خطوة مهمة."
-        )
-
-        addInfo(
-            "الخصوصية",
-            "لا ينبغي أن تحتوي الإشعارات على معلومات حساسة غير ضرورية."
-        )
-
-        addCard(
-            "🔐 مركز الخصوصية",
-            "مراجعة إعدادات الخصوصية"
-        ) {
-            showPrivacyCenter()
-        }
-
-        addCard(
             "🛡️ الأمان",
-            "مراجعة حماية التطبيق"
+            "الأمان والخصوصية"
         ) {
             showSafety()
         }
 
-        addCard(
-            "🏠 الرئيسية",
-            "العودة إلى الرئيسية"
-        ) {
+        addNavButton("🏠 الرئيسية") {
             showHome()
         }
     }
 
-    private fun showArchive() {
-        baseLayout("الأرشيف")
+    private fun showManagerTools() {
+        baseLayout("أدوات الإدارة")
 
-        addSection(
-            "🗄️ أرشيف المشروع",
-            "مساحة تنظيمية لحفظ القرارات والمعلومات المهمة"
-        )
-
-        addInfo(
-            "قرارات المشروع",
-            "يتم الاحتفاظ بالقرارات المهمة قبل تنفيذ التغييرات الأساسية."
-        )
-
-        addInfo(
-            "الإصدارات",
-            "يجب تسجيل الإصدارات والتغييرات المهمة بصورة منظمة."
-        )
-
-        addInfo(
-            "المراجعات",
-            "نتائج المراجعة التقنية والأمنية تساعد على تتبع تطور المشروع."
-        )
-
-        addInfo(
-            "الملكية",
-            "المعلومات الخاصة بإدارة المشروع لا تمنح صلاحيات للمستخدمين العاديين."
-        )
-
-        addInfo(
-            "النسخ الاحتياطية",
-            "النسخ الاحتياطية الفعلية تحتاج إلى نظام تخزين آمن خارج واجهة التطبيق."
-        )
+        addSection("الأدوات")
 
         addCard(
-            "📊 حالة المشروع",
-            "عرض حالة النسخة الحالية"
+            "🛡️ الأمن والمعلومات",
+            "إدارة ومراجعة الأمان"
         ) {
-            showProjectStatus()
+            showSecurityOffice()
         }
 
         addCard(
-            "📄 المستندات",
-            "إدارة المستندات"
+            "⚖️ مكتب النائب العام",
+            "المعلومات والصلاحيات"
         ) {
-            showDocuments()
+            showAttorneyOffice()
         }
 
         addCard(
-            "🏠 الرئيسية",
-            "العودة إلى الرئيسية"
+            "🦡 BADGER",
+            "إدارة منتج BADGER"
         ) {
-            showHome()
+            showBadgerOffice()
+        }
+
+        addCard(
+            "📋 اعتماد المالك",
+            "الاعتمادات المطلوبة"
+        ) {
+            showOwnerApproval()
+        }
+
+        addCard(
+            "🔍 التشخيص",
+            "فحص التطبيق والجهاز"
+        ) {
+            showDiagnostics()
+        }
+
+        addNavButton("↩️ إدارة المنصة") {
+            showManagerOffice()
         }
     }
 
-    private fun showMarketplaceRules() {
-        baseLayout("قواعد السوق")
+    private fun showSystemSummary() {
+        baseLayout("ملخص النظام")
 
-        addSection(
-            "🛒 قواعد السوق",
-            "قواعد عامة للتجارة والعروض داخل المنصة"
-        )
+        addSection("CENTRAL MARKET")
 
         addInfo(
-            "السلع",
-            "يجب أن تكون المنتجات والخدمات المعروضة قانونية ومسموحًا بتداولها."
-        )
-
-        addInfo(
-            "الإعلانات",
-            "الإعلان لا يعني أن المنصة تضمن جودة المنتج أو صحة جميع ادعاءاته."
-        )
-
-        addInfo(
-            "الأسعار",
-            "يجب توضيح السعر والعملة وأي رسوم إضافية قبل إتمام المعاملة."
-        )
-
-        addInfo(
-            "المعاملات",
-            "المعاملات المالية الحقيقية تحتاج إلى مزود دفع أو نظام مالي مرخص ومتكامل."
-        )
-
-        addInfo(
-            "النزاعات",
-            "تحتاج النزاعات التجارية إلى آلية واضحة للتواصل والمراجعة."
-        )
-
-        addCard(
-            "📢 الإعلانات",
-            "مستويات الإعلانات"
-        ) {
-            showAds()
-        }
-
-        addCard(
-            "📦 المنتجات",
-            "استعراض الأقسام"
-        ) {
-            showProducts()
-        }
-
-        addCard(
-            "🏠 الرئيسية",
-            "العودة إلى الرئيسية"
-        ) {
-            showHome()
-        }
-    }
-
-    private fun showLocalGlobalTransactions() {
-        baseLayout("المعاملات المحلية والدولية")
-
-        addSection(
-            "🌍 المعاملات",
-            "تنظيم التعاملات المحلية والعابرة للحدود"
-        )
-
-        addInfo(
-            "محلية",
-            "المعاملات المحلية تراعي الدولة والمنطقة والعملة والأنظمة المحلية."
-        )
-
-        addInfo(
-            "دولية",
-            "المعاملات الدولية تحتاج إلى مراعاة قوانين الأطراف والشحن والجمارك."
-        )
-
-        addInfo(
-            "العملة",
-            "عرض العملة لا يعني تنفيذ تحويل مالي فعلي."
-        )
-
-        addInfo(
-            "الرسوم",
-            "يجب توضيح الرسوم والتكاليف قبل إتمام أي معاملة فعلية."
-        )
-
-        addInfo(
-            "التحقق",
-            "الخدمات الحساسة لا تنتقل إلى التنفيذ قبل استكمال التحقق المطلوب."
-        )
-
-        addCard(
-            "🚚 الشحن",
-            "الشحن والخدمات اللوجستية"
-        ) {
-            showShipping()
-        }
-
-        addCard(
-            "🧾 الجمارك",
-            "إرشادات الجمارك"
-        ) {
-            showCustoms()
-        }
-
-        addCard(
-            "📋 قواعد المناطق",
-            "القواعد الإقليمية"
-        ) {
-            showRegionalRules()
-        }
-
-        addCard(
-            "🏠 الرئيسية",
-            "العودة إلى الرئيسية"
-        ) {
-            showHome()
-        }
-    }
-
-    private fun showCommunitySupport() {
-        baseLayout("دعم المجتمع")
-
-        addSection(
-            "❤️ دعم المجتمع",
-            "مبادرات اجتماعية وخيرية منظمة"
-        )
-
-        addInfo(
-            "المساعدات",
-            "يمكن تنظيم المبادرات الموجهة للأسر والأفراد المحتاجين."
-        )
-
-        addInfo(
-            "الأيتام",
-            "تحتاج برامج دعم الأيتام إلى ضوابط حماية وخصوصية ومراجعة مناسبة."
-        )
-
-        addInfo(
-            "الشفافية",
-            "يجب توثيق مسار الدعم والجهات المسؤولة عنه بصورة واضحة."
-        )
-
-        addInfo(
-            "الخصوصية",
-            "لا ينبغي نشر بيانات المستفيدين الحساسة بشكل علني."
-        )
-
-        addInfo(
-            "الاعتماد",
-            "عرض مبادرة لا يعني أن المنصة تضمن الجهة أو النتائج دون تحقق."
-        )
-
-        addCard(
-            "🤲 الأعمال الخيرية",
-            "العودة إلى قسم الخير والدعم"
-        ) {
-            showCharity()
-        }
-
-        addCard(
-            "🧠 المشاريع البشرية",
-            "المبادرات والمشاريع المجتمعية"
-        ) {
-            showHumanProjects()
-        }
-
-        addCard(
-            "🏠 الرئيسية",
-            "العودة إلى الرئيسية"
-        ) {
-            showHome()
-        }
-    }
-
-    private fun showAppServices() {
-        baseLayout("الخدمات العامة")
-
-        addSection(
-            "🧰 خدمات المنصة",
-            "مجموعة الخدمات الأساسية المتاحة داخل التطبيق"
-        )
-
-        addCard(
-            "🛍️ السوق",
-            "المنتجات والأقسام التجارية"
-        ) {
-            showProducts()
-        }
-
-        addCard(
-            "🧑‍💼 الخدمات",
-            "الخدمات العامة والمهنية"
-        ) {
-            showServices()
-        }
-
-        addCard(
-            "🚚 الشحن",
-            "الخدمات اللوجستية"
-        ) {
-            showShipping()
-        }
-
-        addCard(
-            "🌍 المعاملات",
-            "محلية ودولية"
-        ) {
-            showLocalGlobalTransactions()
-        }
-
-        addCard(
-            "🤝 التعاون",
-            "الشراكات والمشاريع"
-        ) {
-            showCooperation()
-        }
-
-        addCard(
-            "🆘 المساعدة",
-            "مركز المساعدة"
-        ) {
-            showHelpCenter()
-        }
-
-        addCard(
-            "🏠 الرئيسية",
-            "العودة إلى الرئيسية"
-        ) {
-            showHome()
-        }
-    }
-
-    private fun showPlatformOverview() {
-        baseLayout("نظرة عامة")
-
-        addSection(
-            "🌐 المنصة",
-            "نظرة عامة على بنية CENTRAL MARKET ووظائفها"
-        )
-
-        addInfo(
-            "السوق",
-            "منظومة لعرض المنتجات والخدمات والفرص التجارية."
-        )
-
-        addInfo(
-            "الخدمات",
-            "أقسام متعددة يمكن تنظيمها حسب البلد والمنطقة."
+            "التجارة والخدمات",
+            "منتجات وخدمات وإعلانات وأقسام متعددة."
         )
 
         addInfo(
             "الذكاء",
-            "CTM AI والذكاء البشري يعملان ضمن الحدود المعتمدة للمنصة."
+            "الذكاء البشري وCTM AI."
+        )
+
+        addInfo(
+            "المجتمع",
+            "الدعم المجتمعي والمبادرات."
+        )
+
+        addInfo(
+            "BADGER",
+            "منظومة مالية مستقلة بضوابط خاصة."
         )
 
         addInfo(
             "الأمان",
-            "حماية التطبيق مفعلة على مستوى التطبيق بالكامل."
+            "حماية شاشة شاملة وقفل الجلسة بعد 10 دقائق خارج التطبيق."
         )
 
         addInfo(
-            "التمويل",
-            "الأقسام المالية الحساسة تحتاج إلى تحقق واعتماد مناسبين."
+            "الأهلية",
+            "الخدمات الحساسة يمكن أن تتطلب تحققًا رسميًا وتفويضًا نظاميًا."
         )
 
-        addInfo(
-            "الدول",
-            "المنصة مصممة بفكرة الحزم المحلية والعالمية."
-        )
-
-        addCard(
-            "🌍 الحزم العالمية",
-            "عرض الحزم والدول"
-        ) {
-            showGlobalPackages()
-        }
-
-        addCard(
-            "📋 قواعد المناطق",
-            "القواعد الإقليمية"
-        ) {
-            showRegionalRules()
-        }
-
-        addCard(
-            "🏠 الرئيسية",
-            "العودة إلى الرئيسية"
-        ) {
+        addNavButton("↩️ الرئيسية") {
             showHome()
         }
     }
-
-    private fun showUpdates() {
-        baseLayout("التحديثات")
-
-        addSection(
-            "🔄 تحديثات المنصة",
-            "معلومات عامة عن تطوير التطبيق وإصداراته"
-        )
-
-        addInfo(
-            "التحديثات",
-            "أي تحديث مهم يجب أن يمر بالمراجعة والاختبار قبل اعتماده."
-        )
-
-        addInfo(
-            "الأمان",
-            "التحديثات الأمنية لها أولوية عند وجود مشكلة مؤثرة."
-        )
-
-        addInfo(
-            "التوافق",
-            "يجب مراعاة الأجهزة القديمة والاتصالات الضعيفة قدر الإمكان."
-        )
-
-        addInfo(
-            "البيانات",
-            "يفضل أن تكون التحديثات خفيفة لتقليل استهلاك الإنترنت."
-        )
-
-        addInfo(
-            "الاختبار",
-            "يتم اختبار النسخة قبل اعتمادها للإصدار."
-        )
-
-        addCard(
-            "📊 حالة المشروع",
-            "عرض الحالة الحالية"
-        ) {
-            showProjectStatus()
-        }
-
-        addCard(
-            "🧪 التشخيص",
-            "فحص الجهاز والاتصال"
-        ) {
-            showDiagnostics()
-        }
-
-        addCard(
-            "🏠 الرئيسية",
-            "العودة إلى الرئيسية"
-        ) {
-            showHome()
-        }
-    }
-
-    private fun showAccessibility() {
-        baseLayout("سهولة الوصول")
-
-        addSection(
-            "♿ سهولة الوصول",
-            "تصميم الخدمات بصورة أسهل لمختلف المستخدمين"
-        )
-
-        addInfo(
-            "الوضوح",
-            "استخدام عناوين واضحة وأزرار مباشرة قدر الإمكان."
-        )
-
-        addInfo(
-            "النص",
-            "الحفاظ على نصوص قابلة للقراءة على الشاشات المختلفة."
-        )
-
-        addInfo(
-            "الأداء",
-            "تقليل العناصر الثقيلة لدعم الأجهزة والاتصالات الضعيفة."
-        )
-
-        addInfo(
-            "التنقل",
-            "توفير مسارات واضحة للعودة إلى الأقسام السابقة."
-        )
-
-        addInfo(
-            "اللغات",
-            "يمكن توسيع دعم اللغات ضمن الإصدارات والحزم المستقبلية."
-        )
-
-        addCard(
-            "📱 قدرات الجهاز",
-            "فحص قدرات الجهاز الحالية"
-        ) {
-            showDeviceCapabilities()
-        }
-
-        addCard(
-            "🆘 المساعدة",
-            "مركز المساعدة"
-        ) {
-            showHelpCenter()
-        }
-
-        addCard(
-            "🏠 الرئيسية",
-            "العودة إلى الرئيسية"
-        ) {
-            showHome()
-        }
-    }
-
-    private fun showAboutPlatform() {
-        baseLayout("عن المنصة")
-
-        addSection(
-            "ℹ️ عن المنصة",
-            "معلومات تعريفية عن المشروع"
-        )
-
-        addInfo(
-            "الاسم",
-            "CENTRAL MARKET"
-        )
-
-        addInfo(
-            "الملكية",
-            "المالك ياسر حسن وشركاؤه"
-        )
-
-        addInfo(
-            "الهدف",
-            "إنشاء منصة متعددة الخدمات والأسواق قابلة للتوسع حسب الدول والمناطق."
-        )
-
-        addInfo(
-            "التصميم",
-            "واجهة بسيطة وخفيفة وقابلة للاستخدام على أجهزة متعددة."
-        )
-
-        addInfo(
-            "الأمان",
-            "الحماية العامة مفعلة على مستوى التطبيق."
-        )
-
-        addInfo(
-            "التمويل",
-            "الخدمات المالية الحساسة تحتاج إلى أنظمة تحقق واعتماد فعلية قبل التشغيل الإنتاجي."
-        )
-
-        addCard(
-            "📄 معلومات التطبيق",
-            "التفاصيل الفنية والإصدار"
-        ) {
-            showAppInformation()
-        }
-
-        addCard(
-            "📊 حالة المشروع",
-            "عرض حالة المشروع"
-        ) {
-            showProjectStatus()
-        }
-
-        addCard(
-            "🏠 الرئيسية",
-            "العودة إلى الرئيسية"
-        ) {
-            showHome()
-        }
-    }
-
-    private fun showFinalReview() {
-        baseLayout("المراجعة")
-
-        addSection(
-            "🔎 المراجعة النهائية",
-            "نقطة مراجعة قبل اعتماد أي نسخة جديدة"
-        )
-
-        addInfo(
-            "الكود",
-            "يجب مراجعة الدوال والاستدعاءات والأقواس قبل البناء."
-        )
-
-        addInfo(
-            "الأمان",
-            "حماية التطبيق العامة لا ينبغي تعطيلها من أي شاشة."
-        )
-
-        addInfo(
-            "البيانات",
-            "الخدمات الحساسة تحتاج إلى تحقق فعلي قبل التشغيل الإنتاجي."
-        )
-
-        addInfo(
-            "المالية",
-            "لا يتم تنفيذ معاملات مالية حقيقية من هذه الواجهة وحدها."
-        )
-
-        addInfo(
-            "الحالة",
-            "هذه الشاشة تنظيمية ولا تعتبر بديلًا عن الاختبارات الفعلية."
-        )
-
-        addCard(
-            "🛡️ قائمة الأمان",
-            "مراجعة عناصر الحماية"
-        ) {
-            showSecurityChecklist()
-        }
-
-        addCard(
-            "🧪 التشخيص",
-            "فحص الجهاز والاتصال"
-        ) {
-            showDiagnostics()
-        }
-
-        addCard(
-            "📊 حالة المشروع",
-            "عرض حالة المشروع"
-        ) {
-            showProjectStatus()
-        }
-
-        addCard(
-            "🏠 الرئيسية",
-            "العودة إلى الرئيسية"
-        ) {
-            showHome()
-        }
-    }
+}
