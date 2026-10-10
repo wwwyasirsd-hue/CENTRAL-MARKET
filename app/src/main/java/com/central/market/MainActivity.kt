@@ -157,6 +157,7 @@ class MainActivity : Activity() {
         content = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(16, 12, 16, 22)
+            
             setBackgroundColor(light)
         }
 
@@ -164,15 +165,16 @@ class MainActivity : Activity() {
             setBackgroundColor(light)
             addView(
                 content,
-                ScrollView.LayoutParams(
-                    ScrollView.LayoutParams.MATCH_PARENT,
-                    ScrollView.LayoutParams.WRAP_CONTENT
+                LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
                 )
             )
         }
 
         setContentView(scroll)
         addTopNavigation(title)
+        
 
         if (subtitle.isNotBlank()) {
             val sub = TextView(this).apply {
