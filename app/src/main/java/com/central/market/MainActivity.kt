@@ -285,7 +285,7 @@ class MainActivity : Activity() {
         val input = EditText(this).apply {
             hint = "بحث في الأقسام والمنتجات"
             textSize = 14f
-            singleLine = true
+            setSingleLine(true)
             setPadding(12, 8, 12, 8)
             background = roundedBackground(white, 14f)
         }
