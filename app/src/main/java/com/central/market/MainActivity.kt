@@ -472,7 +472,7 @@ class MainActivity : Activity() {
         )
     }
 
-        private fun addStatus(
+    private fun addStatus(
         title: String,
         value: String,
         statusColor: Int = green
@@ -509,7 +509,7 @@ class MainActivity : Activity() {
         )
     }
 
-    private fun addVisualBanner(
+        private fun addVisualBanner(
         icon: String,
         title: String,
         description: String,
@@ -525,13 +525,15 @@ class MainActivity : Activity() {
                 secondColor,
                 24f
             )
+            elevation = 10f
         }
 
         banner.addView(TextView(this).apply {
             text = icon
             textSize = 44f
             gravity = Gravity.CENTER
-            setTextColor(white)
+            setTextColor(gold)
+            setShadowLayer(12f, 0f, 0f, Color.argb(110, 218, 177, 76))
         })
 
         banner.addView(TextView(this).apply {
@@ -962,7 +964,7 @@ class MainActivity : Activity() {
         }
     }
 
-        private fun showAccount() {
+    private fun showAccount() {
         when (currentRole) {
             UserRole.USER -> showUserAccount()
             UserRole.ADMIN -> showAdminAccount()
@@ -1048,6 +1050,7 @@ class MainActivity : Activity() {
     // الأسواق والمنتجات
     // =========================================================
 
+    
     private fun showProducts() {
         baseLayout("الأسواق والمنتجات", "اختيار الفئة")
 
@@ -1374,7 +1377,7 @@ class MainActivity : Activity() {
         )
     }
 
-        private fun showBadgerDashboard() {
+    private fun showBadgerDashboard() {
         baseLayout("BADGER Dashboard", "لوحة المنظومة")
 
         addVisualBanner(
@@ -1431,6 +1434,7 @@ class MainActivity : Activity() {
     // الوظائف الحساسة
     // =========================================================
 
+    
     private fun showSensitiveInvestment() {
         if (!isPrivileged()) {
             Toast.makeText(
@@ -1771,6 +1775,7 @@ class MainActivity : Activity() {
         }
     }
 
+    
     private fun isPrivileged(): Boolean {
         return simulationLoggedIn &&
             (
@@ -1857,7 +1862,7 @@ class MainActivity : Activity() {
         )
     }
 
-        private fun showPartnerOffice() {
+    private fun showPartnerOffice() {
         if (
             !simulationLoggedIn ||
             (
@@ -2213,6 +2218,7 @@ class MainActivity : Activity() {
     // الإعلانات والمطبخ والدعم
     // =========================================================
 
+    
     private fun showAds() {
         baseLayout(
             "الإعلانات",
@@ -2293,7 +2299,7 @@ class MainActivity : Activity() {
         )
     }
 
-        private fun showCharity() {
+    private fun showCharity() {
         baseLayout(
             "الدعم والصدقة",
             "الأيتام والمحتاجون"
