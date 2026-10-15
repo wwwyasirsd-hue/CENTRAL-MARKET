@@ -1,7 +1,6 @@
 package com.central.market
 
 import android.app.Activity
-import android.content.Context
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
@@ -14,8 +13,8 @@ import android.os.Looper
 import android.os.SystemClock
 import android.text.InputType
 import android.view.Gravity
-import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
+import android.view.WindowManager
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
@@ -38,6 +37,7 @@ class MainActivity : Activity() {
     private val badgerBlack = Color.rgb(20, 23, 27)
 
     private lateinit var content: LinearLayout
+    private lateinit var headerContainer: LinearLayout
     private val handler = Handler(Looper.getMainLooper())
 
     private enum class UserRole {
@@ -79,6 +79,10 @@ class MainActivity : Activity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             window.setDecorFitsSystemWindows(false)
         }
+
+        window.setSoftInputMode(
+            WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
+        )
 
         window.setFlags(
             WindowManager.LayoutParams.FLAG_SECURE,
@@ -133,32 +137,20 @@ class MainActivity : Activity() {
         super.onDestroy()
     }
 
-    private fun registerActivity() {
-        lastActivityTime = SystemClock.elapsedRealtime()
+    private fun focusAndShowKeyboard(input: EditText) {
+        input.requestFocus()
+        input.post {
+            val manager = getSystemService(INPUT_METHOD_SERVICE)
+                as? InputMethodManager
+            manager?.showSoftInput(
+                input,
+                InputMethodManager.SHOW_IMPLICIT
+            )
+        }
     }
 
-    // حقل كتابة موحد: يطلب إظهار لوحة المفاتيح عند التركيز.
-    private fun newTypingField(): EditText {
-        return EditText(this).apply {
-            isFocusable = true
-            isFocusableInTouchMode = true
-
-            setOnFocusChangeListener { view, hasFocus ->
-                if (hasFocus) {
-                    view.postDelayed({
-                        if (view.hasFocus()) {
-                            val imm = getSystemService(
-                                Context.INPUT_METHOD_SERVICE
-                            ) as InputMethodManager
-                            imm.showSoftInput(
-                                view,
-                                InputMethodManager.SHOW_IMPLICIT
-                            )
-                        }
-                    }, 180L)
-                }
-            }
-        }
+    private fun registerActivity() {
+        lastActivityTime = SystemClock.elapsedRealtime()
     }
 
     private fun openPage(page: () -> Unit) {
@@ -185,16 +177,10 @@ class MainActivity : Activity() {
     }
 
     private fun baseLayout(title: String, subtitle: String = "") {
-        content = LinearLayout(this).apply {
+        val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(16, 12, 16, 22)
-            setBackgroundColor(light)
-        }
-
-        val scroll = ScrollView(this).apply {
             setBackgroundColor(light)
             clipToPadding = false
-
             setOnApplyWindowInsetsListener { view, insets ->
                 val topInset =
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -205,7 +191,6 @@ class MainActivity : Activity() {
                         @Suppress("DEPRECATION")
                         insets.systemWindowInsetTop
                     }
-
                 val bottomInset =
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                         insets.getInsets(
@@ -215,11 +200,27 @@ class MainActivity : Activity() {
                         @Suppress("DEPRECATION")
                         insets.systemWindowInsetBottom
                     }
-
                 view.setPadding(0, topInset, 0, bottomInset)
                 insets
             }
+        }
 
+        headerContainer = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(16, 12, 16, 0)
+            setBackgroundColor(light)
+        }
+
+        content = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(16, 12, 16, 22)
+            setBackgroundColor(light)
+        }
+
+        val scroll = ScrollView(this).apply {
+            setBackgroundColor(light)
+            clipToPadding = false
+            isFillViewport = true
             addView(
                 content,
                 LinearLayout.LayoutParams(
@@ -229,7 +230,24 @@ class MainActivity : Activity() {
             )
         }
 
-        setContentView(scroll)
+        root.addView(
+            headerContainer,
+            LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+        )
+
+        root.addView(
+            scroll,
+            LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                0,
+                1f
+            )
+        )
+
+        setContentView(root)
         addTopNavigation(title)
 
         if (subtitle.isNotBlank()) {
@@ -288,7 +306,7 @@ class MainActivity : Activity() {
         )
         bar.addView(home, LinearLayout.LayoutParams(46, 48))
         bar.addView(exit, LinearLayout.LayoutParams(46, 48))
-        content.addView(bar)
+        headerContainer.addView(bar)
 
         if (
             title != "البحث" &&
@@ -308,7 +326,7 @@ class MainActivity : Activity() {
             setPadding(0, 8, 0, 8)
         }
 
-        val input = newTypingField().apply {
+        val input = EditText(this).apply {
             hint = "بحث في الأقسام والمنتجات"
             textSize = 14f
             setSingleLine(true)
@@ -350,7 +368,7 @@ class MainActivity : Activity() {
             }
         )
 
-        content.addView(row)
+        headerContainer.addView(row)
     }
 
     private fun addSection(title: String) {
@@ -413,8 +431,13 @@ class MainActivity : Activity() {
                 textSize = 24f
                 gravity = Gravity.CENTER
                 setTextColor(gold)
+                background = GradientDrawable().apply {
+                    shape = GradientDrawable.OVAL
+                    setColor(navy)
+                    setStroke(2, gold)
+                }
             },
-            LinearLayout.LayoutParams(50, 64)
+            LinearLayout.LayoutParams(58, 58)
         )
 
         val textBox = LinearLayout(this).apply {
@@ -449,7 +472,7 @@ class MainActivity : Activity() {
         )
     }
 
-    private fun addStatus(
+        private fun addStatus(
         title: String,
         value: String,
         statusColor: Int = green
@@ -486,7 +509,7 @@ class MainActivity : Activity() {
         )
     }
 
-        private fun addVisualBanner(
+    private fun addVisualBanner(
         icon: String,
         title: String,
         description: String,
@@ -545,12 +568,12 @@ class MainActivity : Activity() {
 
         baseLayout(
             "الرئيسية",
-            "منصة واحدة .. عالم من الفرص."
+            "بوابتك إلى الخدمات العامة الذكية"
         )
 
         addVisualBanner(
             "◈",
-            "CENTRAL MARKET",
+            "بوابتك إلى الخدمات العامة الذكية",
             "الأسواق والخدمات والفرص في مكان واحد",
             navy,
             blue
@@ -563,6 +586,14 @@ class MainActivity : Activity() {
             if (online) "متصل" else "غير متصل",
             if (online) green else red
         )
+
+        addCard(
+            "🏦",
+            "الخدمات المصرفية",
+            "واجهة تجريبية؛ لا يوجد اتصال مصرفي أو دفع حقيقي مفعّل."
+        ) {
+            openPage { showBankingPortal() }
+        }
 
         addSection("المنصة")
 
@@ -670,6 +701,43 @@ class MainActivity : Activity() {
         )
     }
 
+    private fun showBankingPortal() {
+        baseLayout(
+            "الخدمات المصرفية",
+            "واجهة أولية بانتظار الربط الرسمي"
+        )
+        addVisualBanner(
+            "🏦",
+            "BANKING",
+            "بوابة الخدمات المصرفية",
+            navy,
+            blue
+        )
+        addStatus("حالة الربط المصرفي", "غير مفعّل", red)
+        addInfo(
+            "تنبيه أمني",
+            "هذه واجهة تجريبية فقط. لا تُدخل أرقام بطاقات أو كلمات مرور مصرفية أو بيانات مالية حقيقية. لا توجد حاليًا صلة ببنك أو بوابة دفع."
+        )
+        addCard(
+            "🧾",
+            "الفواتير والمدفوعات",
+            "تجهيز الواجهة فقط؛ التنفيذ يتطلب مزود دفع معتمدًا وموافقة رسمية."
+        ) {
+            Toast.makeText(
+                this,
+                "خدمة تجريبية؛ لم يتم تفعيل الدفع الحقيقي.",
+                Toast.LENGTH_LONG
+            ).show()
+        }
+        addCard(
+            "🔐",
+            "التحقق الآمن",
+            "يتطلب مصادقة خادمية وصلاحيات موثوقة قبل إتاحة أي بيانات مالية."
+        ) {
+            openPage { showSecurity() }
+        }
+    }
+
     // =========================================================
     // الحسابات والدخول
     // =========================================================
@@ -714,7 +782,7 @@ class MainActivity : Activity() {
             "رموز الدخول هنا تجريبية فقط. لا تستخدم هذه الآلية لحماية بيانات أو أموال حقيقية."
         )
 
-        val input = newTypingField().apply {
+        val input = EditText(this).apply {
             hint = "أدخل رمز المحاكاة"
             textSize = 16f
             inputType = InputType.TYPE_CLASS_TEXT or
@@ -729,6 +797,7 @@ class MainActivity : Activity() {
                 setMargins(0, 0, 0, 12)
             }
         )
+        focusAndShowKeyboard(input)
 
         val login = Button(this).apply {
             text = "دخول"
@@ -893,7 +962,7 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun showAccount() {
+        private fun showAccount() {
         when (currentRole) {
             UserRole.USER -> showUserAccount()
             UserRole.ADMIN -> showAdminAccount()
@@ -975,66 +1044,107 @@ class MainActivity : Activity() {
         )
     }
 
-    
+    // =========================================================
+    // الأسواق والمنتجات
+    // =========================================================
+
     private fun showProducts() {
         baseLayout("الأسواق والمنتجات", "اختيار الفئة")
+
         addInfo(
             "الأسواق",
             "منصة متعددة الفئات مع إمكانية تخصيص الحزم حسب الدولة والمنطقة."
         )
 
         val categories = listOf(
-            "🚚" to ("المركبات والشاحنات" to "مركبات وشاحنات وخدمات مرتبطة بها."),
-            "📱" to ("الهواتف والإلكترونيات" to "هواتف وأجهزة إلكترونية."),
-            "🍽" to ("المطاعم والتوصيل" to "مطاعم وخدمات توصيل."),
-            "🌾" to ("الزراعة والثروة الحيوانية" to "منتجات زراعية وحيوانية."),
-            "🐟" to ("الأسماك" to "منتجات وخدمات الأسماك."),
-            "🏗" to ("البناء والجملة" to "مواد البناء وتجارة الجملة."),
-            "🏥" to ("الصحة" to "معلومات وخدمات صحية عامة."),
-            "⚽" to ("الرياضة" to "منتجات وخدمات رياضية."),
-            "💡" to ("الكهرباء والمياه" to "احتياجات الكهرباء والمياه."),
-            "🎓" to ("التعليم" to "الخدمات والمعلومات التعليمية."),
-            "✈" to ("السفر" to "خدمات السفر والتذاكر.")
+            "🚚" to (
+                "المركبات والشاحنات" to
+                    "مركبات وشاحنات وخدمات مرتبطة بها."
+            ),
+            "📱" to (
+                "الهواتف والإلكترونيات" to
+                    "هواتف وأجهزة إلكترونية."
+            ),
+            "🍽" to (
+                "المطاعم والتوصيل" to
+                    "مطاعم وخدمات توصيل."
+            ),
+            "🌾" to (
+                "الزراعة والثروة الحيوانية" to
+                    "منتجات زراعية وحيوانية."
+            ),
+            "🐟" to (
+                "الأسماك" to
+                    "منتجات وخدمات الأسماك."
+            ),
+            "🏗" to (
+                "البناء والجملة" to
+                    "مواد البناء وتجارة الجملة."
+            ),
+            "🏥" to (
+                "الصحة" to
+                    "معلومات وخدمات صحية عامة."
+            ),
+            "⚽" to (
+                "الرياضة" to
+                    "منتجات وخدمات رياضية."
+            ),
+            "💡" to (
+                "الكهرباء والمياه" to
+                    "احتياجات الكهرباء والمياه."
+            ),
+            "🎓" to (
+                "التعليم" to
+                    "الخدمات والمعلومات التعليمية."
+            ),
+            "✈" to (
+                "السفر" to
+                    "خدمات السفر والتذاكر."
+            )
         )
 
         categories.forEach { item ->
-            addCard(item.first, item.second.first, item.second.second) {
-                openPage { showCategory(item.second.first) }
+            addCard(
+                item.first,
+                item.second.first,
+                item.second.second
+            ) {
+                openPage {
+                    showCategory(item.second.first)
+                }
             }
         }
     }
 
     private fun showCategory(category: String) {
         baseLayout(category, "قسم CENTRAL MARKET")
-        addInfo("الفئة المختارة", category)
-        addStatus("حالة القسم", "واجهة تجريبية محلية", green)
+
+        addInfo("الفئة", category)
+        addStatus("الحالة", "متاح للتصفح", green)
 
         addInfo(
-            "ملاحظة",
-            "هذا القسم يعرض واجهة التطبيق التجريبية. نشر إعلانات حقيقية " +
-                "واستقبال الطلبات يتطلبان قاعدة بيانات وخدمة خلفية."
+            "التعاملات",
+            "هذه النسخة تعرض واجهة محلية. التعاملات الحقيقية تحتاج خدمات خلفية واعتمادات مناسبة."
         )
 
         if (
-            category.contains("المركبات") ||
-            category.contains("الشاحنات") ||
-            category.contains("السفر")
+            category == "المركبات والشاحنات" ||
+            category == "السفر"
         ) {
             addInfo(
-                "الخصوصية والموقع",
-                "لا يتم افتراض تتبع موقع المستخدم. أي خدمة تحتاج الموقع " +
-                    "يجب أن تطلب الإذن وتوضح الغرض منه."
+                "الموقع والتتبع",
+                "لا يعمل تتبع الموقع كميزة عامة. يقتصر على خدمة تتطلبه فعليًا وبموافقة ومتطلبات قانونية مناسبة."
             )
         }
 
         addCard(
-            "☆",
-            "إضافة إلى المفضلة",
-            "حفظ اختيارك محليًا في هذه الجلسة."
+            "♡",
+            "إضافة للمفضلة",
+            "حفظ الفئة خلال هذه الجلسة."
         ) {
             Toast.makeText(
                 this,
-                "تم اختيار الفئة للمفضلة محليًا.",
+                "تم اختيار الفئة للمفضلة (محليًا)",
                 Toast.LENGTH_SHORT
             ).show()
         }
@@ -1042,40 +1152,47 @@ class MainActivity : Activity() {
         addCard(
             "⌕",
             "البحث داخل الفئة",
-            "ابحث عن اسم الفئة أو الخدمة المطلوبة."
+            "فتح البحث."
         ) {
-            openPage { showSearch(category) }
+            openPage { showSearch() }
         }
     }
 
-    private fun roleName(role: UserRole): String {
-        return when (role) {
+    private fun roleName(role: UserRole): String =
+        when (role) {
             UserRole.USER -> "مستخدم"
             UserRole.ADMIN -> "إدارة"
             UserRole.PARTNER -> "شريك"
             UserRole.OWNER -> "مالك"
         }
-    }
+
+    // =========================================================
+    // الخدمات
+    // =========================================================
 
     private fun showServices() {
-        baseLayout("الخدمات العامة", "بوابتك إلى الخدمات العامة الذكية")
+        baseLayout("الخدمات", "خدمات CENTRAL MARKET")
+
         addVisualBanner(
-            "الخدمات العامة",
-            "الوصول إلى الأقسام والخدمات من مكان واحد"
+            "⚙",
+            "SERVICES",
+            "الخدمات والذكاء والخدمات المجتمعية",
+            blue,
+            navy
         )
 
         addCard(
             "🧠",
             "الذكاء البشري",
-            "معلومات ومساعدة لتنظيم الأفكار والمهام."
+            "المعرفة والمساعدة البشرية المنظمة."
         ) {
             openPage { showHumanIntelligence() }
         }
 
         addCard(
-            "✦",
+            "◉",
             "CTM AI",
-            "واجهة المساعد الذكي التجريبية."
+            "المساعد الرسمي للمنصة ضمن الصلاحيات المعتمدة."
         ) {
             openPage { showCtmAi() }
         }
@@ -1083,7 +1200,7 @@ class MainActivity : Activity() {
         addCard(
             "🏥",
             "الصحة",
-            "معلومات وخدمات صحية عامة."
+            "معلومات صحية عامة."
         ) {
             openPage { showCategory("الصحة") }
         }
@@ -1091,15 +1208,15 @@ class MainActivity : Activity() {
         addCard(
             "🎓",
             "التعليم",
-            "الخدمات والمعلومات التعليمية."
+            "خدمات تعليمية."
         ) {
             openPage { showCategory("التعليم") }
         }
 
         addCard(
-            "💡",
+            "⚡",
             "الكهرباء والمياه",
-            "خدمات ومعلومات المرافق العامة."
+            "الاحتياجات الأساسية."
         ) {
             openPage { showCategory("الكهرباء والمياه") }
         }
@@ -1107,15 +1224,15 @@ class MainActivity : Activity() {
         addCard(
             "✈",
             "السفر",
-            "معلومات وخدمات السفر."
+            "خدمات السفر والتذاكر."
         ) {
             openPage { showCategory("السفر") }
         }
 
         addCard(
-            "🤲",
-            "العمل الخيري",
-            "واجهة تجريبية للمبادرات الخيرية."
+            "🤝",
+            "الدعم المجتمعي",
+            "مبادرات الدعم."
         ) {
             openPage { showCharity() }
         }
@@ -1123,181 +1240,216 @@ class MainActivity : Activity() {
         addCard(
             "🦡",
             "BADGER",
-            "الدخول إلى واجهة الوحدة التجريبية."
+            "واجهة المنظومة المالية والتحليلات."
         ) {
             openPage { showBadger() }
         }
 
         addCard(
             "✉",
-            "الرسائل والمقترحات",
-            "إرسال رسالة أو مقترح من خلال الواجهة التجريبية."
+            "مراسلة المنصة",
+            "كتابة رسالة محلية."
         ) {
             openPage { showMessage() }
         }
     }
 
     private fun showHumanIntelligence() {
-        baseLayout("الذكاء البشري", "مساعدة المستخدم")
+        baseLayout(
+            "الذكاء البشري",
+            "خدمات المعرفة والمساعدة"
+        )
 
         addVisualBanner(
-            "الذكاء البشري",
-            "المعرفة والخبرة واتخاذ القرار بمسؤولية"
+            "🧠",
+            "HUMAN INTELLIGENCE",
+            "المعرفة البشرية والمساعدة المنظمة",
+            navy,
+            blue
         )
 
         addInfo(
-            "عن القسم",
-            "قسم تجريبي لتنظيم الأفكار وعرض الإرشادات ومساعدة المستخدم " +
-                "على تحديد الخطوات المناسبة."
+            "الفكرة",
+            "قسم للمساعدة البشرية والمعرفة والخدمات المنظمة داخل المنصة."
         )
 
-        addCard(
-            "✎",
-            "كتابة مقترح",
-            "افتح نموذج المقترحات."
-        ) {
-            openPage { showIdea() }
-        }
+        addInfo(
+            "الزكاة البشرية",
+            "يمكن تخصيص وظائف إنسانية لحزمة السودان وفق القوانين والجهات المختصة."
+        )
 
-        addCard(
-            "✉",
-            "إرسال رسالة",
-            "افتح نموذج الرسائل."
-        ) {
-            openPage { showMessage() }
-        }
+        addInfo(
+            "الحزم الدولية",
+            "الوظائف الحكومية الخاصة بدولة معينة لا تُفرض على النسخ الخارجية."
+        )
+
+        addStatus("حالة القسم", "واجهة محلية", green)
     }
 
     private fun showCtmAi() {
-        baseLayout("CTM AI", "المساعد الذكي")
+        baseLayout("CTM AI", "المساعد الرسمي للمنصة")
 
         addVisualBanner(
+            "◉",
             "CTM AI",
-            "مساعد ذكي ضمن منصة CENTRAL MARKET"
+            "CENTRAL MARKET Intelligence",
+            blue,
+            navy
         )
 
         addInfo(
-            "حالة المساعد",
-            "هذه واجهة تجريبية. لا يوجد اتصال فعلي بخدمة ذكاء اصطناعي " +
-                "في هذا الجزء من التطبيق."
+            "وظيفة المساعد",
+            "واجهة مخصصة للمساعدة في البحث وقراءة المعلومات المسموح بها."
         )
 
         addInfo(
-            "ما يمكن إضافته لاحقًا",
-            "ربط آمن بخدمة ذكاء اصطناعي، مع حماية بيانات المستخدم " +
-                "وعدم إرسال المعلومات الحساسة دون ضرورة وموافقة مناسبة."
+            "الخصوصية",
+            "يجب ألا يصل المساعد إلى بيانات أو أقسام لا يملك المستخدم صلاحية الوصول إليها."
         )
 
-        addCard(
-            "✎",
-            "إرسال فكرة لتطوير المساعد",
-            "اكتب اقتراحك."
-        ) {
-            openPage { showIdea() }
-        }
+        addInfo(
+            "الموافقة",
+            "التغييرات الحساسة تخضع للاعتماد المطلوب عند ربط النظام بخدمات إنتاجية."
+        )
+
+        addInfo(
+            "التكامل",
+            "هذه الصفحة واجهة محلية وليست اتصالًا فعليًا بمحرك ذكاء اصطناعي."
+        )
     }
 
-    
+    // =========================================================
+    // BADGER
+    // =========================================================
+
     private fun showBadger() {
-        baseLayout("BADGER", "الوحدة التجريبية")
+        baseLayout("BADGER", "المنظومة المالية المقترحة")
 
         addVisualBanner(
+            "🦡",
             "BADGER",
-            "وحدة الخدمات والأدوات المترابطة"
+            "Banking • Analytics • Deposits • Global",
+            badgerBlack,
+            navy
         )
 
-        addInfo(
-            "حالة الوحدة",
-            "واجهة تجريبية محلية. تشغيل الخدمات المتصلة بالحسابات " +
-                "أو البيانات يتطلب ربطًا خلفيًا آمنًا."
-        )
+        addStatus("حالة الحماية", "واجهة محلية", green)
 
         addCard(
             "▣",
-            "لوحة الوحدة",
-            "استعراض الأدوات المتاحة."
+            "لوحة BADGER",
+            "الحساب والتحليلات المتاحة."
         ) {
             openPage { showBadgerDashboard() }
         }
 
         addCard(
-            "🔒",
+            "◆",
             "المشاركة الاستثمارية",
-            "منطقة حساسة تتطلب التحقق من الصلاحيات والجلسة."
+            "وظيفة حساسة تتطلب تحققًا واعتمادات مناسبة."
         ) {
             openPage { showSensitiveInvestment() }
         }
 
         addCard(
-            "⚙",
-            "أدوات الإدارة",
-            "متاحة للحسابات المخولة فقط."
+            "▰",
+            "الحماية الحساسة",
+            "عرض حالة القفل الحساس."
         ) {
-            if (isPrivileged()) {
-                openPage { showManagerTools() }
+            if (!simulationLoggedIn) {
+                showSimulationLogin()
             } else {
-                Toast.makeText(
-                    this,
-                    "هذه الوظيفة تتطلب صلاحية إدارية.",
-                    Toast.LENGTH_SHORT
-                ).show()
+                lockSensitiveSection()
             }
         }
-    }
-
-    private fun showBadgerDashboard() {
-        baseLayout("لوحة BADGER", "الأدوات والخدمات")
 
         addInfo(
-            "الوحدة",
-            "هذه لوحة محاكاة. لا تُنفذ تحويلات مالية أو معاملات " +
-                "حقيقية ولا تتصل بخادم خارجي."
+            "مبدأ BADGER",
+            "منتج مقترح قابل للتطوير للمؤسسات وفق العقود والاعتمادات المناسبة."
         )
 
+        addInfo(
+            "التنفيذ المالي",
+            "هذه النسخة لا تنفذ تحويلات أو إيداعات أو استثمارات مالية حقيقية."
+        )
+    }
+
+        private fun showBadgerDashboard() {
+        baseLayout("BADGER Dashboard", "لوحة المنظومة")
+
+        addVisualBanner(
+            "🦡",
+            "BADGER",
+            "Financial Technology Interface",
+            badgerBlack,
+            gold
+        )
+
+        addStatus(
+            "الجلسة",
+            if (simulationLoggedIn) "نشطة" else "زائر",
+            if (simulationLoggedIn) green else gray
+        )
+
+        addStatus("القفل الحساس", "3 دقائق", gold)
+
         addCard(
-            "📄",
-            "المستندات",
-            "عرض واجهة المستندات."
+            "◈",
+            "تحليلات الإيداع",
+            "معلومات محاكاة دون تنفيذ مالي."
+        ) {
+            Toast.makeText(
+                this,
+                "التحليلات محاكاة فقط",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+
+        addCard(
+            "◆",
+            "تحليلات الاستثمار",
+            "عرض واجهة الاستثمار الحساسة."
+        ) {
+            openPage { showSensitiveInvestment() }
+        }
+
+        addCard(
+            "▰",
+            "السجلات والعقود",
+            "متطلبات توثيق العمولات والعلاقات التجارية."
         ) {
             openPage { showDocuments() }
         }
 
-        addCard(
-            "✉",
-            "الرسائل",
-            "فتح قسم الرسائل."
-        ) {
-            openPage { showMessage() }
-        }
-
-        addCard(
-            "🔐",
-            "المشاركة الاستثمارية",
-            "الانتقال إلى القسم الحساس بعد التحقق."
-        ) {
-            openPage { showSensitiveInvestment() }
-        }
-
-        addCard(
-            "↩",
-            "العودة إلى الخدمات",
-            "عرض أقسام الخدمات العامة."
-        ) {
-            openPage { showServices() }
-        }
+        addInfo(
+            "الحالة",
+            "أي تكامل مالي فعلي يحتاج بنية خلفية آمنة ومؤسسة مخولة واعتمادات مناسبة."
+        )
     }
+
+    // =========================================================
+    // الوظائف الحساسة
+    // =========================================================
 
     private fun showSensitiveInvestment() {
         if (!isPrivileged()) {
             Toast.makeText(
                 this,
-                "لا تملك صلاحية الوصول إلى هذه الوظيفة.",
+                "هذه الوظيفة تتطلب حسابًا خاصًا موثقًا؛ المصادقة الإنتاجية غير مفعلة في هذه النسخة.",
                 Toast.LENGTH_LONG
             ).show()
+
+            showSimulationLogin()
             return
         }
 
         if (!simulationLoggedIn) {
+            Toast.makeText(
+                this,
+                "يجب الدخول إلى الحساب أولًا",
+                Toast.LENGTH_SHORT
+            ).show()
+
             showSimulationLogin()
             return
         }
@@ -1313,36 +1465,46 @@ class MainActivity : Activity() {
             sensitiveTimeout
         )
 
-        baseLayout("المشاركة الاستثمارية", "وظيفة حساسة")
+        baseLayout(
+            "المشاركة الاستثمارية",
+            "وظيفة حساسة"
+        )
 
         addVisualBanner(
-            "المشاركة الاستثمارية",
-            "واجهة محاكاة وليست نظامًا ماليًا فعليًا"
+            "◆",
+            "SENSITIVE",
+            "حماية الوظائف المالية الحساسة",
+            red,
+            navy
         )
 
-        addStatus(
-            "حالة الجلسة",
-            "تم اجتياز فحص الصلاحية المحلي",
-            green
+        addStatus("حماية الشاشة", "مفعلة", green)
+        addStatus("القفل التلقائي", "3 دقائق", gold)
+
+        addInfo(
+            "الأهلية",
+            "أي مشاركة مالية حقيقية تحتاج تحققًا قانونيًا ورسميًا وتفويضات مناسبة."
         )
 
         addInfo(
-            "حدود النسخة التجريبية",
-            "لا يتم إنشاء استثمار حقيقي أو تنفيذ تحويل مالي أو حفظ " +
-                "أموال المستخدمين. يجب أن يسبق التشغيل الفعلي تحقق " +
-                "من الهوية وصلاحيات الخادم ومراجعة المتطلبات القانونية."
+            "الموانع القانونية",
+            "لا يجوز تجاوز مانع قانوني موثق. التحقق الحقيقي يحتاج تكاملًا رسميًا معتمدًا."
         )
 
         addInfo(
-            "حماية الحساب",
-            "يتم قفل القسم الحساس بعد انتهاء المهلة المحددة، ويمكن " +
-                "للمستخدم قفله يدويًا."
+            "حماية الشاشة",
+            "تم تفعيل FLAG_SECURE على مستوى النافذة لمنع لقطات الشاشة المعتادة قدر الإمكان."
+        )
+
+        addInfo(
+            "التنفيذ",
+            "لا توجد عملية استثمار أو تحويل أموال حقيقية في هذه النسخة."
         )
 
         addCard(
             "🔒",
-            "قفل الوظيفة الحساسة",
-            "إغلاق القسم الحساس الآن."
+            "إغلاق الوظيفة الحساسة",
+            "إغلاق الشاشة الحساسة فورًا."
         ) {
             lockSensitiveSection()
         }
@@ -1352,31 +1514,36 @@ class MainActivity : Activity() {
         handler.removeCallbacks(sensitiveLockRunnable)
         sensitiveLocked = true
 
-        baseLayout("القفل الحساس", "حماية الوظائف الحساسة")
+        baseLayout("القفل الحساس", "تم تأمين الوظيفة")
 
-        addInfo(
-            "القسم مقفل",
-            "تم قفل الوظيفة الحساسة. أعد التحقق من الجلسة والصلاحيات " +
-                "قبل محاولة الوصول مجددًا."
+        addVisualBanner(
+            "🔒",
+            "LOCKED",
+            "تم إغلاق القسم الحساس",
+            red,
+            officeDark
         )
 
+        addInfo(
+            "سبب القفل",
+            "انتهت مدة الأمان المحددة للوظائف الحساسة أو تم إغلاقها يدويًا."
+        )
+
+        addStatus("الحالة", "مقفلة", red)
+
         addCard(
-            "🔐",
-            "إعادة التحقق",
-            "العودة إلى بوابة الحساب التجريبي."
+            "↻",
+            "إعادة الدخول",
+            "العودة إلى الحساب وإعادة فتح الوظيفة بعد التحقق."
         ) {
-            if (simulationLoggedIn && isPrivileged()) {
-                sensitiveLocked = false
-                openPage { showSensitiveInvestment() }
-            } else {
-                openPage { showSimulationLogin() }
-            }
+            sensitiveLocked = true
+            showAccountHome()
         }
 
         addCard(
-            "↩",
-            "العودة إلى الصفحة الرئيسية",
-            "الخروج من القسم الحساس."
+            "⌂",
+            "الرئيسية",
+            "العودة إلى الصفحة الرئيسية."
         ) {
             sensitiveLocked = true
             goHome()
@@ -1389,16 +1556,17 @@ class MainActivity : Activity() {
         showSensitiveLock()
     }
 
+    // =========================================================
+    // قفل الجلسة وتسجيل الخروج
+    // =========================================================
+
     private fun lockAccount() {
+        if (!simulationLoggedIn) return
+
         handler.removeCallbacks(globalLockRunnable)
         handler.removeCallbacks(sensitiveLockRunnable)
 
-        if (!simulationLoggedIn) {
-            showHome()
-            return
-        }
-
-        lastActivityTime = System.currentTimeMillis()
+        sensitiveLocked = true
         showSessionLock()
     }
 
@@ -1406,29 +1574,36 @@ class MainActivity : Activity() {
         baseLayout("قفل الجلسة", "حماية الحساب")
 
         addVisualBanner(
-            "الجلسة مقفلة",
-            "أعد التحقق للمتابعة في النسخة التجريبية"
+            "🔒",
+            "SESSION LOCK",
+            "تم تأمين الجلسة",
+            red,
+            navy
         )
 
+        addStatus("الحالة", "مقفلة", red)
+
         addInfo(
-            "سبب القفل",
-            "تم إيقاف الوصول إلى صفحات الحساب حتى إعادة التحقق."
+            "السبب",
+            "انتهت مدة عدم النشاط في الخلفية أو انتهت المهلة المحددة."
         )
 
         addCard(
-            "🔐",
-            "إعادة فتح الجلسة التجريبية",
-            "العودة إلى بوابة تسجيل الدخول."
+            "↻",
+            "إعادة الدخول",
+            "العودة إلى شاشة الحسابات."
         ) {
-            openPage { showSimulationLogin() }
+            clearSession()
+            showSimulationLogin()
         }
 
         addCard(
-            "↩",
-            "إنهاء الجلسة",
-            "الخروج من الحساب التجريبي."
+            "⌂",
+            "الرئيسية",
+            "إنهاء الجلسة والعودة للرئيسية."
         ) {
-            logoutSimulation()
+            clearSession()
+            goHome()
         }
     }
 
@@ -1440,515 +1615,20 @@ class MainActivity : Activity() {
         sensitiveLocked = false
         currentRole = UserRole.USER
         currentAccountName = "زائر"
-        failedLoginAttempts = 0
-        loginBlockedUntil = 0L
-        lastActivityTime = 0L
         lastBackgroundTime = 0L
+        lastActivityTime = 0L
     }
 
     private fun logoutSimulation() {
         clearSession()
-        pageHistory.clear()
-        currentPage = null
-        showHome()
 
         Toast.makeText(
             this,
-            "تم إنهاء الجلسة التجريبية.",
+            "تم تسجيل الخروج. يلزم التحقق مجددًا عند الدخول.",
             Toast.LENGTH_SHORT
         ).show()
-    }
 
-    
-    // =========================================================
-    // الإعلانات
-    // =========================================================
-
-    private fun showAds() {
-        baseLayout("الإعلانات", "باقات العرض الإعلاني")
-
-        addVisualBanner(
-            "📢",
-            "CENTRAL MARKET ADS",
-            "خيارات إعلانية تجريبية",
-            navy,
-            gold
-        )
-
-        addCard(
-            "🥉",
-            "BRONZE",
-            "الباقة الأساسية للإعلانات."
-        ) {
-            openPage { showAdPackage("BRONZE") }
-        }
-
-        addCard(
-            "🥈",
-            "SILVER",
-            "الباقة المتوسطة للإعلانات."
-        ) {
-            openPage { showAdPackage("SILVER") }
-        }
-
-        addCard(
-            "🥇",
-            "GOLD",
-            "الباقة المميزة للإعلانات."
-        ) {
-            openPage { showAdPackage("GOLD") }
-        }
-
-        addInfo(
-            "تنبيه",
-            "الباقات هنا للعرض فقط. لا توجد مدفوعات أو عمليات نشر فعلية."
-        )
-    }
-
-    private fun showAdPackage(packageName: String) {
-        baseLayout("باقة $packageName", "تفاصيل الباقة")
-
-        addStatus("الباقة المختارة", packageName, gold)
-
-        addInfo(
-            "الحالة",
-            "لم يتم تفعيل الباقة أو تحصيل رسوم. يلزم لاحقًا تحديد الأسعار " +
-                "والشروط وربط نظام إعلانات وخادم موثوق."
-        )
-
-        addActionButton("إرسال استفسار عن الباقة") {
-            openPage {
-                showMessage("استفسار عن باقة $packageName")
-            }
-        }
-    }
-
-    // =========================================================
-    // المطبخ
-    // =========================================================
-
-    private fun showKitchen() {
-        baseLayout("المطبخ", "المطاعم والمنتجات الغذائية")
-
-        addVisualBanner(
-            "🍲",
-            "CENTRAL KITCHEN",
-            "واجهة تجريبية للأطعمة والخدمات الغذائية",
-            navy,
-            gold
-        )
-
-        addCard(
-            "🍽",
-            "المطاعم",
-            "استعراض واجهة المطاعم."
-        ) {
-            openPage { showCategory("المطاعم") }
-        }
-
-        addCard(
-            "🥬",
-            "الخضروات والمنتجات الطازجة",
-            "استعراض المنتجات الزراعية."
-        ) {
-            openPage { showCategory("المنتجات الزراعية") }
-        }
-
-        addCard(
-            "🐟",
-            "الأسماك",
-            "استعراض قسم الأسماك."
-        ) {
-            openPage { showCategory("الأسماك") }
-        }
-
-        addCard(
-            "✉",
-            "استفسار غذائي أو تجاري",
-            "إرسال رسالة من النموذج المحلي."
-        ) {
-            openPage { showMessage("استفسار عن المطبخ") }
-        }
-
-        addInfo(
-            "حالة الخدمة",
-            "لا يوجد طلب طعام أو دفع أو توصيل فعلي في هذه النسخة."
-        )
-    }
-
-    // =========================================================
-    // الصدقة والدعم
-    // =========================================================
-
-    private fun showCharity() {
-        baseLayout("الصدقة والدعم", "المبادرات الإنسانية")
-
-        addVisualBanner(
-            "🤲",
-            "العطاء والتكافل",
-            "واجهة للمبادرات الخيرية ودعم المحتاجين",
-            navy,
-            green
-        )
-
-        addCard(
-            "🧒",
-            "دعم الأيتام",
-            "واجهة تعريفية لمبادرات رعاية الأيتام."
-        ) {
-            openPage { showCharityDetails("دعم الأيتام") }
-        }
-
-        addCard(
-            "🤝",
-            "مساعدة المحتاجين",
-            "واجهة تعريفية للمبادرات الإنسانية."
-        ) {
-            openPage { showCharityDetails("مساعدة المحتاجين") }
-        }
-
-        addCard(
-            "🇸🇩",
-            "المبادرات المرتبطة بالسودان",
-            "عرض فكرة مبادرات دعم المجتمع السوداني."
-        ) {
-            openPage { showCharityDetails("المبادرات المرتبطة بالسودان") }
-        }
-
-        addInfo(
-            "الأمانة المالية",
-            "لا يستقبل التطبيق تبرعات مالية حقيقية في هذه النسخة. " +
-                "أي جمع أموال مستقبلي يتطلب التحقق من الجهة المستفيدة " +
-                "والالتزام بالمتطلبات القانونية."
-        )
-    }
-
-    private fun showCharityDetails(program: String) {
-        baseLayout(program, "تفاصيل المبادرة")
-
-        addInfo(
-            "المبادرة",
-            program
-        )
-
-        addInfo(
-            "حالة التنفيذ",
-            "صفحة تعريفية تجريبية. لم يُنشأ طلب مساعدة ولم تُستقبل أموال."
-        )
-
-        addActionButton("إرسال استفسار") {
-            openPage {
-                showMessage("استفسار حول مبادرة: $program")
-            }
-        }
-    }
-
-    // =========================================================
-    // الاتصال
-    // =========================================================
-
-    private fun showConnectivity() {
-        baseLayout("اختبار الاتصال", "فحص اتصال الشبكة")
-
-        val online = isOnline()
-
-        addVisualBanner(
-            "📡",
-            "حالة الشبكة",
-            if (online) "يوجد اتصال إنترنت متحقق" else "لا يوجد اتصال إنترنت متحقق",
-            navy,
-            if (online) green else red
-        )
-
-        addStatus(
-            "الإنترنت",
-            if (online) "متصل" else "غير متصل",
-            if (online) green else red
-        )
-
-        addInfo(
-            "نطاق الاختبار",
-            "يفحص هذا الاختبار حالة الاتصال العامة فقط. لا يختبر خادم CENTRAL MARKET " +
-                "ولا يثبت أن خدمات الحسابات تعمل."
-        )
-
-        addActionButton("إعادة فحص الاتصال") {
-            openPage { showConnectivity() }
-        }
-    }
-
-    // =========================================================
-    // وضع الضيف
-    // =========================================================
-
-    private fun showGuestMode() {
-        baseLayout("الوضع الضيف", "التصفح العام")
-
-        addInfo(
-            "صلاحيات الضيف",
-            "يمكنك تصفح الأقسام العامة. لا يمنح وضع الضيف أي صلاحيات " +
-                "إدارية أو مالية أو وصول إلى حسابات خاصة."
-        )
-
-        addCard(
-            "🛒",
-            "الأسواق",
-            "تصفح الفئات العامة."
-        ) {
-            openPage { showProducts() }
-        }
-
-        addCard(
-            "⚙",
-            "الخدمات العامة",
-            "تصفح الخدمات المتاحة."
-        ) {
-            openPage { showServices() }
-        }
-
-        addCard(
-            "📢",
-            "الإعلانات",
-            "تصفح الباقات التجريبية."
-        ) {
-            openPage { showAds() }
-        }
-
-        addCard(
-            "👤",
-            "الدخول إلى الحساب",
-            "الانتقال إلى بوابة الحساب."
-        ) {
-            openPage { showSimulationLogin() }
-        }
-    }
-
-    // =========================================================
-    // الأمان والخصوصية
-    // =========================================================
-
-    private fun showSecurity() {
-        baseLayout("الأمان والخصوصية", "معلومات حماية التطبيق")
-
-        addVisualBanner(
-            "🔐",
-            "الحماية",
-            "مبادئ حماية الجلسة والبيانات",
-            officeDark,
-            navy
-        )
-
-        addInfo(
-            "حماية لقطات الشاشة",
-            "يستخدم التطبيق FLAG_SECURE لمنع لقطات الشاشة والتسجيل " +
-                "في النوافذ المحمية على الأنظمة التي تدعم ذلك."
-        )
-
-        addInfo(
-            "قفل الجلسة",
-            "توجد آلية لقفل الجلسة التجريبية بعد انتهاء المهلة المحددة. " +
-                "هذا لا يغني عن مصادقة الخادم في الإصدار الفعلي."
-        )
-
-        addInfo(
-            "البيانات الحساسة",
-            "لا تدخل كلمات مرور حقيقية أو معلومات مالية سرية في نماذج المحاكاة."
-        )
-
-        addInfo(
-            "الموقع",
-            "لا يطلب هذا القسم موقعك ولا يشغل تتبع الموقع."
-        )
-
-        addInfo(
-            "حدود الحماية",
-            "الحماية المحلية وحدها لا تكفي لتأمين حسابات المالك أو الشركاء " +
-                "أو العمليات المالية الحقيقية."
-        )
-    }
-
-    // =========================================================
-    // المقترحات والرسائل
-    // =========================================================
-
-    private fun showIdea() {
-        baseLayout("فكرة أو اقتراح", "المساهمة في تطوير المنصة")
-
-        val titleInput = newTypingField().apply {
-            hint = "عنوان الفكرة"
-            textSize = 15f
-            setSingleLine(true)
-            setPadding(12, 10, 12, 10)
-            background = roundedBackground(white, 14f)
-        }
-
-        val detailsInput = newTypingField().apply {
-            hint = "اشرح الفكرة أو التحسين المقترح"
-            textSize = 15f
-            inputType = InputType.TYPE_CLASS_TEXT or
-                InputType.TYPE_TEXT_FLAG_MULTI_LINE or
-                InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
-            gravity = Gravity.TOP or Gravity.START
-            minLines = 4
-            setPadding(12, 12, 12, 12)
-            background = roundedBackground(white, 14f)
-        }
-
-        content.addView(
-            titleInput,
-            LinearLayout.LayoutParams(-1, 52).apply {
-                setMargins(0, 8, 0, 10)
-            }
-        )
-
-        content.addView(
-            detailsInput,
-            LinearLayout.LayoutParams(-1, 130).apply {
-                setMargins(0, 0, 0, 12)
-            }
-        )
-
-        addActionButton("حفظ مسودة الاقتراح") {
-            val title = titleInput.text.toString().trim()
-            val details = detailsInput.text.toString().trim()
-
-            if (title.isBlank() || details.isBlank()) {
-                Toast.makeText(
-                    this,
-                    "أدخل عنوان الفكرة وتفاصيلها.",
-                    Toast.LENGTH_SHORT
-                ).show()
-            } else {
-                Toast.makeText(
-                    this,
-                    "تم التحقق من الحقول. الحفظ الدائم والإرسال إلى الخادم غير مفعّلين.",
-                    Toast.LENGTH_LONG
-                ).show()
-            }
-        }
-
-        addInfo(
-            "ملاحظة",
-            "النموذج لا يرسل البيانات إلى الإنترنت ولا يحفظها حفظًا دائمًا."
-        )
-    }
-
-    private fun showMessage(
-        initialMessage: String = ""
-    ) {
-        baseLayout("الرسائل", "نموذج مراسلة تجريبي")
-
-        val subjectInput = newTypingField().apply {
-            hint = "موضوع الرسالة"
-            setSingleLine(true)
-            setPadding(12, 10, 12, 10)
-            background = roundedBackground(white, 14f)
-        }
-
-        val bodyInput = newTypingField().apply {
-            hint = "اكتب رسالتك"
-            inputType = InputType.TYPE_CLASS_TEXT or
-                InputType.TYPE_TEXT_FLAG_MULTI_LINE or
-                InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
-            gravity = Gravity.TOP or Gravity.START
-            minLines = 4
-            setPadding(12, 12, 12, 12)
-            background = roundedBackground(white, 14f)
-            setText(initialMessage)
-        }
-
-        content.addView(
-            subjectInput,
-            LinearLayout.LayoutParams(-1, 52).apply {
-                setMargins(0, 8, 0, 10)
-            }
-        )
-
-        content.addView(
-            bodyInput,
-            LinearLayout.LayoutParams(-1, 130).apply {
-                setMargins(0, 0, 0, 12)
-            }
-        )
-
-        addActionButton("التحقق من الرسالة") {
-            val subject = subjectInput.text.toString().trim()
-            val body = bodyInput.text.toString().trim()
-
-            if (subject.isBlank() || body.isBlank()) {
-                Toast.makeText(
-                    this,
-                    "أدخل موضوع الرسالة ونصها.",
-                    Toast.LENGTH_SHORT
-                ).show()
-            } else {
-                Toast.makeText(
-                    this,
-                    "الرسالة جاهزة محليًا؛ لم تُرسل إلى أي جهة.",
-                    Toast.LENGTH_LONG
-                ).show()
-            }
-        }
-
-        addInfo(
-            "الخصوصية",
-            "لا تُرسل الرسالة إلى خادم في هذه النسخة التجريبية."
-        )
-    }
-
-    
-    // =========================================================
-    // النقاط والمفضلة
-    // =========================================================
-
-    private fun showPoints() {
-        baseLayout("النقاط", "نظام النقاط التجريبي")
-
-        addVisualBanner(
-            "★",
-            "نقاط المستخدم",
-            "واجهة أولية لنظام النقاط",
-            navy,
-            gold
-        )
-
-        addStatus("رصيد النقاط", "0", blue)
-
-        addInfo(
-            "حالة النظام",
-            "لا توجد نقاط مكتسبة أو مكافآت مالية حقيقية. " +
-                "احتساب النقاط واسترجاعها يحتاج إلى تخزين موثوق على الخادم."
-        )
-    }
-
-    private fun showFavorites() {
-        baseLayout("المفضلة", "العناصر المحفوظة")
-
-        addInfo(
-            "المفضلة",
-            "لا توجد عناصر محفوظة بصورة دائمة في هذه النسخة التجريبية."
-        )
-
-        addCard(
-            "🛒",
-            "الأسواق والمنتجات",
-            "افتح الفئات لاختيار المنتجات."
-        ) {
-            openPage { showProducts() }
-        }
-
-        addCard(
-            "⌕",
-            "البحث",
-            "ابحث عن قسم أو خدمة."
-        ) {
-            openPage { showSearch() }
-        }
-
-        addInfo(
-            "ملاحظة",
-            "زر إضافة الفئة إلى المفضلة في النسخة الحالية لا ينشئ سجلًا دائمًا."
-        )
+        goHome()
     }
 
     // =========================================================
@@ -1956,213 +1636,140 @@ class MainActivity : Activity() {
     // =========================================================
 
     private fun showManagerOffice() {
-        if (!isPrivileged()) {
+        if (
+            !simulationLoggedIn ||
+            (
+                currentRole != UserRole.ADMIN &&
+                currentRole != UserRole.PARTNER &&
+                currentRole != UserRole.OWNER
+            )
+        ) {
             Toast.makeText(
                 this,
-                "يتطلب المكتب الإداري حسابًا مخولًا.",
-                Toast.LENGTH_LONG
+                "هذه المنطقة مخصصة للحسابات المصرح لها",
+                Toast.LENGTH_SHORT
             ).show()
+
             return
         }
 
-        baseLayout("المكتب الإداري", "أدوات الإدارة حسب الصلاحية")
+        baseLayout(
+            "المكتب الإداري",
+            "الوصول حسب الصلاحية"
+        )
 
         addVisualBanner(
             "▣",
             "MANAGEMENT OFFICE",
-            "واجهة إدارية تجريبية",
+            "مكتب الإدارة والمراجعة",
             officeDark,
             navy
         )
 
-        addStatus(
-            "الدور الحالي",
-            roleName(currentRole),
-            gold
-        )
-
-        addInfo(
-            "حدود الصلاحية",
-            "الدور الحالي محفوظ محليًا داخل المحاكاة. لا يمثل إثبات هوية " +
-                "ولا يمنح صلاحيات على خادم حقيقي."
-        )
+        addStatus("الحساب", currentAccountName, blue)
+        addStatus("الصلاحية", roleName(currentRole), green)
 
         addCard(
-            "⚙",
+            "▣",
             "أدوات الإدارة",
-            "عرض أدوات الإدارة التجريبية."
+            "المراجعة والإدارة."
         ) {
             openPage { showManagerTools() }
         }
 
         addCard(
-            "📄",
-            "المستندات",
-            "عرض واجهة المستندات."
+            "◈",
+            "التشخيص",
+            "حالة الاتصال ومكونات التطبيق."
         ) {
-            openPage { showDocuments() }
+            openPage { showDiagnostics() }
         }
 
-        addCard(
-            "🔐",
-            "الأمان والخصوصية",
-            "مراجعة مبادئ الحماية."
+        if (
+            currentRole == UserRole.PARTNER ||
+            currentRole == UserRole.OWNER
         ) {
-            openPage { showSecurity() }
+            addCard(
+                "🤝",
+                "مكتب الشريك",
+                "وظائف الشراكة."
+            ) {
+                openPage { showPartnerOffice() }
+            }
         }
 
-        addCard(
-            "✉",
-            "الرسائل والمقترحات",
-            "فتح نموذج المراسلة."
-        ) {
-            openPage { showMessage() }
+        if (currentRole == UserRole.OWNER) {
+            addCard(
+                "★",
+                "مكتب المالك",
+                "الموافقات والإدارة العليا."
+            ) {
+                openPage { showOwnerOffice() }
+            }
         }
     }
 
     private fun showManagerTools() {
         if (!isPrivileged()) {
-            Toast.makeText(
-                this,
-                "ليس لديك تصريح للوصول إلى أدوات الإدارة.",
-                Toast.LENGTH_LONG
-            ).show()
+            showHome()
             return
         }
 
-        baseLayout("أدوات الإدارة", "واجهة محلية تجريبية")
+        baseLayout(
+            "أدوات الإدارة",
+            "Management Tools"
+        )
 
-        addStatus("الدور", roleName(currentRole), gold)
+        addVisualBanner(
+            "▣",
+            "ADMIN TOOLS",
+            "المراجعة والتشخيص",
+            officeDark,
+            blue
+        )
 
         addCard(
-            "📄",
-            "المستندات",
-            "عرض صفحة المستندات التجريبية."
+            "◈",
+            "تشخيص النظام",
+            "فحص الحالة المحلية."
+        ) {
+            openPage { showDiagnostics() }
+        }
+
+        addCard(
+            "▤",
+            "ملخص النظام",
+            "ملخص المكونات والحماية."
+        ) {
+            openPage { showSystemSummary() }
+        }
+
+        addCard(
+            "▰",
+            "الوثائق",
+            "الوثائق والاعتمادات."
         ) {
             openPage { showDocuments() }
         }
 
-        addCard(
-            "📡",
-            "فحص الاتصال",
-            "معرفة حالة اتصال الجهاز بالإنترنت."
-        ) {
-            openPage { showConnectivity() }
-        }
-
-        addCard(
-            "🔐",
-            "التحقق من الجلسة",
-            "مراجعة حالة الجلسة الحالية."
-        ) {
-            openPage { showAdminSessionStatus() }
-        }
-
-        addInfo(
-            "مهم",
-            "لا توجد هنا إدارة مستخدمين فعلية أو صلاحيات محفوظة على خادم. " +
-                "يجب أن تُفرض صلاحيات الإدارة الحقيقية من الخادم نفسه."
-        )
-    }
-
-    private fun showAdminSessionStatus() {
-        if (!isPrivileged()) {
-            goHome()
-            return
-        }
-
-        baseLayout("حالة الجلسة", "معلومات محلية")
-
-        addStatus(
-            "الجلسة",
-            if (simulationLoggedIn) "نشطة" else "غير نشطة",
-            if (simulationLoggedIn) green else red
-        )
-
-        addStatus(
-            "الدور",
-            roleName(currentRole),
-            gold
-        )
-
-        addStatus(
-            "القسم الحساس",
-            if (sensitiveLocked) "مقفل" else "غير مقفل",
-            if (sensitiveLocked) red else green
-        )
-
-        addInfo(
-            "مصدر الحالة",
-            "المعلومات المعروضة تخص جلسة التطبيق الحالية فقط، " +
-                "ولا تثبت صحة صلاحيات حساب على خادم."
-        )
-
-        addActionButton("قفل القسم الحساس") {
-            lockSensitiveSection()
-        }
-
-        addActionButton("إنهاء الجلسة") {
-            logoutSimulation()
-        }
-    }
-
-    // =========================================================
-    // المستندات
-    // =========================================================
-
-    private fun showDocuments() {
-        if (!simulationLoggedIn) {
-            baseLayout("المستندات", "واجهة عامة")
-
-            addInfo(
-                "الوصول",
-                "تصفح معلومات المستندات العامة. لا توجد مستندات خاصة محملة."
-            )
-
+        if (currentRole == UserRole.OWNER) {
             addCard(
-                "👤",
-                "الدخول إلى الحساب",
-                "انتقل إلى بوابة الدخول."
+                "★",
+                "إدارة الشركاء",
+                "واجهة إدارة الشركاء."
             ) {
-                openPage { showSimulationLogin() }
+                openPage { showPartnerManagement() }
             }
 
-            return
+            addCard(
+                "✓",
+                "اعتماد المالك",
+                "مراجعة الوظائف التي تحتاج اعتمادًا."
+            ) {
+                openPage { showOwnerApproval() }
+            }
         }
-
-        baseLayout("المستندات", "واجهة المستندات التجريبية")
-
-        addVisualBanner(
-            "📄",
-            "المستندات",
-            "عرض أولي لتنظيم الوثائق",
-            navy,
-            blue
-        )
-
-        addInfo(
-            "الحالة",
-            "لم يتم تحميل مستندات من خادم أو حفظ ملفات خاصة داخل هذه الصفحة."
-        )
-
-        addCard(
-            "✉",
-            "استفسار عن مستند",
-            "اكتب استفسارًا في نموذج المراسلة."
-        ) {
-            openPage { showMessage("استفسار عن المستندات") }
-        }
-
-        addInfo(
-            "حماية البيانات",
-            "قبل إضافة رفع المستندات الفعلية، يجب تحديد صلاحيات الوصول " +
-                "والتخزين الآمن وسياسة الاحتفاظ والحذف."
-        )
     }
-
-    // =========================================================
-    // أدوات مساعدة لازمة للبناء
-    // =========================================================
 
     private fun isPrivileged(): Boolean {
         return simulationLoggedIn &&
@@ -2173,15 +1780,712 @@ class MainActivity : Activity() {
             )
     }
 
+    private fun showDiagnostics() {
+        if (!isPrivileged()) {
+            showHome()
+            return
+        }
+
+        baseLayout(
+            "التشخيص",
+            "حالة المكونات المحلية"
+        )
+
+        val online = isOnline()
+
+        addStatus(
+            "الاتصال",
+            if (online) "متصل" else "غير متصل",
+            if (online) green else red
+        )
+
+        addStatus("حماية الشاشة", "مفعلة", green)
+
+        addStatus(
+            "جلسة المستخدم",
+            if (simulationLoggedIn) "نشطة" else "غير مسجلة",
+            if (simulationLoggedIn) green else gray
+        )
+
+        addStatus("BADGER", "واجهة محلية", blue)
+        addStatus("CTM AI", "واجهة محلية", blue)
+
+        addInfo(
+            "ملاحظة",
+            "التكاملات الحكومية والمالية الحقيقية تحتاج خدمات خلفية رسمية وتفويضات مناسبة."
+        )
+    }
+
+    private fun showSystemSummary() {
+        if (!isPrivileged()) {
+            showHome()
+            return
+        }
+
+        baseLayout(
+            "ملخص النظام",
+            "حالة CENTRAL MARKET"
+        )
+
+        addVisualBanner(
+            "◈",
+            "SYSTEM",
+            "ملخص الحماية والتكامل",
+            navy,
+            blue
+        )
+
+        addStatus("الحماية الحساسة", "واجهة محلية", gold)
+        addStatus("حماية الشاشة", "FLAG_SECURE", green)
+        addStatus("القفل الحساس", "3 دقائق", gold)
+        addStatus("BADGER", "واجهة محلية", blue)
+        addStatus("CTM AI", "واجهة محلية", blue)
+
+        addInfo(
+            "التكاملات الحكومية",
+            "تحتاج مصادر رسمية أو جهات مخولة وتفويضات مناسبة."
+        )
+
+        addInfo(
+            "التكاملات المالية",
+            "تحتاج مؤسسات مرخصة وخدمات خلفية وعقودًا مناسبة."
+        )
+
+        addInfo(
+            "التتبع والموقع",
+            "ليس وظيفة عامة. يستخدم فقط عند حاجة خدمة مشروعة إليه."
+        )
+    }
+
+        private fun showPartnerOffice() {
+        if (
+            !simulationLoggedIn ||
+            (
+                currentRole != UserRole.PARTNER &&
+                currentRole != UserRole.OWNER
+            )
+        ) {
+            Toast.makeText(
+                this,
+                "الصلاحية غير متاحة",
+                Toast.LENGTH_SHORT
+            ).show()
+
+            return
+        }
+
+        baseLayout(
+            "مكتب الشريك",
+            "PARTNER OFFICE"
+        )
+
+        addVisualBanner(
+            "🤝",
+            "PARTNER",
+            "إدارة العلاقة التجارية والشراكات",
+            blue,
+            navy
+        )
+
+        addStatus("الحالة", "واجهة محلية", green)
+
+        addInfo(
+            "الوظائف",
+            "هذه واجهة عامة. إدارة الشركاء الحقيقيين تحتاج خدمة خلفية وصلاحيات موثقة."
+        )
+
+        addCard(
+            "▰",
+            "الوثائق",
+            "مراجعة الوثائق المرتبطة بالشراكة."
+        ) {
+            openPage { showDocuments() }
+        }
+    }
+
+    private fun showOwnerOffice() {
+        if (
+            !simulationLoggedIn ||
+            currentRole != UserRole.OWNER
+        ) {
+            Toast.makeText(
+                this,
+                "هذه الصفحة للمالك فقط",
+                Toast.LENGTH_SHORT
+            ).show()
+
+            return
+        }
+
+        baseLayout(
+            "مكتب المالك",
+            "OWNER OFFICE"
+        )
+
+        addVisualBanner(
+            "★",
+            "OWNER OFFICE",
+            "الإدارة العليا والاعتماد",
+            gold,
+            officeDark
+        )
+
+        addStatus("الصلاحية", "مالك", gold)
+
+        addInfo(
+            "بيانات المالك",
+            "تُعرض فقط داخل المسار المخوّل."
+        )
+
+        addCard(
+            "✓",
+            "الموافقات",
+            "مراجعة الوظائف التي تحتاج اعتمادًا."
+        ) {
+            openPage { showOwnerApproval() }
+        }
+
+        addCard(
+            "🤝",
+            "إدارة الشركاء",
+            "مراجعة بنية الشركاء."
+        ) {
+            openPage { showPartnerManagement() }
+        }
+
+        addCard(
+            "▤",
+            "الوثائق",
+            "الوثائق والاعتمادات."
+        ) {
+            openPage { showDocuments() }
+        }
+
+        addCard(
+            "◈",
+            "ملخص النظام",
+            "مراجعة الحماية والتكامل."
+        ) {
+            openPage { showSystemSummary() }
+        }
+    }
+
+    private fun showPartnerManagement() {
+        if (
+            !simulationLoggedIn ||
+            currentRole != UserRole.OWNER
+        ) {
+            showHome()
+            return
+        }
+
+        baseLayout(
+            "إدارة الشركاء",
+            "PARTNER MANAGEMENT"
+        )
+
+        addVisualBanner(
+            "🤝",
+            "PARTNERS",
+            "إدارة الشراكات",
+            blue,
+            navy
+        )
+
+        addInfo(
+            "الحالة",
+            "هذه واجهة محلية. إضافة أو تعديل شريك حقيقي يحتاج نظام خلفية آمنًا."
+        )
+
+        addStatus("الوصول", "المالك", green)
+    }
+
+    private fun showOwnerApproval() {
+        if (
+            !simulationLoggedIn ||
+            currentRole != UserRole.OWNER
+        ) {
+            showHome()
+            return
+        }
+
+        baseLayout(
+            "اعتماد المالك",
+            "OWNER APPROVAL"
+        )
+
+        addVisualBanner(
+            "✓",
+            "APPROVAL",
+            "الاعتماد والمراجعة قبل التفعيل",
+            gold,
+            navy
+        )
+
+        addInfo(
+            "المبدأ",
+            "الوظائف الحساسة لا تُشغّل تلقائيًا لمجرد وجود واجهة."
+        )
+
+        addStatus("حالة الاعتماد", "تحتاج مراجعة", gold)
+
+        addCard(
+            "▣",
+            "مراجعة النظام",
+            "فتح ملخص النظام."
+        ) {
+            openPage { showSystemSummary() }
+        }
+    }
+
+    private fun showDocuments() {
+        baseLayout(
+            "الوثائق",
+            "DOCUMENTS"
+        )
+
+        addVisualBanner(
+            "▤",
+            "DOCUMENTS",
+            "الوثائق والعقود والاعتمادات",
+            officeDark,
+            blue
+        )
+
+        addInfo(
+            "الوثائق القانونية",
+            "الخدمات المنظمة قانونيًا تحتاج وثائق صحيحة ومصادر رسمية."
+        )
+
+        addInfo(
+            "العقود",
+            "العمولات والشراكات والالتزامات المالية يجب أن تكون موثقة."
+        )
+
+        addInfo(
+            "التحقق",
+            "التحقق الرسمي من الأهلية يحتاج تكاملًا مع الجهة المخولة."
+        )
+    }
+
+    // =========================================================
+    // البحث
+    // =========================================================
+
+    private fun showSearch() {
+        showSearch("")
+    }
+
+    private fun showSearch(initialQuery: String) {
+        baseLayout(
+            "البحث",
+            "البحث داخل المنصة"
+        )
+
+        val searchInput = EditText(this).apply {
+            hint = "اكتب ما تريد البحث عنه"
+            setText(initialQuery)
+            textSize = 16f
+            setSingleLine(true)
+            setPadding(14, 10, 14, 10)
+            background = roundedBackground(white, 14f)
+        }
+
+        content.addView(
+            searchInput,
+            LinearLayout.LayoutParams(-1, 56).apply {
+                setMargins(0, 0, 0, 10)
+            }
+        )
+        focusAndShowKeyboard(searchInput)
+
+        val searchButton = Button(this).apply {
+            text = "بحث"
+            isAllCaps = false
+            setTextColor(white)
+            background = roundedBackground(blue, 16f)
+
+            setOnClickListener {
+                searchTapCount++
+
+                val query = searchInput.text.toString().trim()
+
+                if (query.isBlank()) {
+                    Toast.makeText(
+                        this@MainActivity,
+                        "اكتب كلمة للبحث",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                } else {
+                    addInfo(
+                        "نتيجة البحث",
+                        "تم استلام البحث عن: $query\n\nهذه النسخة لا تحتوي على محرك بحث خلفي."
+                    )
+                }
+
+                if (searchTapCount >= 20) {
+                    searchTapCount = 0
+
+                    Toast.makeText(
+                        this@MainActivity,
+                        "تمت إعادة ضبط عداد ضغطات البحث.",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        }
+
+        content.addView(
+            searchButton,
+            LinearLayout.LayoutParams(-1, 54).apply {
+                setMargins(0, 0, 0, 14)
+            }
+        )
+
+        addCard(
+            "🛒",
+            "الأسواق",
+            "البحث داخل المنتجات والفئات."
+        ) {
+            openPage { showProducts() }
+        }
+
+        addCard(
+            "⚙",
+            "الخدمات",
+            "استعراض الخدمات."
+        ) {
+            openPage { showServices() }
+        }
+    }
+
+    private fun showFavorites() {
+        baseLayout(
+            "المفضلة",
+            "العناصر المحفوظة"
+        )
+
+        addVisualBanner(
+            "♡",
+            "FAVORITES",
+            "العناصر التي يختارها المستخدم",
+            blue,
+            navy
+        )
+
+        addInfo(
+            "الحالة",
+            "هذه واجهة للمفضلة. لا يُحفظ المحتوى بعد إغلاق التطبيق في هذه النسخة."
+        )
+
+        addCard(
+            "🛒",
+            "الأسواق والمنتجات",
+            "العودة إلى المنتجات."
+        ) {
+            openPage { showProducts() }
+        }
+    }
+
+    private fun showPoints() {
+        baseLayout(
+            "النقاط",
+            "نظام النقاط"
+        )
+
+        addVisualBanner(
+            "★",
+            "POINTS",
+            "نظام النقاط داخل CENTRAL MARKET",
+            gold,
+            navy
+        )
+
+        addStatus("الرصيد الحالي", "0 نقطة", gold)
+
+        addInfo(
+            "ملاحظة",
+            "هذا رصيد واجهة محلية. نظام المكافآت الفعلي يحتاج قواعد خلفية وشروط استخدام."
+        )
+    }
+
+    // =========================================================
+    // الإعلانات والمطبخ والدعم
+    // =========================================================
+
+    private fun showAds() {
+        baseLayout(
+            "الإعلانات",
+            "مستويات الإعلان"
+        )
+
+        addVisualBanner(
+            "📢",
+            "ADVERTISE",
+            "مساحات إعلانية منظمة",
+            gold,
+            blue
+        )
+
+        addCard("B", "BRONZE", "المستوى الأساسي.") {
+            showAdMessage("BRONZE")
+        }
+
+        addCard("S", "SILVER", "المستوى المتوسط.") {
+            showAdMessage("SILVER")
+        }
+
+        addCard("G", "GOLD", "المستوى المميز.") {
+            showAdMessage("GOLD")
+        }
+
+        addInfo(
+            "الحماية",
+            "أي شبكة إعلانية أو دفع حقيقي تحتاج تكاملًا منفصلًا وآمنًا."
+        )
+    }
+
+    private fun showAdMessage(level: String) {
+        Toast.makeText(
+            this,
+            "مستوى الإعلان: $level",
+            Toast.LENGTH_SHORT
+        ).show()
+    }
+
+    private fun showKitchen() {
+        baseLayout(
+            "المطبخ",
+            "KITCHEN"
+        )
+
+        addVisualBanner(
+            "🍲",
+            "KITCHEN",
+            "المطبخ والخدمات المرتبطة به",
+            Color.rgb(130, 75, 35),
+            gold
+        )
+
+        addCard(
+            "🍽",
+            "المطاعم",
+            "استعراض قسم المطاعم."
+        ) {
+            openPage {
+                showCategory("المطاعم والتوصيل")
+            }
+        }
+
+        addCard(
+            "🛒",
+            "المنتجات الغذائية",
+            "استعراض الأسواق الغذائية."
+        ) {
+            openPage {
+                showCategory("الأسواق الغذائية")
+            }
+        }
+
+        addInfo(
+            "التتبع",
+            "لا يعمل تتبع الموقع تلقائيًا. إذا تطلبت خدمة توصيل معينة التتبع، يقتصر عليها وبما يراعي الموافقة والقانون."
+        )
+    }
+
+        private fun showCharity() {
+        baseLayout(
+            "الدعم والصدقة",
+            "الأيتام والمحتاجون"
+        )
+
+        addVisualBanner(
+            "🤝",
+            "CHARITY",
+            "الدعم المجتمعي والإنساني",
+            green,
+            navy
+        )
+
+        addInfo(
+            "الهدف",
+            "واجهة لتنظيم مبادرات الدعم وفق القوانين والجهات المختصة."
+        )
+
+        addInfo(
+            "الشفافية",
+            "أي أموال حقيقية تحتاج جهة مسؤولة وآليات تحقق وسجلات واضحة."
+        )
+
+        addStatus("الواجهة", "متاحة", green)
+    }
+
+    private fun showMessage() {
+        baseLayout(
+            "المراسلة",
+            "رسالة إلى المنصة"
+        )
+
+        val messageInput = EditText(this).apply {
+            hint = "اكتب رسالتك"
+            textSize = 15f
+            gravity = Gravity.TOP
+            minLines = 5
+            setPadding(14, 12, 14, 12)
+            background = roundedBackground(white, 14f)
+        }
+
+        content.addView(
+            messageInput,
+            LinearLayout.LayoutParams(-1, 150).apply {
+                setMargins(0, 0, 0, 10)
+            }
+        )
+        focusAndShowKeyboard(messageInput)
+
+        val save = Button(this).apply {
+            text = "حفظ الرسالة محليًا"
+            isAllCaps = false
+            setTextColor(white)
+            background = roundedBackground(blue, 16f)
+
+            setOnClickListener {
+                if (messageInput.text.toString().trim().isBlank()) {
+                    Toast.makeText(
+                        this@MainActivity,
+                        "اكتب الرسالة أولًا",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                } else {
+                    Toast.makeText(
+                        this@MainActivity,
+                        "تم استلام النص داخل الجلسة الحالية فقط",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        }
+
+        content.addView(
+            save,
+            LinearLayout.LayoutParams(-1, 54)
+        )
+    }
+
+    private fun showIdea() {
+        baseLayout(
+            "فكرة أو اقتراح",
+            "تطوير CENTRAL MARKET"
+        )
+
+        addInfo(
+            "شارك فكرتك",
+            "هذه الواجهة مخصصة للأفكار والاقتراحات التطويرية."
+        )
+
+        val ideaInput = EditText(this).apply {
+            hint = "اكتب الفكرة"
+            textSize = 15f
+            gravity = Gravity.TOP
+            minLines = 5
+            setPadding(14, 12, 14, 12)
+            background = roundedBackground(white, 14f)
+        }
+
+        content.addView(
+            ideaInput,
+            LinearLayout.LayoutParams(-1, 150).apply {
+                setMargins(0, 0, 0, 10)
+            }
+        )
+        focusAndShowKeyboard(ideaInput)
+
+        val save = Button(this).apply {
+            text = "حفظ الاقتراح محليًا"
+            isAllCaps = false
+            setTextColor(white)
+            background = roundedBackground(green, 16f)
+
+            setOnClickListener {
+                if (ideaInput.text.toString().trim().isBlank()) {
+                    Toast.makeText(
+                        this@MainActivity,
+                        "اكتب الفكرة أولًا",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                } else {
+                    Toast.makeText(
+                        this@MainActivity,
+                        "تم استلام النص داخل الجلسة الحالية فقط",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        }
+
+        content.addView(
+            save,
+            LinearLayout.LayoutParams(-1, 54)
+        )
+    }
+
+    // =========================================================
+    // الاتصال والضيف والأمان
+    // =========================================================
+
+    private fun showConnectivity() {
+        baseLayout(
+            "اختبار الاتصال",
+            "حالة اتصال الجهاز"
+        )
+
+        addVisualBanner(
+            "📡",
+            "CONNECTIVITY",
+            "فحص الاتصال دون تشغيل تتبع الموقع",
+            blue,
+            navy
+        )
+
+        val online = isOnline()
+
+        addStatus(
+            "الاتصال",
+            if (online) "متصل" else "غير متصل",
+            if (online) green else red
+        )
+
+        addInfo(
+            "الخصوصية",
+            "اختبار الاتصال لا يعني تشغيل GPS أو تتبع الموقع."
+        )
+
+        addInfo(
+            "التتبع",
+            "الموقع ليس ميزة عامة. يستخدم فقط عندما تتطلبه خدمة محددة فعلًا."
+        )
+
+        addCard(
+            "↻",
+            "إعادة الفحص",
+            "فحص الاتصال مرة أخرى."
+        ) {
+            openPage { showConnectivity() }
+        }
+    }
+
     private fun isOnline(): Boolean {
         return try {
-            val manager = getSystemService(
-                Context.CONNECTIVITY_SERVICE
-            ) as ConnectivityManager
+            val manager =
+                getSystemService(CONNECTIVITY_SERVICE)
+                    as ConnectivityManager
 
-            val network = manager.activeNetwork ?: return false
+            val network = manager.activeNetwork
+                ?: return false
+
             val capabilities =
-                manager.getNetworkCapabilities(network) ?: return false
+                manager.getNetworkCapabilities(network)
+                    ?: return false
 
             capabilities.hasCapability(
                 NetworkCapabilities.NET_CAPABILITY_INTERNET
@@ -2193,215 +2497,172 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun addActionButton(
-        label: String,
-        action: () -> Unit
-    ) {
-        val button = Button(this).apply {
-            text = label
-            textSize = 15f
-            isAllCaps = false
-            setTextColor(white)
-            background = roundedBackground(blue, 16f)
-            setOnClickListener { action() }
-        }
-
-        content.addView(
-            button,
-            LinearLayout.LayoutParams(-1, 52).apply {
-                setMargins(0, 4, 0, 12)
-            }
-        )
+    private fun showOnline() {
+        showConnectivity()
     }
 
-    // توافق مع استدعاءات اللافتة ذات وسيطين.
-    private fun addVisualBanner(
-        title: String,
-        description: String
-    ) {
+    private fun showGuestMode() {
+        clearSession()
+
+        baseLayout(
+            "الوضع الضيف",
+            "تصفح عام"
+        )
+
         addVisualBanner(
-            "◈",
-            title,
-            description,
-            navy,
-            blue
-        )
-    }
-
-    // توافق إضافي مع استدعاءات اللافتة ذات ثلاثة وسائط.
-    private fun addVisualBanner(
-        icon: String,
-        title: String,
-        description: String
-    ) {
-        addVisualBanner(
-            icon,
-            title,
-            description,
-            navy,
-            blue
-        )
-    }
-
-    // =========================================================
-    // البحث داخل الواجهة التجريبية
-    // =========================================================
-
-    private fun showSearch(query: String = "") {
-        baseLayout("البحث", "البحث في الأقسام والخدمات")
-
-        val input = newTypingField().apply {
-            hint = "اكتب اسم قسم أو خدمة"
-            textSize = 15f
-            setSingleLine(true)
-            setPadding(12, 10, 12, 10)
-            background = roundedBackground(white, 14f)
-            setText(query)
-            setSelection(text.length)
-        }
-
-        content.addView(
-            input,
-            LinearLayout.LayoutParams(-1, 52).apply {
-                setMargins(0, 8, 0, 10)
-            }
+            "👤",
+            "GUEST MODE",
+            "الوصول إلى المعلومات العامة",
+            blue,
+            navy
         )
 
-        addActionButton("تنفيذ البحث") {
-            val value = input.text.toString().trim()
+        addStatus("نوع الوصول", "عام", blue)
 
-            if (value.isBlank()) {
-                Toast.makeText(
-                    this,
-                    "اكتب كلمة للبحث",
-                    Toast.LENGTH_SHORT
-                ).show()
-            } else {
-                openPage { showSearchResults(value) }
-            }
-        }
+        addInfo(
+            "الوضع الضيف",
+            "يمكن للزائر تصفح الوظائف العامة دون الدخول إلى الوظائف الإدارية الحساسة."
+        )
 
-        if (query.isNotBlank()) {
-            addSection("نتائج البحث")
-            addSearchResultsContent(query)
-        } else {
-            addInfo(
-                "البحث",
-                "اكتب كلمة مثل الأسواق أو الخدمات أو الإعلانات أو المطبخ."
-            )
-        }
-    }
-
-    private fun showSearchResults(query: String) {
-        baseLayout("البحث", "نتائج البحث عن: $query")
-        addSearchResultsContent(query)
-    }
-
-    private fun addSearchResultsContent(query: String) {
-        val term = query.trim().lowercase()
-
-        var found = false
-
-        fun result(
-            keywords: List<String>,
-            symbol: String,
-            title: String,
-            description: String,
-            action: () -> Unit
-        ) {
-            if (keywords.any { it.lowercase().contains(term) } ||
-                term.contains(title.lowercase())
-            ) {
-                found = true
-                addCard(symbol, title, description) {
-                    openPage(action)
-                }
-            }
-        }
-
-        result(
-            listOf("الأسواق", "المنتجات", "المركبات", "الشاحنات"),
+        addCard(
             "🛒",
-            "الأسواق والمنتجات",
-            "عرض فئات المنتجات.",
-            { showProducts() }
-        )
+            "الأسواق",
+            "تصفح الفئات."
+        ) {
+            openPage { showProducts() }
+        }
 
-        result(
-            listOf("الخدمات", "الصحة", "التعليم", "السفر"),
+        addCard(
             "⚙",
-            "الخدمات العامة",
-            "عرض الخدمات والأقسام العامة.",
-            { showServices() }
-        )
+            "الخدمات",
+            "تصفح الخدمات العامة."
+        ) {
+            openPage { showServices() }
+        }
 
-        result(
-            listOf("الإعلانات", "إعلان", "bronze", "silver", "gold"),
+        addCard(
             "📢",
             "الإعلانات",
-            "عرض باقات الإعلانات التجريبية.",
-            { showAds() }
-        )
+            "تصفح مستويات الإعلانات."
+        ) {
+            openPage { showAds() }
+        }
 
-        result(
-            listOf("المطبخ", "المطاعم", "الطعام", "الغذاء"),
-            "🍲",
-            "المطبخ",
-            "عرض قسم المطاعم والمنتجات الغذائية.",
-            { showKitchen() }
-        )
-
-        result(
-            listOf("الصدقة", "الدعم", "الأيتام", "المحتاجين"),
-            "🤲",
-            "الصدقة والدعم",
-            "عرض المبادرات الإنسانية التجريبية.",
-            { showCharity() }
-        )
-
-        result(
-            listOf("الأمان", "الحماية", "الخصوصية", "الأمن"),
+        addCard(
             "🔐",
             "الأمان والخصوصية",
-            "عرض معلومات الحماية.",
-            { showSecurity() }
-        )
+            "قراءة قواعد الحماية."
+        ) {
+            openPage { showSecurity() }
+        }
 
-        result(
-            listOf("الاتصال", "الإنترنت", "الشبكة"),
-            "📡",
-            "اختبار الاتصال",
-            "فحص اتصال الإنترنت.",
-            { showConnectivity() }
-        )
-
-        result(
-            listOf("الحساب", "الدخول", "تسجيل الدخول"),
-            "👤",
-            "الحساب والدخول",
-            "فتح بوابة الحساب التجريبي.",
-            { showSimulationLogin() }
-        )
-
-        result(
-            listOf("الرسائل", "رسالة", "المقترحات", "اقتراح", "فكرة"),
-            "✉",
-            "الرسائل والمقترحات",
-            "فتح نموذج الرسائل.",
-            { showMessage() }
-        )
-
-        if (!found) {
-            addInfo(
-                "لا توجد نتائج مطابقة",
-                "جرّب كلمة أخرى مثل الأسواق أو الخدمات أو الإعلانات."
-            )
+        addCard(
+            "⌂",
+            "الرئيسية",
+            "العودة للرئيسية."
+        ) {
+            goHome()
         }
     }
 
-    
+    private fun showSecurity() {
+        baseLayout(
+            "الأمان والخصوصية",
+            "حماية المستخدم والمنصة"
+        )
+
+        addVisualBanner(
+            "🔐",
+            "SECURITY",
+            "الحماية والخصوصية",
+            navy,
+            blue
+        )
+
+        addStatus("حماية الشاشة", "مفعلة", green)
+        addStatus("القفل العام", "10 دقائق في الخلفية", gold)
+        addStatus("القفل الحساس", "3 دقائق", gold)
+
+        addInfo(
+            "لقطات الشاشة",
+            "تم استخدام FLAG_SECURE لمنع لقطات الشاشة المعتادة وتسجيل الشاشة قدر الإمكان."
+        )
+
+        addInfo(
+            "البيانات",
+            "يجب ألا تظهر البيانات الحساسة لمستخدم لا يملك الصلاحية."
+        )
+
+        addInfo(
+            "التتبع والموقع",
+            "لا يعمل التتبع بشكل عام. أي استخدام يجب أن يكون مرتبطًا بحاجة مشروعة ومحددة."
+        )
+
+        addInfo(
+            "التحقق الرسمي",
+            "الخدمات التي تحتاج تحققًا قانونيًا يجب أن تستخدم مصادر رسمية أو جهات مخولة."
+        )
+
+        addCard(
+            "📜",
+            "القواعد",
+            "عرض قواعد المنصة."
+        ) {
+            openPage { showRules() }
+        }
+    }
+
+    private fun showSafety() {
+        showSecurity()
+    }
+
+    private fun showRules() {
+        baseLayout(
+            "قواعد المنصة",
+            "CENTRAL MARKET RULES"
+        )
+
+        addVisualBanner(
+            "◈",
+            "RULES",
+            "القواعد الأساسية للتشغيل الآمن",
+            navy,
+            gold
+        )
+
+        addInfo(
+            "1 — الخصوصية",
+            "لا يتم جمع أو تتبع بيانات المستخدم دون حاجة مشروعة وآلية مناسبة."
+        )
+
+        addInfo(
+            "2 — الموقع",
+            "الموقع ليس ميزة عامة؛ يستخدم فقط عندما تحتاجه خدمة محددة."
+        )
+
+        addInfo(
+            "3 — الخدمات الحساسة",
+            "الوظائف المالية والاستثمارية تحتاج حماية وتحققًا قانونيًا مناسبًا."
+        )
+
+        addInfo(
+            "4 — الاعتماد",
+            "وجود واجهة لا يعني تفعيل التكاملات الحكومية والمالية."
+        )
+
+        addInfo(
+            "5 — المالك",
+            "الوظائف التي تحتاج اعتمادًا لا تُفعّل تلقائيًا."
+        )
+
+        addInfo(
+            "6 — النسخ الدولية",
+            "الوظائف الحكومية الخاصة بالدولة تدار ضمن حزمة الدولة المناسبة."
+        )
+    }
+
     // =========================================================
-    // دوال الخلفيات والتصميم
+    // أدوات الرسم والخلفيات
     // =========================================================
 
     private fun roundedBackground(
@@ -2418,7 +2679,10 @@ class MainActivity : Activity() {
         return GradientDrawable().apply {
             setColor(white)
             cornerRadius = 18f
-            setStroke(1, Color.rgb(220, 226, 235))
+            setStroke(
+                1,
+                Color.rgb(225, 230, 235)
+            )
         }
     }
 
@@ -2436,7 +2700,6 @@ class MainActivity : Activity() {
     }
 
     // =========================================================
-    // إنهاء الملف
+    // نهاية MainActivity
     // =========================================================
-
 }
