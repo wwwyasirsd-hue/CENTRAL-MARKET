@@ -2161,6 +2161,245 @@ class MainActivity : Activity() {
     }
 
     // =========================================================
+    // أدوات مساعدة لازمة للبناء
+    // =========================================================
+
+    private fun isPrivileged(): Boolean {
+        return simulationLoggedIn &&
+            (
+                currentRole == UserRole.ADMIN ||
+                currentRole == UserRole.PARTNER ||
+                currentRole == UserRole.OWNER
+            )
+    }
+
+    private fun isOnline(): Boolean {
+        return try {
+            val manager = getSystemService(
+                Context.CONNECTIVITY_SERVICE
+            ) as ConnectivityManager
+
+            val network = manager.activeNetwork ?: return false
+            val capabilities =
+                manager.getNetworkCapabilities(network) ?: return false
+
+            capabilities.hasCapability(
+                NetworkCapabilities.NET_CAPABILITY_INTERNET
+            ) && capabilities.hasCapability(
+                NetworkCapabilities.NET_CAPABILITY_VALIDATED
+            )
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    private fun addActionButton(
+        label: String,
+        action: () -> Unit
+    ) {
+        val button = Button(this).apply {
+            text = label
+            textSize = 15f
+            isAllCaps = false
+            setTextColor(white)
+            background = roundedBackground(blue, 16f)
+            setOnClickListener { action() }
+        }
+
+        content.addView(
+            button,
+            LinearLayout.LayoutParams(-1, 52).apply {
+                setMargins(0, 4, 0, 12)
+            }
+        )
+    }
+
+    // توافق مع استدعاءات اللافتة ذات وسيطين.
+    private fun addVisualBanner(
+        title: String,
+        description: String
+    ) {
+        addVisualBanner(
+            "◈",
+            title,
+            description,
+            navy,
+            blue
+        )
+    }
+
+    // توافق إضافي مع استدعاءات اللافتة ذات ثلاثة وسائط.
+    private fun addVisualBanner(
+        icon: String,
+        title: String,
+        description: String
+    ) {
+        addVisualBanner(
+            icon,
+            title,
+            description,
+            navy,
+            blue
+        )
+    }
+
+    // =========================================================
+    // البحث داخل الواجهة التجريبية
+    // =========================================================
+
+    private fun showSearch(query: String = "") {
+        baseLayout("البحث", "البحث في الأقسام والخدمات")
+
+        val input = newTypingField().apply {
+            hint = "اكتب اسم قسم أو خدمة"
+            textSize = 15f
+            setSingleLine(true)
+            setPadding(12, 10, 12, 10)
+            background = roundedBackground(white, 14f)
+            setText(query)
+            setSelection(text.length)
+        }
+
+        content.addView(
+            input,
+            LinearLayout.LayoutParams(-1, 52).apply {
+                setMargins(0, 8, 0, 10)
+            }
+        )
+
+        addActionButton("تنفيذ البحث") {
+            val value = input.text.toString().trim()
+
+            if (value.isBlank()) {
+                Toast.makeText(
+                    this,
+                    "اكتب كلمة للبحث",
+                    Toast.LENGTH_SHORT
+                ).show()
+            } else {
+                openPage { showSearchResults(value) }
+            }
+        }
+
+        if (query.isNotBlank()) {
+            addSection("نتائج البحث")
+            addSearchResultsContent(query)
+        } else {
+            addInfo(
+                "البحث",
+                "اكتب كلمة مثل الأسواق أو الخدمات أو الإعلانات أو المطبخ."
+            )
+        }
+    }
+
+    private fun showSearchResults(query: String) {
+        baseLayout("البحث", "نتائج البحث عن: $query")
+        addSearchResultsContent(query)
+    }
+
+    private fun addSearchResultsContent(query: String) {
+        val term = query.trim().lowercase()
+
+        var found = false
+
+        fun result(
+            keywords: List<String>,
+            symbol: String,
+            title: String,
+            description: String,
+            action: () -> Unit
+        ) {
+            if (keywords.any { it.lowercase().contains(term) } ||
+                term.contains(title.lowercase())
+            ) {
+                found = true
+                addCard(symbol, title, description) {
+                    openPage(action)
+                }
+            }
+        }
+
+        result(
+            listOf("الأسواق", "المنتجات", "المركبات", "الشاحنات"),
+            "🛒",
+            "الأسواق والمنتجات",
+            "عرض فئات المنتجات.",
+            { showProducts() }
+        )
+
+        result(
+            listOf("الخدمات", "الصحة", "التعليم", "السفر"),
+            "⚙",
+            "الخدمات العامة",
+            "عرض الخدمات والأقسام العامة.",
+            { showServices() }
+        )
+
+        result(
+            listOf("الإعلانات", "إعلان", "bronze", "silver", "gold"),
+            "📢",
+            "الإعلانات",
+            "عرض باقات الإعلانات التجريبية.",
+            { showAds() }
+        )
+
+        result(
+            listOf("المطبخ", "المطاعم", "الطعام", "الغذاء"),
+            "🍲",
+            "المطبخ",
+            "عرض قسم المطاعم والمنتجات الغذائية.",
+            { showKitchen() }
+        )
+
+        result(
+            listOf("الصدقة", "الدعم", "الأيتام", "المحتاجين"),
+            "🤲",
+            "الصدقة والدعم",
+            "عرض المبادرات الإنسانية التجريبية.",
+            { showCharity() }
+        )
+
+        result(
+            listOf("الأمان", "الحماية", "الخصوصية", "الأمن"),
+            "🔐",
+            "الأمان والخصوصية",
+            "عرض معلومات الحماية.",
+            { showSecurity() }
+        )
+
+        result(
+            listOf("الاتصال", "الإنترنت", "الشبكة"),
+            "📡",
+            "اختبار الاتصال",
+            "فحص اتصال الإنترنت.",
+            { showConnectivity() }
+        )
+
+        result(
+            listOf("الحساب", "الدخول", "تسجيل الدخول"),
+            "👤",
+            "الحساب والدخول",
+            "فتح بوابة الحساب التجريبي.",
+            { showSimulationLogin() }
+        )
+
+        result(
+            listOf("الرسائل", "رسالة", "المقترحات", "اقتراح", "فكرة"),
+            "✉",
+            "الرسائل والمقترحات",
+            "فتح نموذج الرسائل.",
+            { showMessage() }
+        )
+
+        if (!found) {
+            addInfo(
+                "لا توجد نتائج مطابقة",
+                "جرّب كلمة أخرى مثل الأسواق أو الخدمات أو الإعلانات."
+            )
+        }
+    }
+
+    // =========================================================
     // إنهاء الملف
     // =========================================================
 
