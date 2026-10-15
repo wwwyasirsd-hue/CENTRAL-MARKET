@@ -13,6 +13,7 @@ import android.os.Looper
 import android.os.SystemClock
 import android.text.InputType
 import android.view.Gravity
+import android.view.inputmethod.InputMethodManager
 import android.view.WindowManager
 import android.widget.Button
 import android.widget.EditText
@@ -33,7 +34,7 @@ class MainActivity : Activity() {
     private val darkText = Color.rgb(25, 35, 45)
     private val gray = Color.rgb(105, 115, 125)
     private val officeDark = Color.rgb(15, 31, 48)
-    private val badgerBlack = Color.rgb(20, 23, 27)
+    private val pocketBlack = Color.rgb(20, 23, 27)
 
     private lateinit var content: LinearLayout
     private val handler = Handler(Looper.getMainLooper())
@@ -60,6 +61,13 @@ class MainActivity : Activity() {
     private var currentPage: (() -> Unit)? = null
     private var ignoreHistoryOnce = false
 
+    private data class SearchEntry(
+        val title: String,
+        val description: String,
+        val keywords: String,
+        val action: () -> Unit
+    )
+
     private val globalLockRunnable = Runnable {
         if (simulationLoggedIn) lockAccount()
     }
@@ -77,6 +85,10 @@ class MainActivity : Activity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             window.setDecorFitsSystemWindows(false)
         }
+
+        window.setSoftInputMode(
+            WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
+        )
 
         window.setFlags(
             WindowManager.LayoutParams.FLAG_SECURE,
@@ -337,7 +349,7 @@ class MainActivity : Activity() {
         })
     }
 
-        private fun addInfo(title: String, body: String) {
+    private fun addInfo(title: String, body: String) {
         val card = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(16, 14, 16, 14)
@@ -482,7 +494,7 @@ class MainActivity : Activity() {
             text = icon
             textSize = 44f
             gravity = Gravity.CENTER
-            setTextColor(white)
+            setTextColor(Color.rgb(235, 242, 248))
         })
 
         banner.addView(TextView(this).apply {
@@ -490,13 +502,13 @@ class MainActivity : Activity() {
             textSize = 23f
             typeface = Typeface.DEFAULT_BOLD
             gravity = Gravity.CENTER
-            setTextColor(white)
-            setPadding(0, 6, 0, 4)
+            setTextColor(gold)
+            setPadding(0, 8, 0, 4)
         })
 
         banner.addView(TextView(this).apply {
             text = description
-            textSize = 13f
+            textSize = 14f
             gravity = Gravity.CENTER
             setTextColor(Color.rgb(235, 242, 248))
         })
@@ -509,253 +521,7 @@ class MainActivity : Activity() {
         )
     }
 
-    // =========================================================
-    // الرئيسية
-    // =========================================================
-
-    private fun showHome() {
-        pageHistory.clear()
-        currentPage = null
-
-        baseLayout(
-            "الرئيسية",
-            "منصة واحدة .. عالم من الفرص."
-        )
-
-        addVisualBanner(
-            "◈",
-            "CENTRAL MARKET",
-            "الأسواق والخدمات والفرص في مكان واحد",
-            navy,
-            blue
-        )
-
-        val online = isOnline()
-
-        addStatus(
-            "حالة الاتصال",
-            if (online) "متصل" else "غير متصل",
-            if (online) green else red
-        )
-
-        addSection("المنصة")
-
-        addCard(
-            "🛒",
-            "الأسواق والمنتجات",
-            "المركبات والشاحنات والإلكترونيات وغيرها."
-        ) {
-            openPage { showProducts() }
-        }
-
-        addCard(
-            "⚙",
-            "الخدمات",
-            "الخدمات العامة والذكاء البشري وCTM AI."
-        ) {
-            openPage { showServices() }
-        }
-
-        addCard(
-            "📢",
-            "الإعلانات",
-            "BRONZE وSILVER وGOLD."
-        ) {
-            openPage { showAds() }
-        }
-
-        addCard(
-            "🍲",
-            "المطبخ",
-            "المطاعم والمنتجات الغذائية."
-        ) {
-            openPage { showKitchen() }
-        }
-
-        addCard(
-            "🤝",
-            "الصدقة والدعم",
-            "مبادرات الأيتام والمحتاجين."
-        ) {
-            openPage { showCharity() }
-        }
-
-        addSection("الوصول والحماية")
-
-        addCard(
-            "📡",
-            "اختبار الاتصال",
-            "فحص الشبكة دون تشغيل تتبع الموقع."
-        ) {
-            openPage { showConnectivity() }
-        }
-
-        addCard(
-            "👤",
-            "الوضع الضيف",
-            "تصفح الوظائف العامة."
-        ) {
-            openPage { showGuestMode() }
-        }
-
-        addCard(
-            "🔐",
-            "الأمان والخصوصية",
-            "قواعد حماية الحساب والبيانات."
-        ) {
-            openPage { showSecurity() }
-        }
-
-        addCard(
-            "💡",
-            "فكرة أو اقتراح",
-            "إرسال اقتراح تطويري."
-        ) {
-            openPage { showIdea() }
-        }
-
-        addSection("الحساب")
-
-        addCard(
-            "◉",
-            "الحساب والدخول",
-            "الدخول إلى حسابك وفق الصلاحيات المتاحة."
-        ) {
-            openPage { showSimulationLogin() }
-        }
-
-        if (
-            currentRole == UserRole.ADMIN ||
-            currentRole == UserRole.PARTNER ||
-            currentRole == UserRole.OWNER
-        ) {
-            addCard(
-                "▣",
-                "المكتب الإداري",
-                "الأدوات المتاحة حسب صلاحية الجلسة."
-            ) {
-                openPage { showManagerOffice() }
-            }
-        }
-
-        addInfo(
-            "قاعدة الخصوصية",
-            "لا يعمل تتبع الموقع كميزة عامة. يقتصر على الخدمات التي تحتاج إليه فعليًا وبما يتفق مع الموافقة والقوانين."
-        )
-    }
-
-    // =========================================================
-    // الحسابات والدخول
-    // =========================================================
-
-    private fun showSimulationLogin() {
-        baseLayout("الدخول", "الوصول إلى حسابك")
-
-        addInfo(
-            "الدخول العام",
-            "يمكنك المتابعة كمستخدم عام. الحسابات الإدارية والخاصة لا تُعرض هنا، ولا تُفتح إلا بعد ربط مصادقة موثوقة والتحقق من الصلاحيات."
-        )
-
-        addCard(
-            "👤",
-            "متابعة كمستخدم عام",
-            "تصفح الوظائف العامة دون صلاحيات إدارية."
-        ) {
-            loginSimulation(UserRole.USER, "مستخدم عام")
-        }
-
-        addCard(
-            "🔐",
-            "دخول حساب خاص",
-            "يتطلب هذا المسار مصادقة موثوقة غير مفعلة في النسخة المحلية."
-        ) {
-            Toast.makeText(
-                this,
-                "الدخول الخاص غير مفعّل بعد؛ لن نستخدم رموزًا ثابتة داخل التطبيق لحماية الحسابات.",
-                Toast.LENGTH_LONG
-            ).show()
-        }
-    }
-
-    private fun showPasswordGate(
-        role: UserRole,
-        accountName: String
-    ) {
-        baseLayout("دخول الحساب", accountName)
-
-        addInfo(
-            "تنبيه",
-            "رموز الدخول هنا تجريبية فقط. لا تستخدم هذه الآلية لحماية بيانات أو أموال حقيقية."
-        )
-
-        val input = EditText(this).apply {
-            hint = "أدخل رمز المحاكاة"
-            textSize = 16f
-            inputType = InputType.TYPE_CLASS_TEXT or
-                InputType.TYPE_TEXT_VARIATION_PASSWORD
-            setPadding(14, 12, 14, 12)
-            background = roundedBackground(white, 14f)
-        }
-
-        content.addView(
-            input,
-            LinearLayout.LayoutParams(-1, 56).apply {
-                setMargins(0, 0, 0, 12)
-            }
-        )
-
-        val login = Button(this).apply {
-            text = "دخول"
-            isAllCaps = false
-            setTextColor(white)
-            background = roundedBackground(blue, 16f)
-
-            setOnClickListener {
-                loginSimulation(
-                    role,
-                    accountName,
-                    input.text.toString()
-                )
-            }
-        }
-
-        content.addView(
-            login,
-            LinearLayout.LayoutParams(-1, 54)
-        )
-
-        addInfo("الصلاحيات", roleName(role))
-    }
-
-    private fun loginSimulation(
-        role: UserRole,
-        accountName: String,
-        password: String = ""
-    ) {
-        val now = SystemClock.elapsedRealtime()
-
-        if (now < loginBlockedUntil) {
-            val remaining =
-                ((loginBlockedUntil - now) / 1000L) + 1L
-
-            Toast.makeText(
-                this,
-                "محاولات الدخول موقوفة مؤقتًا. حاول بعد $remaining ثانية.",
-                Toast.LENGTH_LONG
-            ).show()
-
-            return
-        }
-
-        val valid = when (role) {
-            UserRole.USER -> true
-            UserRole.ADMIN,
-            UserRole.PARTNER,
-            UserRole.OWNER -> false
-        }
-
-        if (!valid) {
-            failedLoginAttempts++
+                failedLoginAttempts++
 
             if (failedLoginAttempts >= 5) {
                 loginBlockedUntil = now + 60_000L
@@ -1198,7 +964,8 @@ class MainActivity : Activity() {
             "◉",
             "CTM AI",
             "CENTRAL MARKET Intelligence",
-            blue,
+
+                        blue,
             navy
         )
 
@@ -1649,7 +1416,7 @@ class MainActivity : Activity() {
             openPage { showSystemSummary() }
         }
 
-        addCard(
+                addCard(
             "▰",
             "الوثائق",
             "الوثائق والاعتمادات."
@@ -2046,7 +1813,7 @@ class MainActivity : Activity() {
             }
         )
 
-        addCard(
+                addCard(
             "🛒",
             "الأسواق",
             "البحث داخل المنتجات والفئات."
