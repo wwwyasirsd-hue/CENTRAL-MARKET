@@ -2399,6 +2399,42 @@ class MainActivity : Activity() {
         }
     }
 
+    
+    // =========================================================
+    // دوال الخلفيات والتصميم
+    // =========================================================
+
+    private fun roundedBackground(
+        color: Int,
+        radius: Float
+    ): GradientDrawable {
+        return GradientDrawable().apply {
+            setColor(color)
+            cornerRadius = radius
+        }
+    }
+
+    private fun cardBackground(): GradientDrawable {
+        return GradientDrawable().apply {
+            setColor(white)
+            cornerRadius = 18f
+            setStroke(1, Color.rgb(220, 226, 235))
+        }
+    }
+
+    private fun gradientBackground(
+        firstColor: Int,
+        secondColor: Int,
+        radius: Float
+    ): GradientDrawable {
+        return GradientDrawable(
+            GradientDrawable.Orientation.TL_BR,
+            intArrayOf(firstColor, secondColor)
+        ).apply {
+            cornerRadius = radius
+        }
+    }
+
     // =========================================================
     // إنهاء الملف
     // =========================================================
