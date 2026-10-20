@@ -1,4 +1,3 @@
-
 package com.central.market
 
 import android.app.Activity
@@ -14,6 +13,7 @@ import android.os.Looper
 import android.os.SystemClock
 import android.text.InputType
 import android.view.Gravity
+import android.view.ViewGroup
 import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
@@ -74,7 +74,6 @@ class MainActivity : Activity() {
         }
     }
 
-    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -185,7 +184,31 @@ class MainActivity : Activity() {
         )
     }
 
-    
+    private fun loginSimulation(
+        role: UserRole,
+        accountName: String
+    ) {
+        if (role != UserRole.USER) {
+            Toast.makeText(
+                this,
+                "الحسابات الخاصة تحتاج إلى تحقق آمن",
+                Toast.LENGTH_LONG
+            ).show()
+            return
+        }
+
+        guestMode = false
+        currentRole = UserRole.USER
+        currentAccountName = accountName
+        simulationLoggedIn = true
+        sensitiveLocked = true
+
+        registerActivity()
+        pageHistory.clear()
+        currentPage = { showAccountHome() }
+        showAccountHome()
+    }
+
     override fun onUserInteraction() {
         super.onUserInteraction()
         lastActivityTime = SystemClock.elapsedRealtime()
@@ -232,7 +255,7 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun exitPage() {
+        private fun exitPage() {
         if (pageHistory.isNotEmpty()) {
             pageHistory.removeAt(pageHistory.lastIndex)
         }
@@ -261,9 +284,9 @@ class MainActivity : Activity() {
             clipToPadding = false
             addView(
                 root,
-                ScrollView.LayoutParams(
-                    ScrollView.LayoutParams.MATCH_PARENT,
-                    ScrollView.LayoutParams.WRAP_CONTENT
+                ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
                 )
             )
         }
@@ -339,6 +362,7 @@ class MainActivity : Activity() {
         )
 
         if (
+            title != "CENTRAL MARKET" &&
             title != "الدخول" &&
             title != "قفل الجلسة" &&
             title != "القفل الحساس"
@@ -357,7 +381,7 @@ class MainActivity : Activity() {
         val input = EditText(this).apply {
             hint = "ابحث في السوق"
             textSize = 14f
-            singleLine = true
+            setSingleLine(true)
             setTextColor(darkText)
             setHintTextColor(gray)
             inputType = InputType.TYPE_CLASS_TEXT
@@ -502,7 +526,7 @@ class MainActivity : Activity() {
         )
     }
 
-    private fun addStatus(
+        private fun addStatus(
         parent: LinearLayout,
         title: String,
         value: String
@@ -552,7 +576,6 @@ class MainActivity : Activity() {
         )
     }
 
-    
     private fun showHome() {
         if (!simulationLoggedIn) {
             if (guestMode) {
@@ -777,7 +800,7 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun showServices() {
+        private fun showServices() {
         if (!simulationLoggedIn) {
             showSimulationLogin()
             return
@@ -999,7 +1022,6 @@ class MainActivity : Activity() {
         showSimulationLogin()
     }
 
-    
     private fun showAccount() {
         if (!simulationLoggedIn) {
             showSimulationLogin()
@@ -1057,7 +1079,7 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun showManagerOffice() {
+        private fun showManagerOffice() {
         if (!isPrivileged()) {
             showMessage("لا تملك صلاحية دخول المكتب الإداري.")
             return
@@ -1262,7 +1284,7 @@ class MainActivity : Activity() {
             setText(initialQuery)
             setTextColor(darkText)
             setHintTextColor(gray)
-            singleLine = true
+            setSingleLine(true)
             inputType = InputType.TYPE_CLASS_TEXT
             background = roundedBackground(white, 12)
             setPadding(12, 10, 12, 10)
@@ -1317,7 +1339,6 @@ class MainActivity : Activity() {
         }
     }
 
-    
     private fun showFavorites() {
         val root = baseLayout(
             "المفضلة",
@@ -1342,132 +1363,218 @@ class MainActivity : Activity() {
         )
     }
 
+    
     private fun showAds() {
+        if (!simulationLoggedIn) {
+            showSimulationLogin()
+            return
+        }
+
         val root = baseLayout(
             "الإعلانات",
-            "مساحات إعلانية تجريبية"
-        )
-
-        addCard(root, "BRONZE", "المستوى البرونزي") {
-            showAdMessage("BRONZE")
-        }
-
-        addCard(root, "SILVER", "المستوى الفضي") {
-            showAdMessage("SILVER")
-        }
-
-        addCard(root, "GOLD", "المستوى الذهبي") {
-            showAdMessage("GOLD")
-        }
-    }
-
-    private fun showAdMessage(level: String) {
-        val root = baseLayout(
-            "الإعلانات",
-            "المستوى $level"
-        )
-
-        addInfo(
-            root,
-            "هذه مساحة إعلانية تجريبية. لا توجد حملة إعلانية مفعلة."
-        )
-    }
-
-    private fun showKitchen() {
-        val root = baseLayout(
-            "المطبخ",
-            "قسم المطبخ"
+            "منصة الإعلانات التجارية"
         )
 
         addVisualBanner(
             root,
-            "KITCHEN",
-            "واجهة تجريبية"
+            "CENTRAL ADS",
+            "مساحة إعلانية منظمة وقابلة للتطوير"
         )
+
+        addCard(
+            root,
+            "BRONZE",
+            "الفئة الأساسية للإعلانات"
+        ) {
+            showMessage("فئة BRONZE تجريبية، ولا توجد إعلانات مدفوعة فعليًا.")
+        }
+
+        addCard(
+            root,
+            "SILVER",
+            "الفئة المتوسطة للإعلانات"
+        ) {
+            showMessage("فئة SILVER تجريبية.")
+        }
+
+        addCard(
+            root,
+            "GOLD",
+            "الفئة المميزة للإعلانات"
+        ) {
+            showMessage("فئة GOLD تجريبية.")
+        }
 
         addInfo(
             root,
-            "يمكن إضافة الوصفات والطلبات لاحقًا بعد تحديد آلية الخدمة."
+            "لا توجد عمليات دفع أو نشر إعلانات فعلية في هذه النسخة."
+        )
+    }
+
+    private fun showKitchen() {
+        if (!simulationLoggedIn) {
+            showSimulationLogin()
+            return
+        }
+
+        val root = baseLayout(
+            "المطبخ",
+            "خدمات الطعام والمطبخ"
+        )
+
+        addVisualBanner(
+            root,
+            "CENTRAL KITCHEN",
+            "تنظيم خدمات الطعام والطلبات"
+        )
+
+        addCard(
+            root,
+            "قائمة الطعام",
+            "عرض الأصناف والأسعار عند ربط قاعدة البيانات"
+        ) {
+            showMessage("قائمة الطعام الفعلية غير متصلة بقاعدة بيانات.")
+        }
+
+        addCard(
+            root,
+            "الطلبات",
+            "واجهة تجريبية لمتابعة الطلبات"
+        ) {
+            showMessage("الطلبات غير متصلة بخدمة تشغيل فعلية.")
+        }
+
+        addInfo(
+            root,
+            "هذه الواجهة لا تنفذ طلبات شراء أو دفع حقيقية."
         )
     }
 
     private fun showCharity() {
+        if (!simulationLoggedIn) {
+            showSimulationLogin()
+            return
+        }
+
         val root = baseLayout(
             "الصدقات والمساعدات",
-            "معلومات توعوية"
+            "التكافل والعمل الخيري"
         )
 
         addVisualBanner(
             root,
             "CHARITY",
-            "العمل الخيري ومساعدة المحتاجين"
+            "مبادرات خيرية لخدمة المجتمع"
         )
 
-        addInfo(
+        addCard(
             root,
-            "لا تستقبل هذه النسخة تبرعات ولا تجمع بيانات المستفيدين."
-        )
-
-        addInfo(
-            root,
-            "أي خدمة زكاة أو تبرع مستقبلية تحتاج إلى آلية شفافة " +
-                "للتحقق من المستفيدين وحماية بياناتهم."
-        )
-    }
-
-    private fun showMessage(message: String) {
-        val root = baseLayout(
-            "المعلومات",
-            "رسالة النظام"
-        )
-
-        addInfo(root, message)
-
-        addActionButton(root, "رجوع", blue) {
-            exitPage()
+            "مساعدة المحتاجين",
+            "قسم توعوي للمبادرات والمساعدات"
+        ) {
+            showMessage(
+                "تسجيل الحالات والتحقق منها يحتاجان إلى نظام موثوق."
+            )
         }
-    }
 
-    private fun showIdea() {
-        val root = baseLayout(
-            "الأفكار",
-            "اقتراحات تطوير المشروع"
-        )
+        addCard(
+            root,
+            "كفالة الأيتام",
+            "واجهة تعريفية لمبادرات رعاية الأيتام"
+        ) {
+            showMessage(
+                "لا توجد حاليًا سجلات أو عمليات كفالة فعلية."
+            )
+        }
+
+        addCard(
+            root,
+            "الزكاة والصدقات",
+            "معلومات تنظيمية وتوعوية"
+        ) {
+            showMessage(
+                "يجب التحقق من الأحكام الشرعية والجهات المستفيدة " +
+                    "قبل إطلاق أي خدمة مالية."
+            )
+        }
 
         addInfo(
             root,
-            "يمكن تطوير المشروع تدريجيًا مع المحافظة على الأمان " +
-                "والأداء وسهولة الاستخدام."
+            "لا يستقبل التطبيق تبرعات أو أموالًا حقيقية في هذه النسخة."
         )
     }
 
     private fun showConnectivity() {
         val root = baseLayout(
             "الاتصال",
-            "حالة الشبكة"
+            "حالة الشبكة على الجهاز"
         )
+
+        val connected = isOnline()
 
         addVisualBanner(
             root,
-            "CONNECTIVITY",
-            if (isOnline()) "متصل بالإنترنت" else "غير متصل بالإنترنت"
+            "NETWORK STATUS",
+            if (connected) {
+                "الجهاز متصل بالشبكة"
+            } else {
+                "لا يوجد اتصال متاح بالإنترنت"
+            }
         )
 
         addInfo(
             root,
-            "حالة الاتصال لا تعني أن خدمات الخادم أو الحسابات متاحة."
+            "حالة الاتصال: " +
+                if (connected) "متصل" else "غير متصل"
         )
+
+        addInfo(
+            root,
+            "إصدار أندرويد: ${Build.VERSION.RELEASE}"
+        )
+
+        addInfo(
+            root,
+            "مستوى API: ${Build.VERSION.SDK_INT}"
+        )
+
+        addActionButton(root, "تحديث حالة الاتصال", blue) {
+            showConnectivity()
+        }
+    }
+
+    private fun showMessage(message: String) {
+        val root = baseLayout(
+            "تنبيه",
+            "CENTRAL MARKET"
+        )
+
+        addVisualBanner(
+            root,
+            "معلومات",
+            "رسالة النظام"
+        )
+
+        addInfo(root, message)
+
+        addActionButton(root, "العودة", blue) {
+            goHome()
+        }
     }
 
     private fun isOnline(): Boolean {
         return try {
-            val manager =
-                getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
+            val manager = getSystemService(
+                CONNECTIVITY_SERVICE
+            ) as ConnectivityManager
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                val network = manager.activeNetwork ?: return false
+                val network = manager.activeNetwork
+                    ?: return false
+
                 val capabilities =
-                    manager.getNetworkCapabilities(network) ?: return false
+                    manager.getNetworkCapabilities(network)
+                        ?: return false
 
                 capabilities.hasCapability(
                     NetworkCapabilities.NET_CAPABILITY_INTERNET
@@ -1477,141 +1584,15 @@ class MainActivity : Activity() {
                     )
             } else {
                 @Suppress("DEPRECATION")
-                val info = manager.activeNetworkInfo
+                val networkInfo = manager.activeNetworkInfo
 
                 @Suppress("DEPRECATION")
-                info != null && info.isConnected
+                networkInfo?.isConnected == true
             }
+        } catch (_: SecurityException) {
+            false
         } catch (_: Exception) {
             false
-        }
-    }
-
-    private fun showOnline() {
-        showConnectivity()
-    }
-
-    private fun showGuestMode() {
-        clearSession()
-        guestMode = true
-
-        val root = baseLayout(
-            "التصفح العام",
-            "تصفح محدود دون شراء"
-        )
-
-        addVisualBanner(
-            root,
-            "CENTRAL MARKET",
-            "وضع الضيف"
-        )
-
-        addInfo(
-            root,
-            "يمكنك استعراض فئات المنتجات العامة. " +
-                "لا تتوفر عمليات شراء أو معاملات مالية."
-        )
-
-        addActionButton(root, "تصفح فئات المنتجات", blue) {
-            guestMode = true
-            showProducts()
-        }
-
-        addActionButton(root, "تسجيل الدخول", gold) {
-            guestMode = false
-            showSimulationLogin()
-        }
-    }
-
-    private fun showSecurity() {
-        val root = baseLayout(
-            "الأمان",
-            "معلومات الحماية"
-        )
-
-        addVisualBanner(
-            root,
-            "SECURITY",
-            "إعدادات الحماية الحالية"
-        )
-
-        addInfo(
-            root,
-            "منع لقطات الشاشة مفعّل عبر FLAG_SECURE."
-        )
-
-        addInfo(
-            root,
-            "هذا الملف لا يحتوي على تحقق ببصمة حيوية يسمح بالتقاط " +
-                "لقطة شاشة للنظام عند كل محاولة."
-        )
-
-        addInfo(
-            root,
-            "تسجيل الدخول الحالي تجريبي ومحلي، وليس مصادقة آمنة " +
-                "للحسابات الخاصة."
-        )
-
-        addCard(
-            root,
-            "سلامة الجلسة",
-            "قفل الجلسة التجريبية"
-        ) {
-            if (simulationLoggedIn) {
-                lockAccount()
-            } else {
-                showSimulationLogin()
-            }
-        }
-    }
-
-    private fun showSafety() {
-        showSecurity()
-    }
-
-    private fun showRules() {
-        val root = baseLayout(
-            "القواعد",
-            "إرشادات استخدام النسخة التجريبية"
-        )
-
-        addInfo(
-            root,
-            "لا تدخل كلمات مرور مصرفية أو بيانات مالية حقيقية."
-        )
-
-        addInfo(
-            root,
-            "المكاتب والصلاحيات الحالية ليست نظام إدارة إنتاجيًا."
-        )
-
-        addInfo(
-            root,
-            "يجب ربط الحسابات والبيانات بخادم آمن قبل الاستخدام الفعلي."
-        )
-    }
-
-    private fun roundedBackground(
-        color: Int,
-        radius: Int
-    ): GradientDrawable {
-        return GradientDrawable().apply {
-            setColor(color)
-            cornerRadius = radius.toFloat()
-        }
-    }
-
-    private fun cardBackground(): GradientDrawable {
-        return GradientDrawable(
-            GradientDrawable.Orientation.TL_BR,
-            intArrayOf(
-                officeDark,
-                navy,
-                Color.rgb(24, 51, 75)
-            )
-        ).apply {
-            cornerRadius = 18f
-            setStroke(1, gold)
         }
     }
 
@@ -1619,10 +1600,32 @@ class MainActivity : Activity() {
         return GradientDrawable(
             GradientDrawable.Orientation.TL_BR,
             intArrayOf(
-                Color.rgb(8, 20, 33),
+                officeDark,
                 navy,
-                Color.rgb(28, 59, 84)
+                badgerBlack
             )
-        )
+        ).apply {
+            cornerRadius = 0f
+        }
+    }
+
+    private fun cardBackground(): GradientDrawable {
+        return GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            cornerRadius = 18f
+            setColor(officeDark)
+            setStroke(1, gold)
+        }
+    }
+
+    private fun roundedBackground(
+        color: Int,
+        radius: Int
+    ): GradientDrawable {
+        return GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            cornerRadius = radius.toFloat()
+            setColor(color)
+        }
     }
 }
