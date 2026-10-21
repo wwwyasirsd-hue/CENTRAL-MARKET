@@ -576,6 +576,88 @@ class MainActivity : Activity() {
         )
     }
 
+    private fun showGuestMode() {
+        guestMode = true
+        simulationLoggedIn = false
+        currentRole = UserRole.USER
+        currentAccountName = "زائر"
+
+        val root = baseLayout(
+            "التصفح العام",
+            "تصفح المنتجات والأسعار — دون شراء"
+        )
+
+        addVisualBanner(
+            root,
+            "CENTRAL MARKET",
+            "وضع الزائر"
+        )
+
+        addInfo(
+            root,
+            "يمكنك تصفح الفئات العامة فقط. " +
+                "الشراء والمعاملات المالية غير متاحة."
+        )
+
+        addCard(
+            root,
+            "الأسواق والمنتجات",
+            "عرض فئات المنتجات"
+        ) {
+            openPage { showProducts() }
+        }
+
+        addActionButton(
+            root,
+            "العودة إلى تسجيل الدخول",
+            gold
+        ) {
+            showSimulationLogin()
+        }
+    }
+
+    private fun showSecurity() {
+        if (!simulationLoggedIn) {
+            showSimulationLogin()
+            return
+        }
+
+        val root = baseLayout(
+            "الأمان",
+            "حالة الحماية والجلسة"
+        )
+
+        addVisualBanner(
+            root,
+            "مركز الأمان",
+            "حماية الجلسة التجريبية"
+        )
+
+        addInfo(
+            root,
+            "حماية لقطات الشاشة مفعّلة عبر FLAG_SECURE."
+        )
+
+        addInfo(
+            root,
+            "المصادقة الحيوية الفعلية غير مدمجة بعد. " +
+                "لا تعتبر هذه الشاشة تحققًا أمنيًا حقيقيًا."
+        )
+
+        addInfo(
+            root,
+            "تُقفل الجلسة وفق مهلة الخمول المحددة."
+        )
+
+        addActionButton(
+            root,
+            "قفل الجلسة الآن",
+            red
+        ) {
+            lockAccount()
+        }
+    }
+    
     private fun showHome() {
         if (!simulationLoggedIn) {
             if (guestMode) {
