@@ -13,6 +13,7 @@ import android.os.Looper
 import android.os.SystemClock
 import android.text.InputType
 import android.view.Gravity
+import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
@@ -47,7 +48,7 @@ class MainActivity : Activity() {
     private var currentRole = UserRole.USER
     private var currentAccountName = "زائر"
     private var simulationLoggedIn = false
-    private var sensitiveLocked = false
+    private var sensitiveLocked = true
     private var guestMode = false
 
     private var lastBackgroundTime = 0L
@@ -61,14 +62,13 @@ class MainActivity : Activity() {
 
     private val pageHistory = ArrayList<() -> Unit>()
     private var currentPage: (() -> Unit)? = null
-    private var ignoreHistoryOnce = false
 
     private val globalLockRunnable = Runnable {
         if (simulationLoggedIn) lockAccount()
     }
 
     private val sensitiveLockRunnable = Runnable {
-        if (simulationLoggedIn) {
+        if (simulationLoggedIn && !sensitiveLocked) {
             sensitiveLocked = true
             showSensitiveLock()
         }
@@ -94,25 +94,42 @@ class MainActivity : Activity() {
         showSimulationLogin()
     }
 
-    override fun onResume() {
+        override fun onResume() {
         super.onResume()
 
         val now = SystemClock.elapsedRealtime()
-        if (lastBackgroundTime > 0L &&
-            now - lastBackgroundTime >= globalTimeout &&
-            simulationLoggedIn
+        val backgroundDuration =
+            if (lastBackgroundTime > 0L) {
+                now - lastBackgroundTime
+            } else {
+                0L
+            }
+
+        lastBackgroundTime = 0L
+
+        if (
+            simulationLoggedIn &&
+            backgroundDuration >= globalTimeout
         ) {
             lockAccount()
             return
         }
 
+        if (
+            simulationLoggedIn &&
+            backgroundDuration >= sensitiveTimeout
+        ) {
+            sensitiveLocked = true
+        }
+
         lastActivityTime = now
         handler.removeCallbacks(globalLockRunnable)
         handler.removeCallbacks(sensitiveLockRunnable)
-    }
+        }
 
     override fun onPause() {
         super.onPause()
+
         lastBackgroundTime = SystemClock.elapsedRealtime()
 
         handler.removeCallbacks(globalLockRunnable)
@@ -122,13 +139,14 @@ class MainActivity : Activity() {
         handler.postDelayed(sensitiveLockRunnable, sensitiveTimeout)
     }
 
+    @Suppress("DEPRECATION")
     override fun onBackPressed() {
         if (guestMode || !simulationLoggedIn) {
             showSimulationLogin()
             return
         }
 
-        showHome()
+        exitPage()
     }
 
     private fun showSimulationLogin() {
@@ -138,12 +156,16 @@ class MainActivity : Activity() {
         currentAccountName = "زائر"
         sensitiveLocked = true
 
+        pageHistory.clear()
+        currentPage = null
+
         val root = baseLayout(
             "CENTRAL MARKET",
             "بوابتك إلى الخدمات العامة الذكية"
         )
 
         addSectionTitle(root, "مرحبًا بك")
+
         addInfo(
             root,
             "نسخة تجريبية. تسجيل الحسابات الخاصة والتحقق الحقيقي " +
@@ -189,11 +211,9 @@ class MainActivity : Activity() {
         accountName: String
     ) {
         if (role != UserRole.USER) {
-            Toast.makeText(
-                this,
-                "الحسابات الخاصة تحتاج إلى تحقق آمن",
-                Toast.LENGTH_LONG
-            ).show()
+            showMessage(
+                "الحسابات الخاصة تحتاج إلى تحقق آمن."
+            )
             return
         }
 
@@ -211,11 +231,15 @@ class MainActivity : Activity() {
 
     override fun onUserInteraction() {
         super.onUserInteraction()
+
         lastActivityTime = SystemClock.elapsedRealtime()
 
         if (simulationLoggedIn) {
             handler.removeCallbacks(globalLockRunnable)
-            handler.postDelayed(globalLockRunnable, globalTimeout)
+            handler.postDelayed(
+                globalLockRunnable,
+                globalTimeout
+            )
         }
     }
 
@@ -228,22 +252,29 @@ class MainActivity : Activity() {
     private fun registerActivity() {
         lastActivityTime = SystemClock.elapsedRealtime()
         lastBackgroundTime = 0L
+
         handler.removeCallbacks(globalLockRunnable)
         handler.removeCallbacks(sensitiveLockRunnable)
     }
 
     private fun focusAndShowKeyboard(input: EditText) {
         input.requestFocus()
+
         input.post {
-            val manager =
-                getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
-            manager.showSoftInput(input, InputMethodManager.SHOW_IMPLICIT)
+            val manager = getSystemService(
+                INPUT_METHOD_SERVICE
+            ) as InputMethodManager
+
+            manager.showSoftInput(
+                input,
+                InputMethodManager.SHOW_IMPLICIT
+            )
         }
     }
 
     private fun openPage(page: () -> Unit) {
+        pageHistory.add(currentPage ?: { goHome() })
         currentPage = page
-        pageHistory.add(page)
         page()
     }
 
@@ -255,13 +286,12 @@ class MainActivity : Activity() {
         }
     }
 
-        private fun exitPage() {
+    private fun exitPage() {
         if (pageHistory.isNotEmpty()) {
-            pageHistory.removeAt(pageHistory.lastIndex)
-        }
+            val previous = pageHistory.removeAt(
+                pageHistory.lastIndex
+            )
 
-        val previous = pageHistory.lastOrNull()
-        if (previous != null) {
             currentPage = previous
             previous()
         } else {
@@ -277,11 +307,16 @@ class MainActivity : Activity() {
             orientation = LinearLayout.VERTICAL
             setPadding(16, 12, 16, 20)
             background = gradientBackground()
+            isFocusable = true
+            isFocusableInTouchMode = true
         }
 
         val scroll = ScrollView(this).apply {
             isFillViewport = true
             clipToPadding = false
+            isClickable = true
+            isFocusable = true
+
             addView(
                 root,
                 ViewGroup.LayoutParams(
@@ -293,15 +328,19 @@ class MainActivity : Activity() {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             scroll.setOnApplyWindowInsetsListener { view, insets ->
-                val top = insets.systemWindowInsetTop
-                val bottom = insets.systemWindowInsetBottom
-                view.setPadding(0, top, 0, bottom)
+                view.setPadding(
+                    0,
+                    insets.systemWindowInsetTop,
+                    0,
+                    insets.systemWindowInsetBottom
+                )
                 insets
             }
         }
 
         content = root
         setContentView(scroll)
+
         addTopNavigation(title)
 
         if (subtitle.isNotBlank()) {
@@ -312,13 +351,14 @@ class MainActivity : Activity() {
                 gravity = Gravity.CENTER
                 setPadding(8, 10, 8, 16)
             }
+
             root.addView(sub)
         }
 
         return root
     }
 
-    private fun addTopNavigation(title: String) {
+        private fun addTopNavigation(title: String) {
         val bar = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
@@ -341,12 +381,14 @@ class MainActivity : Activity() {
 
         val back = Button(this).apply {
             text = "رجوع"
+            isAllCaps = false
             setOnClickListener { exitPage() }
         }
         bar.addView(back)
 
         val home = Button(this).apply {
             text = "الرئيسية"
+            isAllCaps = false
             setOnClickListener { goHome() }
         }
         bar.addView(home)
@@ -391,16 +433,14 @@ class MainActivity : Activity() {
 
         val button = Button(this).apply {
             text = "بحث"
+            isAllCaps = false
             setOnClickListener {
                 val query = input.text.toString().trim()
+
                 if (query.isNotEmpty()) {
                     openPage { showSearch(query) }
                 } else {
-                    Toast.makeText(
-                        this@MainActivity,
-                        "اكتب كلمة للبحث أولًا",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    showMessage("اكتب كلمة للبحث أولًا")
                 }
             }
         }
@@ -468,6 +508,8 @@ class MainActivity : Activity() {
             setTextColor(white)
             textSize = 15f
             isAllCaps = false
+            isClickable = true
+            isFocusable = true
             background = roundedBackground(color, 14)
             setOnClickListener { action() }
         }
@@ -526,7 +568,7 @@ class MainActivity : Activity() {
         )
     }
 
-        private fun addStatus(
+    private fun addStatus(
         parent: LinearLayout,
         title: String,
         value: String
@@ -576,7 +618,7 @@ class MainActivity : Activity() {
         )
     }
 
-    private fun showGuestMode() {
+        private fun showGuestMode() {
         guestMode = true
         simulationLoggedIn = false
         currentRole = UserRole.USER
@@ -640,8 +682,7 @@ class MainActivity : Activity() {
 
         addInfo(
             root,
-            "المصادقة الحيوية الفعلية غير مدمجة بعد. " +
-                "لا تعتبر هذه الشاشة تحققًا أمنيًا حقيقيًا."
+            "المصادقة الحيوية الفعلية غير مدمجة بعد."
         )
 
         addInfo(
@@ -657,7 +698,7 @@ class MainActivity : Activity() {
             lockAccount()
         }
     }
-    
+
     private fun showHome() {
         if (!simulationLoggedIn) {
             if (guestMode) {
@@ -685,7 +726,11 @@ class MainActivity : Activity() {
         addStatus(
             root,
             "حالة الاتصال",
-            if (isOnline()) "متصل بالإنترنت" else "غير متصل — قد تكون بعض الخدمات محدودة"
+            if (isOnline()) {
+                "متصل بالإنترنت"
+            } else {
+                "غير متصل — بعض الخدمات محدودة"
+            }
         )
 
         addSectionTitle(root, "الأسواق والخدمات")
@@ -709,7 +754,7 @@ class MainActivity : Activity() {
         addCard(
             root,
             "البوابة المصرفية التجريبية",
-            "واجهة توضيحية فقط — لا توجد معاملات مالية حقيقية"
+            "واجهة توضيحية — لا توجد معاملات مالية حقيقية"
         ) {
             openPage { showBankingPortal() }
         }
@@ -725,7 +770,7 @@ class MainActivity : Activity() {
         addCard(
             root,
             "المطبخ",
-            "قسم المطبخ"
+            "قسم المطبخ وخدمات الطعام"
         ) {
             openPage { showKitchen() }
         }
@@ -780,15 +825,27 @@ class MainActivity : Activity() {
             "الدور: ${roleName(currentRole)}"
         )
 
-        addCard(root, "بيانات الحساب", "عرض بيانات الحساب الحالية") {
+        addCard(
+            root,
+            "بيانات الحساب",
+            "عرض بيانات الحساب الحالية"
+        ) {
             openPage { showAccount() }
         }
 
-        addCard(root, "المفضلة", "العناصر المحفوظة في هذه الجلسة") {
+        addCard(
+            root,
+            "المفضلة",
+            "العناصر المحفوظة في هذه الجلسة"
+        ) {
             openPage { showFavorites() }
         }
 
-        addCard(root, "النقاط", "عرض نقاط الحساب التجريبي") {
+        addCard(
+            root,
+            "النقاط",
+            "عرض نقاط الحساب التجريبي"
+        ) {
             openPage { showPoints() }
         }
 
@@ -802,7 +859,11 @@ class MainActivity : Activity() {
             }
         }
 
-        addActionButton(root, "تسجيل الخروج", red) {
+        addActionButton(
+            root,
+            "تسجيل الخروج",
+            red
+        ) {
             logoutSimulation()
         }
     }
@@ -831,7 +892,7 @@ class MainActivity : Activity() {
             addCard(
                 root,
                 category,
-                "تصفح الفئة — الأسعار الفعلية تحتاج إلى بيانات موثوقة"
+                "تصفح الفئة — البيانات الفعلية تحتاج إلى مصدر موثوق"
             ) {
                 openPage { showCategory(category) }
             }
@@ -839,8 +900,8 @@ class MainActivity : Activity() {
 
         addInfo(
             root,
-            "هذه النسخة واجهة تجريبية. لا تعرض أسعارًا حقيقية غير متصلة بمصدر بيانات، " +
-                "ولا تنفذ عمليات شراء أو دفع."
+            "هذه نسخة تجريبية. لا تعرض أسعارًا حقيقية مرتبطة " +
+                "بقاعدة بيانات، ولا تنفذ عمليات شراء أو دفع."
         )
     }
 
@@ -858,25 +919,34 @@ class MainActivity : Activity() {
 
         addInfo(
             root,
-            "لا توجد منتجات أو أسعار فعلية مرتبطة بقاعدة بيانات في هذه النسخة. " +
-                "يمكن إضافة البيانات لاحقًا عبر مصدر موثوق."
+            "لا توجد منتجات أو أسعار فعلية مرتبطة بقاعدة بيانات " +
+                "في هذه النسخة."
         )
 
-        addActionButton(root, "حفظ في المفضلة التجريبية", blue) {
-            Toast.makeText(
-                this,
-                "ميزة المفضلة تحتاج إلى تخزين دائم",
-                Toast.LENGTH_SHORT
-            ).show()
+        addActionButton(
+            root,
+            "حفظ في المفضلة التجريبية",
+            blue
+        ) {
+            showMessage(
+                "ميزة المفضلة تحتاج إلى تخزين دائم."
+            )
         }
 
-        addActionButton(root, "العودة إلى الأسواق", navy) {
+        addActionButton(
+            root,
+            "العودة إلى الأسواق",
+            navy
+        ) {
             showProducts()
         }
 
         if (guestMode) {
-            addActionButton(root, "الانتقال إلى تسجيل الدخول", gold) {
-                guestMode = false
+            addActionButton(
+                root,
+                "الانتقال إلى تسجيل الدخول",
+                gold
+            ) {
                 showSimulationLogin()
             }
         }
@@ -893,23 +963,35 @@ class MainActivity : Activity() {
             "الخدمات العامة التجريبية"
         )
 
-        addCard(root, "الذكاء البشري", "معلومات وخدمات مساعدة") {
+        addCard(
+            root,
+            "الذكاء البشري",
+            "المعرفة والخبرة البشرية"
+        ) {
             openPage { showHumanIntelligence() }
         }
 
-        addCard(root, "CTM AI", "واجهة مساعد ذكي تجريبية") {
+        addCard(
+            root,
+            "CTM AI",
+            "واجهة مساعد ذكي تجريبية"
+        ) {
             openPage { showCtmAi() }
         }
 
         addCard(root, "الصحة", "معلومات عامة") {
-            openPage { showMessage("قسم الصحة تجريبي وغير مرتبط بمقدم خدمة.") }
+            openPage {
+                showMessage(
+                    "قسم الصحة تجريبي وغير مرتبط بمقدم خدمة."
+                )
+            }
         }
 
         addCard(root, "التعليم", "معلومات تعليمية") {
             openPage { showMessage("قسم التعليم تجريبي.") }
         }
 
-        addCard(root, "المرافق", "معلومات الكهرباء والمياه") {
+        addCard(root, "المرافق", "الكهرباء والمياه") {
             openPage { showMessage("قسم المرافق تجريبي.") }
         }
 
@@ -917,16 +999,32 @@ class MainActivity : Activity() {
             openPage { showMessage("قسم السفر تجريبي.") }
         }
 
-        addCard(root, "العمل الخيري", "معلومات عن الصدقات والمساعدات") {
+        addCard(
+            root,
+            "العمل الخيري",
+            "معلومات عن الصدقات والمساعدات"
+        ) {
             openPage { showCharity() }
         }
 
-        addCard(root, "Pocket", "قسم تجريبي لإدارة الأدوات") {
+        addCard(
+            root,
+            "Pocket",
+            "قسم الأدوات الشخصية"
+        ) {
             openPage { showBadger() }
         }
 
-        addCard(root, "الرسائل", "واجهة رسائل تجريبية") {
-            openPage { showMessage("الرسائل غير متصلة بخدمة مراسلة فعلية.") }
+        addCard(
+            root,
+            "الرسائل",
+            "واجهة رسائل تجريبية"
+        ) {
+            openPage {
+                showMessage(
+                    "الرسائل غير متصلة بخدمة مراسلة فعلية."
+                )
+            }
         }
     }
 
@@ -944,7 +1042,7 @@ class MainActivity : Activity() {
 
         addInfo(
             root,
-            "هذا القسم تعريفي. لا يرسل بياناتك إلى خدمة خارجية."
+            "هذا القسم تعريفي ولا يرسل بياناتك إلى خدمة خارجية."
         )
     }
 
@@ -962,7 +1060,8 @@ class MainActivity : Activity() {
 
         addInfo(
             root,
-            "هذه الشاشة لا تتصل حاليًا بنموذج ذكاء اصطناعي أو خادم خارجي."
+            "هذه الشاشة لا تتصل حاليًا بنموذج ذكاء اصطناعي " +
+                "أو خادم خارجي."
         )
     }
 
@@ -975,10 +1074,14 @@ class MainActivity : Activity() {
         addVisualBanner(
             root,
             "Pocket",
-            "واجهة تجريبية بالهوية الكحلية والذهبية"
+            "الهوية الكحلية والذهبية والفضية"
         )
 
-        addCard(root, "لوحة Pocket", "فتح الأدوات التجريبية") {
+        addCard(
+            root,
+            "لوحة Pocket",
+            "فتح الأدوات التجريبية"
+        ) {
             openPage { showBadgerDashboard() }
         }
     }
@@ -1016,10 +1119,14 @@ class MainActivity : Activity() {
 
         addInfo(
             root,
-            "لا تُدخل بيانات مصرفية حقيقية. هذا القسم لا يتصل ببنك."
+            "لا تدخل بيانات مصرفية حقيقية. هذا القسم لا يتصل ببنك."
         )
 
-        addActionButton(root, "قفل القسم", red) {
+        addActionButton(
+            root,
+            "قفل القسم",
+            red
+        ) {
             lockSensitiveSection()
         }
     }
@@ -1040,11 +1147,20 @@ class MainActivity : Activity() {
 
         addInfo(
             root,
-            "القفل هنا تجريبي. لا توجد مصادقة حيوية فعلية مدمجة في هذا الملف."
+            "القفل هنا تجريبي. لا توجد مصادقة حيوية فعلية " +
+                "مدمجة في هذا الملف."
         )
 
-        addActionButton(root, "العودة إلى حسابي", blue) {
-            showAccountHome()
+        addActionButton(
+            root,
+            "العودة إلى حسابي",
+            blue
+        ) {
+            if (simulationLoggedIn) {
+                showAccountHome()
+            } else {
+                showSimulationLogin()
+            }
         }
     }
 
@@ -1064,6 +1180,7 @@ class MainActivity : Activity() {
             currentAccountName = "زائر"
             currentRole = UserRole.USER
             pageHistory.clear()
+            currentPage = null
             showSessionLock()
         } else {
             showSimulationLogin()
@@ -1081,7 +1198,11 @@ class MainActivity : Activity() {
             "سجّل الدخول مرة أخرى لمتابعة استخدام التطبيق."
         )
 
-        addActionButton(root, "العودة إلى الدخول", gold) {
+        addActionButton(
+            root,
+            "العودة إلى الدخول",
+            gold
+        ) {
             showSimulationLogin()
         }
     }
@@ -1104,7 +1225,7 @@ class MainActivity : Activity() {
         showSimulationLogin()
     }
 
-    private fun showAccount() {
+        private fun showAccount() {
         if (!simulationLoggedIn) {
             showSimulationLogin()
             return
@@ -1119,7 +1240,11 @@ class MainActivity : Activity() {
         addInfo(root, "نوع الحساب: ${roleName(currentRole)}")
         addInfo(root, "حالة الجلسة: نشطة تجريبيًا")
 
-        addActionButton(root, "العودة إلى حسابي", blue) {
+        addActionButton(
+            root,
+            "العودة إلى حسابي",
+            blue
+        ) {
             showAccountHome()
         }
     }
@@ -1161,7 +1286,7 @@ class MainActivity : Activity() {
         }
     }
 
-        private fun showManagerOffice() {
+    private fun showManagerOffice() {
         if (!isPrivileged()) {
             showMessage("لا تملك صلاحية دخول المكتب الإداري.")
             return
@@ -1172,15 +1297,27 @@ class MainActivity : Activity() {
             "أدوات إدارية تجريبية"
         )
 
-        addCard(root, "أدوات الإدارة", "إجراءات محاكاة") {
+        addCard(
+            root,
+            "أدوات الإدارة",
+            "إجراءات محاكاة"
+        ) {
             openPage { showManagerTools() }
         }
 
-        addCard(root, "التشخيص", "عرض معلومات التطبيق") {
+        addCard(
+            root,
+            "التشخيص",
+            "عرض معلومات التطبيق"
+        ) {
             openPage { showDiagnostics() }
         }
 
-        addCard(root, "ملخص النظام", "ملخص الحالة الحالية") {
+        addCard(
+            root,
+            "ملخص النظام",
+            "ملخص الحالة الحالية"
+        ) {
             openPage { showSystemSummary() }
         }
     }
@@ -1201,12 +1338,20 @@ class MainActivity : Activity() {
             "لا تنفذ هذه الأدوات تغييرات على خادم أو حسابات حقيقية."
         )
 
-        addActionButton(root, "عرض التشخيص", blue) {
-            showDiagnostics()
+        addActionButton(
+            root,
+            "عرض التشخيص",
+            blue
+        ) {
+            openPage { showDiagnostics() }
         }
 
-        addActionButton(root, "عرض ملخص النظام", navy) {
-            showSystemSummary()
+        addActionButton(
+            root,
+            "عرض ملخص النظام",
+            navy
+        ) {
+            openPage { showSystemSummary() }
         }
     }
 
@@ -1227,7 +1372,10 @@ class MainActivity : Activity() {
 
         addInfo(root, "إصدار أندرويد: ${Build.VERSION.RELEASE}")
         addInfo(root, "مستوى API: ${Build.VERSION.SDK_INT}")
-        addInfo(root, "حالة الشبكة: ${if (isOnline()) "متصل" else "غير متصل"}")
+        addInfo(
+            root,
+            "حالة الشبكة: ${if (isOnline()) "متصل" else "غير متصل"}"
+        )
         addInfo(root, "الجلسة التجريبية: $simulationLoggedIn")
         addInfo(root, "القسم الحساس مقفل: $sensitiveLocked")
     }
@@ -1278,7 +1426,8 @@ class MainActivity : Activity() {
 
         addInfo(
             root,
-            "هذه الشاشة ليست نظام صلاحيات إنتاجيًا، ولا تثبت ملكية الحساب."
+            "هذه الشاشة ليست نظام صلاحيات إنتاجيًا، " +
+                "ولا تثبت ملكية الحساب."
         )
     }
 
@@ -1334,7 +1483,11 @@ class MainActivity : Activity() {
                 "هذه النسخة لا تتصل ببنك ولا تنفذ تحويلات."
         )
 
-        addActionButton(root, "العودة", blue) {
+        addActionButton(
+            root,
+            "العودة",
+            blue
+        ) {
             goHome()
         }
     }
@@ -1380,45 +1533,51 @@ class MainActivity : Activity() {
             )
         )
 
-        addActionButton(root, "بحث في الفئات", blue) {
+        addActionButton(
+            root,
+            "بحث في الفئات",
+            blue
+        ) {
             val query = input.text.toString().trim()
 
             if (query.isBlank()) {
-                Toast.makeText(
-                    this,
-                    "أدخل كلمة للبحث",
-                    Toast.LENGTH_SHORT
-                ).show()
-            } else {
-                val categories = listOf(
-                    "المركبات والشاحنات",
-                    "الهواتف والإلكترونيات",
-                    "المطاعم والتوصيل",
-                    "الزراعة والثروة الحيوانية",
-                    "الأسماك",
-                    "البناء ومواد الجملة",
-                    "الصحة",
-                    "الرياضة",
-                    "الكهرباء والمياه",
-                    "التعليم",
-                    "السفر"
+                showMessage("أدخل كلمة للبحث")
+                return@addActionButton
+            }
+
+            val categories = listOf(
+                "المركبات والشاحنات",
+                "الهواتف والإلكترونيات",
+                "المطاعم والتوصيل",
+                "الزراعة والثروة الحيوانية",
+                "الأسماك",
+                "البناء ومواد الجملة",
+                "الصحة",
+                "الرياضة",
+                "الكهرباء والمياه",
+                "التعليم",
+                "السفر"
+            )
+
+            val matches = categories.filter {
+                it.contains(query, ignoreCase = true)
+            }
+
+            if (matches.isEmpty()) {
+                addInfo(
+                    root,
+                    "لا توجد فئة مطابقة في القائمة التجريبية."
                 )
-
-                val matches = categories.filter {
-                    it.contains(query, ignoreCase = true)
-                }
-
-                if (matches.isEmpty()) {
-                    addInfo(root, "لا توجد فئة مطابقة في القائمة التجريبية.")
-                } else {
-                    matches.forEach { category ->
-                        addCard(root, category, "فتح الفئة") {
-                            openPage { showCategory(category) }
-                        }
+            } else {
+                matches.forEach { category ->
+                    addCard(root, category, "فتح الفئة") {
+                        openPage { showCategory(category) }
                     }
                 }
             }
         }
+
+        focusAndShowKeyboard(input)
     }
 
     private fun showFavorites() {
@@ -1445,8 +1604,7 @@ class MainActivity : Activity() {
         )
     }
 
-    
-    private fun showAds() {
+        private fun showAds() {
         if (!simulationLoggedIn) {
             showSimulationLogin()
             return
@@ -1468,7 +1626,9 @@ class MainActivity : Activity() {
             "BRONZE",
             "الفئة الأساسية للإعلانات"
         ) {
-            showMessage("فئة BRONZE تجريبية، ولا توجد إعلانات مدفوعة فعليًا.")
+            showMessage(
+                "فئة BRONZE تجريبية، ولا توجد إعلانات مدفوعة فعليًا."
+            )
         }
 
         addCard(
@@ -1515,7 +1675,9 @@ class MainActivity : Activity() {
             "قائمة الطعام",
             "عرض الأصناف والأسعار عند ربط قاعدة البيانات"
         ) {
-            showMessage("قائمة الطعام الفعلية غير متصلة بقاعدة بيانات.")
+            showMessage(
+                "قائمة الطعام الفعلية غير متصلة بقاعدة بيانات."
+            )
         }
 
         addCard(
@@ -1523,7 +1685,9 @@ class MainActivity : Activity() {
             "الطلبات",
             "واجهة تجريبية لمتابعة الطلبات"
         ) {
-            showMessage("الطلبات غير متصلة بخدمة تشغيل فعلية.")
+            showMessage(
+                "الطلبات غير متصلة بخدمة تشغيل فعلية."
+            )
         }
 
         addInfo(
@@ -1620,7 +1784,11 @@ class MainActivity : Activity() {
             "مستوى API: ${Build.VERSION.SDK_INT}"
         )
 
-        addActionButton(root, "تحديث حالة الاتصال", blue) {
+        addActionButton(
+            root,
+            "تحديث حالة الاتصال",
+            blue
+        ) {
             showConnectivity()
         }
     }
@@ -1639,7 +1807,11 @@ class MainActivity : Activity() {
 
         addInfo(root, message)
 
-        addActionButton(root, "العودة", blue) {
+        addActionButton(
+            root,
+            "العودة",
+            blue
+        ) {
             goHome()
         }
     }
