@@ -26,7 +26,7 @@ workflows:
       - name: Build Android Debug APK
         script: |
           gradle wrapper --gradle-version 8.9
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --stacktrace
 
     artifacts:
       - app/build/outputs/**/*.apk
