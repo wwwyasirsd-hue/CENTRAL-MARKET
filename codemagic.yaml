@@ -1,26 +1,32 @@
-<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+workflows:
+  central-market-android:
+    name: CENTRAL MARKET Android
+    max_build_duration: 60
+    instance_type: mac_mini_m2
 
-    <!-- Network permissions for Firebase -->
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.INTERNET" />
+    environment:
+      groups:
+        - firebase_credentials
 
-    <application
-        android:allowBackup="true"
-        android:label="CENTRAL MARKET"
-        android:supportsRtl="true">
+    scripts:
+      - name: Set Android SDK location
+        script: |
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/local.properties"
 
-        <activity
-            android:name=".MainActivity"
-            android:exported="true">
+      - name: Restore Firebase configuration
+        script: |
+          if [ -z "$FIREBASE_CONFIG_JSON" ]; then
+            echo "FIREBASE_CONFIG_JSON is not set"
+            exit 1
+          fi
+          printf '%s' "$FIREBASE_CONFIG_JSON" > "$CM_BUILD_DIR/app/google-services.json"
+          test -s "$CM_BUILD_DIR/app/google-services.json"
 
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
+      - name: Build Android Debug APK
+        script: |
+          gradle wrapper --gradle-version 8.9
+          ./gradlew assembleDebug --stacktrace
 
-        </activity>
-
-    </application>
-
-</manifest>
+    artifacts:
+      - app/build/outputs/**/*.apk
+      
