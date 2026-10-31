@@ -1,13 +1,27 @@
+
 workflows:
   central-market-android:
     name: CENTRAL MARKET Android
     max_build_duration: 60
     instance_type: mac_mini_m2
 
+    environment:
+      groups:
+        - firebase_credentials
+
     scripts:
       - name: Set Android SDK location
         script: |
           echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/local.properties"
+
+      - name: Restore Firebase configuration
+        script: |
+          if [ -z "$FIREBASE_CONFIG_JSON" ]; then
+            echo "FIREBASE_CONFIG_JSON is not set"
+            exit 1
+          fi
+          printf '%s' "$FIREBASE_CONFIG_JSON" > "$CM_BUILD_DIR/app/google-services.json"
+          test -s "$CM_BUILD_DIR/app/google-services.json"
 
       - name: Build Android Debug APK
         script: |
@@ -16,3 +30,4 @@ workflows:
 
     artifacts:
       - app/build/outputs/**/*.apk
+      
