@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "192578592518",
+    "project_id": "central-market-fe0eb",
+    "storage_bucket": "central-market-fe0eb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:192578592518:android:5cd37a6317f87a1c278887",
+        "android_client_info": {
+          "package_name": "com.central.market"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBjRs_HzXsB12Jks5JltfvFnROgluBzsuc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
